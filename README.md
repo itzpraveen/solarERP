@@ -59,7 +59,7 @@ A comprehensive ERP system designed specifically for solar installation companie
 
 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/solarERP.git
+git clone https://github.com/itzpraveen/solarERP.git
 cd solarERP
 ```
 
@@ -71,8 +71,8 @@ npm install
 3. Create a .env file in the root directory with the following variables:
 ```
 NODE_ENV=development
-PORT=5002
-MONGODB_URI=mongodb+srv://itzvellodan:mVRHqdTyBU8Q5igL@solarerp.nb5ij.mongodb.net/?retryWrites=true&w=majority&appName=solarerp
+PORT=5000
+MONGODB_URI=mongodb://localhost:27017/solarERP (or your MongoDB connection string)
 JWT_SECRET=your_secure_jwt_secret
 JWT_EXPIRES_IN=7d
 EMAIL_HOST=your_email_smtp_host
