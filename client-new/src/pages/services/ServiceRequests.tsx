@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -35,7 +35,6 @@ import {
   Delete as DeleteIcon,
   Refresh as RefreshIcon,
   FilterAlt as FilterIcon,
-  Assignment as AssignmentIcon,
   Engineering as EngineeringIcon
 } from '@mui/icons-material';
 import serviceRequestService, { ServiceRequest, ServiceRequestFilter } from '../../api/serviceRequestService';
@@ -113,7 +112,6 @@ const PriorityChip = ({ priority }: { priority: ServiceRequest['priority'] }) =>
 
 const ServiceRequests = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   
   // State for service requests data
   const [serviceRequests, setServiceRequests] = useState<ServiceRequest[]>([]);
@@ -204,7 +202,7 @@ const ServiceRequests = () => {
   useEffect(() => {
     fetchServiceRequests();
     fetchFilterOptions();
-  }, [page, rowsPerPage, filters]);
+  }, [page, rowsPerPage, filters, fetchServiceRequests]);
   
   // Handle page change
   const handleChangePage = (_: unknown, newPage: number) => {

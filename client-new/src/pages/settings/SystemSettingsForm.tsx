@@ -11,7 +11,6 @@ import {
   Typography,
   Divider,
   InputAdornment,
-  FormHelperText,
   SelectChangeEvent
 } from '@mui/material';
 import { SystemSettings, getCurrencySymbol } from '../../api/settingsService';

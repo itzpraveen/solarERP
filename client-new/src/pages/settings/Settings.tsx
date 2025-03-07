@@ -58,7 +58,6 @@ const TabPanel = (props: TabPanelProps) => {
 };
 
 const Settings = () => {
-  const { user } = useContext(AuthContext);
   const [activeTab, setActiveTab] = useState(0);
   const [userSettings, setUserSettings] = useState<UserSettings | null>(null);
   const [companySettings, setCompanySettings] = useState<CompanySettings | null>(null);

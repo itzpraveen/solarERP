@@ -23,21 +23,17 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  IconButton,
   Stack
 } from '@mui/material';
 import {
   ArrowBack as BackIcon,
   Edit as EditIcon,
   Engineering as EngineeringIcon,
-  Business as BusinessIcon,
   Event as EventIcon,
   Assignment as AssignmentIcon,
   Flag as FlagIcon,
-  Notes as NotesIcon,
   Add as AddIcon,
   CheckCircle as CompleteIcon,
-  History as HistoryIcon,
   Person as PersonIcon,
   Delete as DeleteIcon,
   HomeRepairService as ServiceIcon,

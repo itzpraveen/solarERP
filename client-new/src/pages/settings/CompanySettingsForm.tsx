@@ -7,7 +7,6 @@ import {
   Typography,
   Divider,
   Avatar,
-  IconButton,
   FormHelperText
 } from '@mui/material';
 import { PhotoCamera } from '@mui/icons-material';

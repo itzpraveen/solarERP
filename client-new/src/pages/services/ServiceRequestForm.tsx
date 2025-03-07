@@ -13,13 +13,10 @@ import {
   MenuItem,
   Alert,
   CircularProgress,
-  Divider,
-  IconButton,
   Card,
   CardContent,
   CardHeader,
   Chip,
-  Tooltip,
   Stack,
   Dialog,
   DialogTitle,
@@ -30,9 +27,7 @@ import {
 import {
   ArrowBack as BackIcon,
   Save as SaveIcon,
-  Event as EventIcon,
   Engineering as EngineeringIcon,
-  Notes as NotesIcon,
   Add as AddIcon,
   CheckCircle as CompleteIcon
 } from '@mui/icons-material';
@@ -271,7 +266,7 @@ const ServiceRequestForm = () => {
       };
       
       if (isEditing) {
-        const response = await serviceRequestService.updateServiceRequest(id!, formattedData);
+        await serviceRequestService.updateServiceRequest(id!, formattedData);
         setSuccess('Service request updated successfully');
       } else {
         const response = await serviceRequestService.createServiceRequest(formattedData);
@@ -382,7 +377,6 @@ const ServiceRequestForm = () => {
         
         <Button
           variant="outlined"
-          startIcon={<NotesIcon />}
           onClick={() => setNoteDialogOpen(true)}
         >
           Add Note
