@@ -84,19 +84,13 @@ mongoose.connect(process.env.MONGODB_URI)
     process.exit(1);
   });
 
-// Start server
-const PORT = process.env.PORT || 5002;
-const server = app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
-
 // Handle unhandled promise rejections
 process.on('unhandledRejection', err => {
   console.error('UNHANDLED REJECTION! Shutting down...');
   console.error(err.name, err.message);
-  server.close(() => {
+  if (process.env.NODE_ENV === 'production') {
     process.exit(1);
-  });
+  }
 });
 
-module.exports = server;
+module.exports = app;
