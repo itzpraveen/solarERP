@@ -40,8 +40,21 @@ app.use('/api', limiter);
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
-// CORS
-app.use(cors());
+// CORS with more permissive settings for production
+app.use(cors({
+  origin: '*', // In production you might want to restrict this
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+  credentials: true
+}));
+
+// Set Content-Security-Policy header
+app.use((req, res, next) => {
+  res.setHeader(
+    'Content-Security-Policy',
+    "default-src 'self'; connect-src 'self' https://solarerp-production.up.railway.app http://localhost:5002; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:"
+  );
+  next();
+});
 
 // API routes
 app.use('/api/auth', authRoutes);
@@ -57,11 +70,18 @@ app.use('/api/service-requests', serviceRequestRoutes);
 // Serve static assets in production
 if (process.env.NODE_ENV === 'production') {
   // Ensure client build directory exists
-  console.log('Running in production mode, serving static files');
+  console.log('Running in production mode, serving static files from:', path.join(__dirname, '../client-new/build'));
+  
+  // Serve static files from the React app
   app.use(express.static(path.join(__dirname, '../client-new/build')));
   
-  app.get('*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, '../client-new', 'build', 'index.html'));
+  // Handle React routing, return all requests to React app
+  app.get('*', (req, res, next) => {
+    // Skip API routes
+    if (req.url.startsWith('/api')) {
+      return next();
+    }
+    res.sendFile(path.resolve(__dirname, '../client-new/build', 'index.html'));
   });
 } else {
   // For development - respond with API information at root
