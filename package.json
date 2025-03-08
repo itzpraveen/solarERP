@@ -8,8 +8,8 @@
     "dev": "nodemon src/server.js",
     "test": "jest --watchAll",
     "test:ci": "jest --ci",
-    "build": "cd client-new && npm install && npm run build",
-    "heroku-postbuild": "cd client-new && npm install && npm run build"
+    "build": "cd client-new && CI=false npm install && CI=false npm run build",
+    "heroku-postbuild": "cd client-new && CI=false npm install && CI=false npm run build"
   },
   "keywords": [
     "solar",
