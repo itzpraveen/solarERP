@@ -56,10 +56,17 @@ app.use('/api/service-requests', serviceRequestRoutes);
 
 // Serve static assets in production
 if (process.env.NODE_ENV === 'production') {
+  // Ensure client build directory exists
+  console.log('Running in production mode, serving static files');
   app.use(express.static(path.join(__dirname, '../client-new/build')));
   
   app.get('*', (req, res) => {
     res.sendFile(path.resolve(__dirname, '../client-new', 'build', 'index.html'));
+  });
+} else {
+  // For development - respond with API information at root
+  app.get('/', (req, res) => {
+    res.json({ message: 'SolarERP API - Use /api endpoints to access the API' });
   });
 }
 

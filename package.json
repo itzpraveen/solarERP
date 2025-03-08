@@ -4,7 +4,7 @@
   "description": "Solar ERP System for managing solar installation projects",
   "main": "src/server.js",
   "scripts": {
-    "start": "node src/index.js",
+    "start": "node src/scripts/verify-build.js && node src/index.js",
     "dev": "nodemon src/server.js",
     "test": "jest --watchAll",
     "test:ci": "jest --ci",
