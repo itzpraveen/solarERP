@@ -8,8 +8,8 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=5002
-      - MONGODB_URI=${MONGODB_URI}
-      - JWT_SECRET=${JWT_SECRET}
+      - MONGODB_URI=mongodb+srv://itzvellodan:mVRHqdTyBU8Q5igL@solarerp.nb5ij.mongodb.net/?retryWrites=true&w=majority&appName=solarerp
+      - JWT_SECRET=692cb33671b08ed48e58c5a70696b5cdc3038b8b919af6a83792541b1c507203df53c7ba89b3e3f5f13ae695a3a7ed608ea49a2cc111cef99d6120867553276d
       - JWT_EXPIRES_IN=7d
       - ADMIN_EMAIL=admin@solarerp.com
       - ADMIN_PASSWORD=Admin@123
