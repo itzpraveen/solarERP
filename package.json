@@ -11,7 +11,7 @@
     "build": "cd client-new && CI=false npm install && CI=false npm run build",
     "heroku-postbuild": "cd client-new && CI=false npm install && CI=false npm run build",
     "create-admin": "node src/scripts/createAdminUser.js",
-    "postinstall": "npm run create-admin"
+    "postinstall": "node -e \"try { require('./src/scripts/createAdminUser.js') } catch(e) { console.log('Admin creation skipped: ' + e.message) }\""
   },
   "keywords": [
     "solar",

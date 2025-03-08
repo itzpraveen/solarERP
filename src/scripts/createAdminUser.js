@@ -1,4 +1,10 @@
 require('dotenv').config();
+
+// Exit gracefully if running in a container during build/install phase
+if (process.env.NODE_ENV === 'production' && process.env.MONGODB_URI === undefined) {
+  console.log('Skipping admin user creation: Running in production without database connection');
+  process.exit(0);
+}
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const path = require('path');

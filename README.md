@@ -87,6 +87,39 @@ REDIS_URL=redis://localhost:6379
 npm run dev
 ```
 
+### Deployment
+
+#### Railway Deployment
+
+This application is configured for deployment on Railway:
+
+1. Connect your GitHub repository to Railway
+2. Add the required environment variables in Railway settings
+3. The application will automatically build and deploy
+
+#### Docker Deployment
+
+The application includes a Dockerfile for containerized deployment:
+
+```bash
+# Build the Docker image
+docker build -t solarerp .
+
+# Run the container
+docker run -p 5002:5002 --env-file .env solarerp
+```
+
+#### Admin User Creation
+
+An admin user is automatically created during installation. You can customize the admin credentials by setting these environment variables:
+
+```
+ADMIN_EMAIL=admin@solarerp.com
+ADMIN_PASSWORD=Admin@123
+ADMIN_FIRST_NAME=Admin
+ADMIN_LAST_NAME=User
+```
+
 ### API Documentation
 
 API endpoints are organized by resource:
