@@ -86,9 +86,10 @@ const CustomerForm = ({
           try {
             // Get the specific lead data directly
             const leadResponse = await leadService.getLead(initialLeadId);
-            setLeads([leadResponse.data.lead]); // Put it in the leads array
-            populateFormFromLead(leadResponse.data.lead);
-            console.log('Lead data fetched for direct conversion:', leadResponse.data.lead);
+            const lead = leadResponse.data.lead;
+            setLeads([lead]); // Put it in the leads array
+            populateFormFromLead(lead);
+            console.log('Lead data fetched for direct conversion:', lead);
           } catch (err) {
             console.error('Failed to fetch the specific lead:', err);
           }
@@ -99,15 +100,19 @@ const CustomerForm = ({
             limit: 100,
             status: 'qualified,proposal,won' // Include qualified, proposal, and won leads
           });
-          setLeads(response.data.leads);
           
-          // Only set a default if we have leads to choose from
-          if (response.data.leads && response.data.leads.length > 0) {
+          if (response.data && response.data.leads && response.data.leads.length > 0) {
+            setLeads(response.data.leads);
+            
+            // Set a default lead and populate form
+            const defaultLead = response.data.leads[0];
             setFormData(prev => ({
               ...prev,
-              originalLead: response.data.leads[0]._id
+              originalLead: defaultLead._id
             }));
-            populateFormFromLead(response.data.leads[0]);
+            
+            // IMPORTANT FIX: Always call populateFormFromLead when leads load
+            populateFormFromLead(defaultLead);
           }
         }
         
@@ -127,9 +132,10 @@ const CustomerForm = ({
   const populateFormFromLead = (lead: any) => {
     if (!lead) return;
     
+    console.log('Populating form from lead:', lead);
+    
     // Use a callback form of setState to ensure we're working with the latest state
-    setFormData(prevData => ({
-      ...prevData, // Keep other fields like preferredContactMethod
+    setFormData({
       originalLead: lead._id,
       firstName: lead.firstName || '',
       lastName: lead.lastName || '',
@@ -143,12 +149,11 @@ const CustomerForm = ({
         country: lead.address?.country || 'USA'
       },
       leadSource: lead.source || 'direct',
+      preferredContactMethod: 'email', // Default to email if not specified
       // Add any other fields needed for customer creation
       notes: lead.notes || [],
-      monthlyElectricBill: lead.monthlyElectricBill,
-      // If the lead was already contacted, set preferred contact method based on experience
-      preferredContactMethod: prevData.preferredContactMethod || 'email'
-    }));
+      monthlyElectricBill: lead.monthlyElectricBill
+    });
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -201,6 +206,7 @@ const CustomerForm = ({
       // Otherwise find and populate from the selected lead
       const selectedLead = leads.find(lead => lead._id === value);
       if (selectedLead) {
+        console.log('Lead selected, populating form with:', selectedLead);
         populateFormFromLead(selectedLead);
         return;
       }
