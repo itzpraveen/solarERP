@@ -1,0 +1,65 @@
+require('dotenv').config();
+const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
+const path = require('path');
+
+// Check if user model is available in the current path
+const userModelPath = path.join(__dirname, '../api/models/user.model');
+let User;
+try {
+  User = require(userModelPath);
+} catch (err) {
+  console.error(`Error loading user model from ${userModelPath}:`, err);
+  console.log('Attempting to load from alternative path...');
+  try {
+    User = require('../models/user.model');
+  } catch (err) {
+    console.error('Error loading user model from alternative path:', err);
+    process.exit(1);
+  }
+}
+
+const createAdminUser = async () => {
+  try {
+    // Connect to MongoDB
+    await mongoose.connect(process.env.MONGODB_URI);
+    console.log('Connected to MongoDB');
+
+    // Get admin credentials from environment variables or use defaults
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin@solarerp.com';
+    const adminPassword = process.env.ADMIN_PASSWORD || 'Admin@123';
+    const adminFirstName = process.env.ADMIN_FIRST_NAME || 'Admin';
+    const adminLastName = process.env.ADMIN_LAST_NAME || 'User';
+
+    // Check if admin user already exists
+    const existingAdmin = await User.findOne({ email: adminEmail });
+    if (existingAdmin) {
+      console.log(`Admin user with email ${adminEmail} already exists`);
+      await mongoose.disconnect();
+      return;
+    }
+
+    // Create admin user
+    const hashedPassword = await bcrypt.hash(adminPassword, 12);
+    const newAdmin = new User({
+      email: adminEmail,
+      password: hashedPassword,
+      firstName: adminFirstName,
+      lastName: adminLastName,
+      role: 'admin',
+      isActive: true
+    });
+
+    await newAdmin.save();
+    console.log(`Admin user created with email: ${adminEmail} and password: ${adminPassword}`);
+
+    // Disconnect from MongoDB
+    await mongoose.disconnect();
+    console.log('Disconnected from MongoDB');
+  } catch (err) {
+    console.error('Error creating admin user:', err);
+    process.exit(1);
+  }
+};
+
+createAdminUser();

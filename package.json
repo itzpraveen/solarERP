@@ -9,7 +9,9 @@
     "test": "jest --watchAll",
     "test:ci": "jest --ci",
     "build": "cd client-new && CI=false npm install && CI=false npm run build",
-    "heroku-postbuild": "cd client-new && CI=false npm install && CI=false npm run build"
+    "heroku-postbuild": "cd client-new && CI=false npm install && CI=false npm run build",
+    "create-admin": "node src/scripts/createAdminUser.js",
+    "postinstall": "npm run create-admin"
   },
   "keywords": [
     "solar",
