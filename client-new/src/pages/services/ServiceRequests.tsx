@@ -159,20 +159,20 @@ const ServiceRequests = () => {
       
       console.log('Service requests response:', response);
       
-      // Check the structure of the response and handle both possible formats
-      if (response.serviceRequests) {
-        // Direct format: { serviceRequests: [...], totalCount: n }
+      // Handle the response structure according to the backend format
+      // Backend returns: { status, results, total, page, pages, serviceRequests }
+      if (response && response.serviceRequests) {
         setServiceRequests(response.serviceRequests);
-        setTotalRequests(response.totalCount || 0);
-      } else if (response.data && response.data.serviceRequests) {
-        // Nested format: { data: { serviceRequests: [...] }, results: n }
+        setTotalRequests(response.total || 0);
+      } else if (response && response.data && response.data.serviceRequests) {
         setServiceRequests(response.data.serviceRequests);
-        setTotalRequests(response.results || 0);
+        setTotalRequests(response.data.total || response.results || 0);
       } else {
         // Fallback for unexpected format
         setServiceRequests([]);
         setTotalRequests(0);
         console.error('Unexpected response format:', response);
+        setError('Received unexpected data format from server');
       }
       
       setLoading(false);

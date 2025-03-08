@@ -61,16 +61,18 @@ const serviceRequestService = {
       const queryParams = new URLSearchParams();
       
       Object.entries(filters).forEach(([key, value]) => {
-        if (value) {
+        if (value !== undefined && value !== null && value !== '') {
           queryParams.append(key, value.toString());
         }
       });
       
       const queryString = queryParams.toString();
       const endpoint = `/api/service-requests${queryString ? `?${queryString}` : ''}`;
+      console.log('Calling endpoint:', endpoint);
       
       return await apiService.get(endpoint);
     } catch (error) {
+      console.error('Error in getServiceRequests:', error);
       throw error;
     }
   },
@@ -159,8 +161,10 @@ const serviceRequestService = {
   // Get service requests by customer
   getCustomerServiceRequests: async (customerId: string) => {
     try {
-      return await apiService.get(`/api/customers/${customerId}/service-requests`);
+      // Use the correct route path matching the backend
+      return await apiService.get(`/api/service-requests/customer/${customerId}`);
     } catch (error) {
+      console.error('Error fetching customer service requests:', error);
       throw error;
     }
   },
@@ -168,8 +172,10 @@ const serviceRequestService = {
   // Get service requests by project
   getProjectServiceRequests: async (projectId: string) => {
     try {
-      return await apiService.get(`/api/projects/${projectId}/service-requests`);
+      // Use the correct route path matching the backend
+      return await apiService.get(`/api/service-requests/project/${projectId}`);
     } catch (error) {
+      console.error('Error fetching project service requests:', error);
       throw error;
     }
   }
