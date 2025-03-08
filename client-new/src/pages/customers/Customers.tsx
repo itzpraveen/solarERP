@@ -134,7 +134,7 @@ const CustomerForm = ({
     
     console.log('Populating form from lead:', lead);
     
-    // Use a callback form of setState to ensure we're working with the latest state
+    // Only set the properties that are in the type definition of the form state
     setFormData({
       originalLead: lead._id,
       firstName: lead.firstName || '',
@@ -149,10 +149,8 @@ const CustomerForm = ({
         country: lead.address?.country || 'USA'
       },
       leadSource: lead.source || 'direct',
-      preferredContactMethod: 'email', // Default to email if not specified
-      // Add any other fields needed for customer creation
-      notes: lead.notes || [],
-      monthlyElectricBill: lead.monthlyElectricBill
+      preferredContactMethod: 'email' // Default to email if not specified
+      // Removed notes and monthlyElectricBill as they're not in the form state type
     });
   };
 
