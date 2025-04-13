@@ -1,21 +1,4 @@
-const { overrideDevServer } = require('customize-cra');
-
-const devServerConfig = () => config => {
-  return {
-    ...config,
-    // Add proxy configuration here
-    proxy: {
-      '/api': {
-        target: 'http://localhost:5002', // Your backend server address
-        changeOrigin: true,
-        pathRewrite: { '^/api': '/api' }, // Keep /api prefix on backend
-      },
-    },
-  };
-};
-
-module.exports = {
-  webpack: function override(config, env) {
+module.exports = function override(config, env) {
   // Add fallbacks for Node.js core modules
   config.resolve.fallback = {
     ...config.resolve.fallback,
@@ -44,7 +27,5 @@ module.exports = {
     }),
   ];
 
-    return config;
-  },
-  devServer: overrideDevServer(devServerConfig()),
+  return config;
 };
