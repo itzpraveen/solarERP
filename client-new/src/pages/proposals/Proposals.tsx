@@ -25,7 +25,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Chip
+  Chip,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -34,22 +34,25 @@ import {
   Delete as DeleteIcon,
   Refresh as RefreshIcon,
   Send as SendIcon,
-  Visibility as ViewIcon
+  Visibility as ViewIcon,
 } from '@mui/icons-material';
-import proposalService, { Proposal, ProposalFilter } from '../../api/proposalService';
+import proposalService, {
+  Proposal,
+  ProposalFilter,
+} from '../../api/proposalService';
 import leadService from '../../api/leadService';
 import CurrencyDisplay from '../../components/common/CurrencyDisplay';
 
 // Proposal form component for creating new proposals
-const ProposalForm = ({ 
-  open, 
-  onClose, 
-  onSubmit, 
-  loading 
-}: { 
-  open: boolean; 
-  onClose: () => void; 
-  onSubmit: (proposalData: any) => void; 
+const ProposalForm = ({
+  open,
+  onClose,
+  onSubmit,
+  loading,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onSubmit: (proposalData: any) => void;
   loading: boolean;
 }) => {
   const [formData, setFormData] = useState({
@@ -65,7 +68,7 @@ const ProposalForm = ({
     yearlyProductionEstimate: 0,
     estimatedSavings: {
       firstYear: 0,
-      twentyFiveYear: 0
+      twentyFiveYear: 0,
     },
     pricing: {
       grossCost: 0,
@@ -73,14 +76,14 @@ const ProposalForm = ({
       stateTaxCredit: 0,
       utilityRebate: 0,
       otherIncentives: 0,
-      netCost: 0
+      netCost: 0,
     },
-    notes: ''
+    notes: '',
   });
-  
+
   const [leads, setLeads] = useState<any[]>([]);
   const [leadsLoading, setLeadsLoading] = useState(false);
-  
+
   // Fetch leads for dropdown
   useEffect(() => {
     const fetchLeads = async () => {
@@ -88,23 +91,23 @@ const ProposalForm = ({
         setLeadsLoading(true);
         const response = await leadService.getLeads({ limit: 100 });
         setLeads(response.data.leads);
-        
+
         // If leads are available, set the first one as default
         if (response.data.leads && response.data.leads.length > 0) {
-          setFormData(prev => ({
+          setFormData((prev) => ({
             ...prev,
             lead: response.data.leads[0]._id,
-            name: `Solar Proposal for ${response.data.leads[0].firstName} ${response.data.leads[0].lastName}`
+            name: `Solar Proposal for ${response.data.leads[0].firstName} ${response.data.leads[0].lastName}`,
           }));
         }
-        
+
         setLeadsLoading(false);
       } catch (error) {
         console.error('Failed to fetch leads', error);
         setLeadsLoading(false);
       }
     };
-    
+
     if (open) {
       fetchLeads();
     }
@@ -112,83 +115,96 @@ const ProposalForm = ({
 
   // Calculate netCost whenever pricing values change
   useEffect(() => {
-    const { grossCost, federalTaxCredit, stateTaxCredit, utilityRebate, otherIncentives } = formData.pricing;
-    const netCost = grossCost - federalTaxCredit - stateTaxCredit - utilityRebate - otherIncentives;
-    
-    setFormData(prev => ({
+    const {
+      grossCost,
+      federalTaxCredit,
+      stateTaxCredit,
+      utilityRebate,
+      otherIncentives,
+    } = formData.pricing;
+    const netCost =
+      grossCost -
+      federalTaxCredit -
+      stateTaxCredit -
+      utilityRebate -
+      otherIncentives;
+
+    setFormData((prev) => ({
       ...prev,
       pricing: {
         ...prev.pricing,
-        netCost: netCost > 0 ? netCost : 0
-      }
+        netCost: netCost > 0 ? netCost : 0,
+      },
     }));
   }, [
     formData.pricing.grossCost,
     formData.pricing.federalTaxCredit,
     formData.pricing.stateTaxCredit,
     formData.pricing.utilityRebate,
-    formData.pricing.otherIncentives
+    formData.pricing.otherIncentives,
   ]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
-    
+
     if (name.includes('.')) {
       const [parent, child] = name.split('.');
       setFormData({
         ...formData,
         [parent]: {
-          ...formData[parent as keyof typeof formData] as any,
-          [child]: value
-        }
+          ...(formData[parent as keyof typeof formData] as any),
+          [child]: value,
+        },
       });
     } else {
       setFormData({
         ...formData,
-        [name]: value
+        [name]: value,
       });
     }
   };
 
   const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    
+
     if (name.includes('.')) {
       const [parent, child] = name.split('.');
       setFormData({
         ...formData,
         [parent]: {
-          ...formData[parent as keyof typeof formData] as any,
-          [child]: parseFloat(value) || 0
-        }
+          ...(formData[parent as keyof typeof formData] as any),
+          [child]: parseFloat(value) || 0,
+        },
       });
     } else {
       setFormData({
         ...formData,
-        [name]: parseFloat(value) || 0
+        [name]: parseFloat(value) || 0,
       });
     }
   };
 
   const handleSelectChange = (e: any) => {
     const { name, value } = e.target;
-    
+
     // If lead changes, update proposal name
     if (name === 'lead') {
-      const selectedLead = leads.find(lead => lead._id === value);
+      const selectedLead = leads.find((lead) => lead._id === value);
       if (selectedLead) {
         setFormData({
           ...formData,
           lead: value,
-          name: `Solar Proposal for ${selectedLead.firstName} ${selectedLead.lastName}`
+          name: `Solar Proposal for ${selectedLead.firstName} ${selectedLead.lastName}`,
         });
         return;
       }
     }
-    
+
     setFormData({
       ...formData,
-      [name]: value
+      [name]: value,
     });
   };
 
@@ -196,7 +212,7 @@ const ProposalForm = ({
     const { name, checked } = e.target;
     setFormData({
       ...formData,
-      [name]: checked
+      [name]: checked,
     });
   };
 
@@ -224,7 +240,7 @@ const ProposalForm = ({
                   {leadsLoading ? (
                     <MenuItem value="">Loading leads...</MenuItem>
                   ) : (
-                    leads.map(lead => (
+                    leads.map((lead) => (
                       <MenuItem key={lead._id} value={lead._id}>
                         {lead.firstName} {lead.lastName} - {lead.email}
                       </MenuItem>
@@ -243,9 +259,11 @@ const ProposalForm = ({
                 onChange={handleChange}
               />
             </Grid>
-            
+
             <Grid item xs={12}>
-              <Typography variant="subtitle1" sx={{ mb: 1 }}>System Specifications</Typography>
+              <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                System Specifications
+              </Typography>
             </Grid>
             <Grid item xs={12} md={4}>
               <TextField
@@ -298,17 +316,19 @@ const ProposalForm = ({
                   name="includesBattery"
                   value={formData.includesBattery ? 'true' : 'false'}
                   label="Includes Battery"
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    includesBattery: e.target.value === 'true'
-                  })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      includesBattery: e.target.value === 'true',
+                    })
+                  }
                 >
                   <MenuItem value="true">Yes</MenuItem>
                   <MenuItem value="false">No</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
-            
+
             {formData.includesBattery && (
               <>
                 <Grid item xs={12} md={6}>
@@ -333,9 +353,11 @@ const ProposalForm = ({
                 </Grid>
               </>
             )}
-            
+
             <Grid item xs={12}>
-              <Typography variant="subtitle1" sx={{ mb: 1 }}>Production & Savings Estimates</Typography>
+              <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                Production & Savings Estimates
+              </Typography>
             </Grid>
             <Grid item xs={12} md={4}>
               <TextField
@@ -373,9 +395,11 @@ const ProposalForm = ({
                 onChange={handleNumberChange}
               />
             </Grid>
-            
+
             <Grid item xs={12}>
-              <Typography variant="subtitle1" sx={{ mb: 1 }}>Pricing & Incentives</Typography>
+              <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                Pricing & Incentives
+              </Typography>
             </Grid>
             <Grid item xs={12} md={6}>
               <TextField
@@ -443,11 +467,11 @@ const ProposalForm = ({
                 type="number"
                 value={formData.pricing.netCost}
                 InputProps={{
-                  readOnly: true
+                  readOnly: true,
                 }}
               />
             </Grid>
-            
+
             <Grid item xs={12}>
               <TextField
                 fullWidth
@@ -463,9 +487,9 @@ const ProposalForm = ({
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose}>Cancel</Button>
-          <Button 
-            type="submit" 
-            variant="contained" 
+          <Button
+            type="submit"
+            variant="contained"
             disabled={loading}
             startIcon={loading ? <CircularProgress size={20} /> : null}
           >
@@ -479,57 +503,57 @@ const ProposalForm = ({
 
 const Proposals = () => {
   const navigate = useNavigate();
-  
+
   // State for proposals data
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // State for pagination
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalProposals, setTotalProposals] = useState(0);
-  
+
   // State for filters
   const [filters, setFilters] = useState<ProposalFilter>({
-    sort: '-createdAt'
+    sort: '-createdAt',
   });
-  
+
   // State for search
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   // State for new proposal form
   const [formOpen, setFormOpen] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
-  
+
   // State for delete confirmation
   const [deleteDialog, setDeleteDialog] = useState({
     open: false,
     proposalId: '',
-    proposalName: ''
+    proposalName: '',
   });
-  
+
   // State for send confirmation
   const [sendDialog, setSendDialog] = useState({
     open: false,
     proposalId: '',
     proposalName: '',
-    leadEmail: ''
+    leadEmail: '',
   });
-  
+
   // Fetch proposals data
   const fetchProposals = async () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await proposalService.getProposals({
         ...filters,
         page: page + 1,
         limit: rowsPerPage,
-        search: searchTerm
+        search: searchTerm,
       });
-      
+
       setProposals(response.data.proposals);
       setTotalProposals(response.results);
       setLoading(false);
@@ -538,39 +562,41 @@ const Proposals = () => {
       setLoading(false);
     }
   };
-  
+
   // Initial data fetch
   useEffect(() => {
     fetchProposals();
   }, [page, rowsPerPage, filters]);
-  
+
   // Handle page change
   const handleChangePage = (_: unknown, newPage: number) => {
     setPage(newPage);
   };
-  
+
   // Handle rows per page change
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
-  
+
   // Handle filter changes
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFilters({
       ...filters,
-      [name]: value
+      [name]: value,
     });
     setPage(0);
   };
-  
+
   // Handle search
   const handleSearch = () => {
     setPage(0);
     fetchProposals();
   };
-  
+
   // Handle proposal creation
   const handleCreateProposal = async (proposalData: any) => {
     try {
@@ -584,12 +610,12 @@ const Proposals = () => {
       setFormLoading(false);
     }
   };
-  
+
   // Handle proposal edit
   const handleEditProposal = (id: string) => {
     navigate(`/proposals/${id}`);
   };
-  
+
   // Handle proposal delete
   const handleDeleteProposal = async () => {
     try {
@@ -600,7 +626,7 @@ const Proposals = () => {
       setError(err?.message || 'Failed to delete proposal');
     }
   };
-  
+
   // Handle send proposal
   const handleSendProposal = async () => {
     try {
@@ -612,7 +638,7 @@ const Proposals = () => {
       setError(err?.message || 'Failed to send proposal');
     }
   };
-  
+
   // Get status color for UI
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -632,28 +658,33 @@ const Proposals = () => {
         return 'default';
     }
   };
-  
+
   return (
     <Box sx={{ flexGrow: 1 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4">
-          Proposals
-        </Typography>
-        <Button 
-          variant="contained" 
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 3,
+        }}
+      >
+        <Typography variant="h4">Proposals</Typography>
+        <Button
+          variant="contained"
           startIcon={<AddIcon />}
           onClick={() => setFormOpen(true)}
         >
           Create Proposal
         </Button>
       </Box>
-      
+
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
         </Alert>
       )}
-      
+
       {/* Filters */}
       <Paper sx={{ p: 2, mb: 3 }}>
         <Grid container spacing={2} alignItems="center">
@@ -668,7 +699,7 @@ const Proposals = () => {
                   <IconButton onClick={handleSearch}>
                     <SearchIcon />
                   </IconButton>
-                )
+                ),
               }}
             />
           </Grid>
@@ -720,7 +751,7 @@ const Proposals = () => {
           </Grid>
         </Grid>
       </Paper>
-      
+
       {/* Proposals Table */}
       <TableContainer component={Paper}>
         <Table sx={{ minWidth: 650 }}>
@@ -761,7 +792,10 @@ const Proposals = () => {
                   </TableCell>
                   <TableCell>
                     <Chip
-                      label={proposal.status.charAt(0).toUpperCase() + proposal.status.slice(1)}
+                      label={
+                        proposal.status.charAt(0).toUpperCase() +
+                        proposal.status.slice(1)
+                      }
                       color={getStatusColor(proposal.status) as any}
                       size="small"
                     />
@@ -777,48 +811,52 @@ const Proposals = () => {
                   </TableCell>
                   <TableCell>
                     <Box sx={{ display: 'flex' }}>
-                      <IconButton 
-                        size="small" 
-                        color="primary" 
+                      <IconButton
+                        size="small"
+                        color="primary"
                         onClick={() => handleEditProposal(proposal._id)}
                         title="Edit"
                       >
                         <EditIcon />
                       </IconButton>
-                      
+
                       {proposal.status === 'draft' && (
-                        <IconButton 
-                          size="small" 
+                        <IconButton
+                          size="small"
                           color="primary"
-                          onClick={() => setSendDialog({
-                            open: true,
-                            proposalId: proposal._id,
-                            proposalName: proposal.name,
-                            leadEmail: proposal.lead.email
-                          })}
+                          onClick={() =>
+                            setSendDialog({
+                              open: true,
+                              proposalId: proposal._id,
+                              proposalName: proposal.name,
+                              leadEmail: proposal.lead.email,
+                            })
+                          }
                           title="Send to Lead"
                         >
                           <SendIcon />
                         </IconButton>
                       )}
-                      
-                      <IconButton 
-                        size="small" 
+
+                      <IconButton
+                        size="small"
                         color="info"
                         onClick={() => navigate(`/proposals/${proposal._id}`)}
                         title="View"
                       >
                         <ViewIcon />
                       </IconButton>
-                      
-                      <IconButton 
-                        size="small" 
+
+                      <IconButton
+                        size="small"
                         color="error"
-                        onClick={() => setDeleteDialog({
-                          open: true,
-                          proposalId: proposal._id,
-                          proposalName: proposal.name
-                        })}
+                        onClick={() =>
+                          setDeleteDialog({
+                            open: true,
+                            proposalId: proposal._id,
+                            proposalName: proposal.name,
+                          })
+                        }
                         title="Delete"
                       >
                         <DeleteIcon />
@@ -840,7 +878,7 @@ const Proposals = () => {
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
       </TableContainer>
-      
+
       {/* Create Proposal Form */}
       <ProposalForm
         open={formOpen}
@@ -848,33 +886,59 @@ const Proposals = () => {
         onSubmit={handleCreateProposal}
         loading={formLoading}
       />
-      
+
       {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteDialog.open} onClose={() => setDeleteDialog({ ...deleteDialog, open: false })}>
+      <Dialog
+        open={deleteDialog.open}
+        onClose={() => setDeleteDialog({ ...deleteDialog, open: false })}
+      >
         <DialogTitle>Confirm Delete</DialogTitle>
         <DialogContent>
-          Are you sure you want to delete the proposal "{deleteDialog.proposalName}"? This action cannot be undone.
+          Are you sure you want to delete the proposal "
+          {deleteDialog.proposalName}"? This action cannot be undone.
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteDialog({ ...deleteDialog, open: false })}>Cancel</Button>
-          <Button onClick={handleDeleteProposal} color="error" variant="contained">Delete</Button>
+          <Button
+            onClick={() => setDeleteDialog({ ...deleteDialog, open: false })}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleDeleteProposal}
+            color="error"
+            variant="contained"
+          >
+            Delete
+          </Button>
         </DialogActions>
       </Dialog>
-      
+
       {/* Send Proposal Dialog */}
-      <Dialog open={sendDialog.open} onClose={() => setSendDialog({ ...sendDialog, open: false })}>
+      <Dialog
+        open={sendDialog.open}
+        onClose={() => setSendDialog({ ...sendDialog, open: false })}
+      >
         <DialogTitle>Send Proposal</DialogTitle>
         <DialogContent>
           <Typography gutterBottom>
-            Are you sure you want to send "{sendDialog.proposalName}" to {sendDialog.leadEmail}?
+            Are you sure you want to send "{sendDialog.proposalName}" to{' '}
+            {sendDialog.leadEmail}?
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            This will email the proposal to the lead and update the proposal status to "Sent".
+            This will email the proposal to the lead and update the proposal
+            status to "Sent".
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setSendDialog({ ...sendDialog, open: false })}>Cancel</Button>
-          <Button onClick={handleSendProposal} color="primary" variant="contained" startIcon={<SendIcon />}>
+          <Button onClick={() => setSendDialog({ ...sendDialog, open: false })}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSendProposal}
+            color="primary"
+            variant="contained"
+            startIcon={<SendIcon />}
+          >
             Send Proposal
           </Button>
         </DialogActions>

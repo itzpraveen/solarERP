@@ -15,15 +15,23 @@ const MainLayout = () => {
   };
 
   return (
-    <Box sx={{ display: 'flex', backgroundColor: theme.palette.background.default }}>
+    <Box
+      sx={{
+        display: 'flex',
+        backgroundColor: theme.palette.background.default,
+      }}
+    >
       <CssBaseline />
-      
+
       {/* Header */}
       <Header handleDrawerToggle={handleDrawerToggle} />
-      
+
       {/* Sidebar */}
-      <Sidebar mobileOpen={mobileOpen} handleDrawerToggle={handleDrawerToggle} />
-      
+      <Sidebar
+        mobileOpen={mobileOpen}
+        handleDrawerToggle={handleDrawerToggle}
+      />
+
       {/* Main content */}
       <Box
         component="main"
@@ -33,16 +41,18 @@ const MainLayout = () => {
           width: { sm: `calc(100% - ${drawerWidth}px)` },
           minHeight: '100vh',
           backgroundColor: theme.palette.background.default,
-          overflowX: 'hidden'
+          overflowX: 'hidden',
         }}
       >
         <Toolbar />
-        <Box sx={{ 
-          maxWidth: '1600px', 
-          marginX: 'auto',
-          borderRadius: 3,
-          overflow: 'hidden'
-        }}>
+        <Box
+          sx={{
+            maxWidth: '1600px',
+            marginX: 'auto',
+            borderRadius: 3,
+            overflow: 'hidden',
+          }}
+        >
           <Outlet />
         </Box>
       </Box>

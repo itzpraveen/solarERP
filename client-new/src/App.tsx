@@ -1,4 +1,9 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from 'react-router-dom';
 import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
 import { AuthProvider } from './features/auth/context/AuthContext';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -50,7 +55,7 @@ const theme = createTheme({
       light: '#80e27e',
       dark: '#087f23',
       contrastText: '#fff',
-      lightest: '#f1f8e9' // Custom lightest shade for subtle backgrounds
+      lightest: '#f1f8e9', // Custom lightest shade for subtle backgrounds
     },
     secondary: {
       main: '#2196f3', // Blue secondary color
@@ -180,13 +185,13 @@ function App() {
   // Log the theme object for debugging in more detail
   console.log('Theme object:', theme);
   console.log('Theme palette:', theme.palette);
-  
+
   // Clear any dummy data from localStorage on app startup
   const clearResult = clearDummyData();
   if (clearResult.cleared) {
     console.log('Cleared dummy data from localStorage:', clearResult.items);
   }
-  
+
   // Log specific palette colors to check for undefined values
   console.log('Primary color:', JSON.stringify(theme.palette.primary));
   console.log('Secondary color:', JSON.stringify(theme.palette.secondary));
@@ -194,7 +199,7 @@ function App() {
   console.log('Warning color:', JSON.stringify(theme.palette.warning));
   console.log('Info color:', JSON.stringify(theme.palette.info));
   console.log('Success color:', JSON.stringify(theme.palette.success));
-  
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -203,16 +208,19 @@ function App() {
           <Routes>
             {/* Public Routes */}
             <Route path="/login" element={<Login />} />
-            
+
             {/* Private Routes */}
-            <Route path="/" element={
-              <PrivateRoute>
-                <MainLayout />
-              </PrivateRoute>
-            }>
+            <Route
+              path="/"
+              element={
+                <PrivateRoute>
+                  <MainLayout />
+                </PrivateRoute>
+              }
+            >
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="dashboard" element={<Dashboard />} />
-              
+
               {/* Implemented Routes */}
               <Route path="leads" element={<Leads />} />
               <Route path="leads/:id" element={<LeadDetails />} />
@@ -226,18 +234,21 @@ function App() {
               <Route path="equipment/:id" element={<EquipmentDetails />} />
               <Route path="documents" element={<Documents />} />
               <Route path="reports" element={<Reports />} />
-              
+
               {/* Service Request Routes */}
               <Route path="services" element={<ServiceRequests />} />
               <Route path="services/new" element={<ServiceRequestForm />} />
               <Route path="services/:id" element={<ServiceRequestDetails />} />
-              <Route path="services/:id/edit" element={<ServiceRequestForm />} />
-              
+              <Route
+                path="services/:id/edit"
+                element={<ServiceRequestForm />}
+              />
+
               {/* Profile & Settings */}
               <Route path="profile" element={<Profile />} />
               <Route path="settings" element={<Settings />} />
             </Route>
-            
+
             {/* 404 Route */}
             <Route path="*" element={<NotFound />} />
           </Routes>

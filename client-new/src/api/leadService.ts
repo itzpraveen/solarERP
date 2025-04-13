@@ -60,28 +60,31 @@ const leadService = {
   // Get all leads with optional filtering
   getLeads: async (filters: LeadFilter = {}) => {
     try {
-      console.log('leadService.getLeads - Initial filters:', JSON.stringify(filters));
-      
+      console.log(
+        'leadService.getLeads - Initial filters:',
+        JSON.stringify(filters)
+      );
+
       // Build query string from filters
       const queryParams = new URLSearchParams();
-      
+
       Object.entries(filters).forEach(([key, value]) => {
         if (value !== undefined && value !== null && value !== '') {
           console.log(`leadService.getLeads - Adding param: ${key}=${value}`);
           queryParams.append(key, value.toString());
         }
       });
-      
+
       const queryString = queryParams.toString();
       const endpoint = `/api/leads${queryString ? `?${queryString}` : ''}`;
-      
+
       console.log('leadService.getLeads - Final endpoint:', endpoint);
       return await apiService.get(endpoint);
     } catch (error) {
       throw error;
     }
   },
-  
+
   // Get lead by ID
   getLead: async (id: string) => {
     try {
@@ -90,16 +93,18 @@ const leadService = {
       throw error;
     }
   },
-  
+
   // Create new lead
-  createLead: async (leadData: Omit<Lead, '_id' | 'createdAt' | 'updatedAt'>) => {
+  createLead: async (
+    leadData: Omit<Lead, '_id' | 'createdAt' | 'updatedAt'>
+  ) => {
     try {
       return await apiService.post('/api/leads', leadData);
     } catch (error) {
       throw error;
     }
   },
-  
+
   // Update lead
   updateLead: async (id: string, leadData: Partial<Lead>) => {
     try {
@@ -113,7 +118,7 @@ const leadService = {
       throw error;
     }
   },
-  
+
   // Delete lead
   deleteLead: async (id: string) => {
     try {
@@ -122,42 +127,50 @@ const leadService = {
       throw error;
     }
   },
-  
+
   // Add note to lead
   addNote: async (id: string, noteText: string) => {
     try {
-      return await apiService.post(`/api/leads/${id}/notes`, { text: noteText });
+      return await apiService.post(`/api/leads/${id}/notes`, {
+        text: noteText,
+      });
     } catch (error) {
       throw error;
     }
   },
-  
+
   // Add interaction to lead
-  addInteraction: async (id: string, interaction: { type: string; summary: string; date?: string }) => {
+  addInteraction: async (
+    id: string,
+    interaction: { type: string; summary: string; date?: string }
+  ) => {
     try {
-      return await apiService.post(`/api/leads/${id}/interactions`, interaction);
+      return await apiService.post(
+        `/api/leads/${id}/interactions`,
+        interaction
+      );
     } catch (error) {
       throw error;
     }
   },
-  
+
   // Change lead status
   updateStatus: async (id: string, status: string) => {
     try {
-      return await apiService.put(`/api/leads/${id}/status`, { status });
+      return await apiService.patch(`/api/leads/${id}/status`, { status });
     } catch (error) {
       throw error;
     }
   },
-  
+
   // Assign lead to user
   assignLead: async (id: string, userId: string) => {
     try {
-      return await apiService.put(`/api/leads/${id}/assign`, { userId });
+      return await apiService.patch(`/api/leads/${id}/assign`, { userId });
     } catch (error) {
       throw error;
     }
-  }
+  },
 };
 
 export default leadService;

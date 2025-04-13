@@ -6,17 +6,36 @@ const catchAsync = require('../../utils/catchAsync');
 
 // Get all projects with filtering, sorting, and pagination
 exports.getAllProjects = catchAsync(async (req, res, next) => {
-  // BUILD QUERY
-  // 1) Filtering
-  const queryObj = { ...req.query };
-  const excludedFields = ['page', 'sort', 'limit', 'fields'];
-  excludedFields.forEach(el => delete queryObj[el]);
-  
-  // 2) Advanced filtering
-  let queryStr = JSON.stringify(queryObj);
-  queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, match => `$${match}`);
-  
-  let query = Project.find(JSON.parse(queryStr));
+  // BUILD FILTER CONDITIONS
+  const filterConditions = {};
+
+  // 1) Add standard filters from req.query (e.g., status, stage, projectManager)
+  const standardFilters = { ...req.query };
+  // Exclude fields handled separately (pagination, sorting, etc.)
+  const excludedFields = ['page', 'sort', 'limit', 'fields', '_cb'];
+  excludedFields.forEach(el => delete standardFilters[el]);
+
+  Object.keys(standardFilters).forEach(key => {
+    if (standardFilters[key] !== '' && standardFilters[key] !== undefined && standardFilters[key] !== null) {
+      // Handle specific fields like projectManager which might be nested
+      if (key === 'projectManager') {
+        filterConditions['team.projectManager'] = standardFilters[key];
+      } else {
+        // Basic equality check for other fields (status, stage)
+        filterConditions[key] = standardFilters[key];
+      }
+      // Add logic here if range filters (gte, lte) or search are needed
+    }
+  });
+  console.log('getAllProjects - Standard filters applied:', JSON.stringify(filterConditions));
+
+  // Note: The 'active' filter is handled by the pre-find middleware in the model.
+
+  console.log('getAllProjects - Final filter conditions before find:', JSON.stringify(filterConditions));
+
+  // BUILD QUERY (Find + Sort + Paginate)
+  // Apply all calculated filters at once. The 'active' filter is added by pre-find middleware.
+  let query = Project.find(filterConditions);
   
   // 3) Sorting
   if (req.query.sort) {
@@ -147,9 +166,14 @@ exports.createProject = catchAsync(async (req, res, next) => {
 
 // Update project
 exports.updateProject = catchAsync(async (req, res, next) => {
-  const project = await Project.findByIdAndUpdate(req.params.id, req.body, {
+  // Exclude fields that shouldn't be updated via this generic route
+  const excludedFields = ['customer', 'proposal', 'createdBy', 'financials', 'active'];
+  const filteredBody = { ...req.body };
+  excludedFields.forEach(el => delete filteredBody[el]);
+
+  const project = await Project.findByIdAndUpdate(req.params.id, filteredBody, {
     new: true,
-    runValidators: true
+    runValidators: true,
   });
   
   if (!project) {

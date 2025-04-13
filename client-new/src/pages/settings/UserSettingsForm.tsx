@@ -13,7 +13,7 @@ import {
   Typography,
   Divider,
   SelectChangeEvent,
-  FormHelperText
+  FormHelperText,
 } from '@mui/material';
 import { UserSettings } from '../../api/settingsService';
 
@@ -23,7 +23,11 @@ interface UserSettingsFormProps {
   loading: boolean;
 }
 
-const UserSettingsForm = ({ settings, onSave, loading }: UserSettingsFormProps) => {
+const UserSettingsForm = ({
+  settings,
+  onSave,
+  loading,
+}: UserSettingsFormProps) => {
   const [formData, setFormData] = useState<UserSettings>(settings);
 
   useEffect(() => {
@@ -32,8 +36,8 @@ const UserSettingsForm = ({ settings, onSave, loading }: UserSettingsFormProps) 
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, checked, type } = event.target;
-    
-    setFormData(prev => ({
+
+    setFormData((prev) => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
     }));
@@ -41,22 +45,22 @@ const UserSettingsForm = ({ settings, onSave, loading }: UserSettingsFormProps) 
 
   const handleSelectChange = (event: SelectChangeEvent<string>) => {
     const { name, value } = event.target;
-    
-    setFormData(prev => ({
+
+    setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
   };
 
   const handleThemeChange = (event: SelectChangeEvent<string>) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       displayTheme: event.target.value as 'light' | 'dark' | 'system',
     }));
   };
 
   const handleLayoutChange = (event: SelectChangeEvent<string>) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       dashboardLayout: {
         ...prev.dashboardLayout,
@@ -65,27 +69,28 @@ const UserSettingsForm = ({ settings, onSave, loading }: UserSettingsFormProps) 
     }));
   };
 
-  const handleWidgetChange = (widget: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
-    const { checked } = event.target;
-    
-    setFormData(prev => {
-      let widgets = [...prev.dashboardLayout.widgets];
-      
-      if (checked && !widgets.includes(widget)) {
-        widgets.push(widget);
-      } else if (!checked && widgets.includes(widget)) {
-        widgets = widgets.filter(w => w !== widget);
-      }
-      
-      return {
-        ...prev,
-        dashboardLayout: {
-          ...prev.dashboardLayout,
-          widgets,
-        },
-      };
-    });
-  };
+  const handleWidgetChange =
+    (widget: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
+      const { checked } = event.target;
+
+      setFormData((prev) => {
+        let widgets = [...prev.dashboardLayout.widgets];
+
+        if (checked && !widgets.includes(widget)) {
+          widgets.push(widget);
+        } else if (!checked && widgets.includes(widget)) {
+          widgets = widgets.filter((w) => w !== widget);
+        }
+
+        return {
+          ...prev,
+          dashboardLayout: {
+            ...prev.dashboardLayout,
+            widgets,
+          },
+        };
+      });
+    };
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
@@ -97,7 +102,7 @@ const UserSettingsForm = ({ settings, onSave, loading }: UserSettingsFormProps) 
       <Typography variant="h6" gutterBottom>
         User Interface Preferences
       </Typography>
-      
+
       <Grid container spacing={3} mb={4}>
         <Grid item xs={12} md={6}>
           <FormControl fullWidth margin="normal">
@@ -114,10 +119,12 @@ const UserSettingsForm = ({ settings, onSave, loading }: UserSettingsFormProps) 
               <MenuItem value="dark">Dark</MenuItem>
               <MenuItem value="system">Use System Setting</MenuItem>
             </Select>
-            <FormHelperText>Choose your preferred interface theme</FormHelperText>
+            <FormHelperText>
+              Choose your preferred interface theme
+            </FormHelperText>
           </FormControl>
         </Grid>
-        
+
         <Grid item xs={12} md={6}>
           <FormControl fullWidth margin="normal">
             <InputLabel id="language-select-label">Language</InputLabel>
@@ -138,13 +145,13 @@ const UserSettingsForm = ({ settings, onSave, loading }: UserSettingsFormProps) 
           </FormControl>
         </Grid>
       </Grid>
-      
+
       <Divider sx={{ my: 3 }} />
-      
+
       <Typography variant="h6" gutterBottom>
         Dashboard Configuration
       </Typography>
-      
+
       <Grid container spacing={3} mb={4}>
         <Grid item xs={12} md={6}>
           <FormControl fullWidth margin="normal">
@@ -162,10 +169,12 @@ const UserSettingsForm = ({ settings, onSave, loading }: UserSettingsFormProps) 
               <MenuItem value="stats">Statistics</MenuItem>
               <MenuItem value="projects">Projects Overview</MenuItem>
             </Select>
-            <FormHelperText>Choose what you see first when opening dashboard</FormHelperText>
+            <FormHelperText>
+              Choose what you see first when opening dashboard
+            </FormHelperText>
           </FormControl>
         </Grid>
-        
+
         <Grid item xs={12} md={6}>
           <FormControl fullWidth margin="normal">
             <InputLabel id="layout-select-label">Dashboard Layout</InputLabel>
@@ -183,7 +192,7 @@ const UserSettingsForm = ({ settings, onSave, loading }: UserSettingsFormProps) 
             <FormHelperText>Select how widgets are displayed</FormHelperText>
           </FormControl>
         </Grid>
-        
+
         <Grid item xs={12}>
           <Typography variant="subtitle1" gutterBottom sx={{ mt: 2 }}>
             Dashboard Widgets
@@ -192,7 +201,9 @@ const UserSettingsForm = ({ settings, onSave, loading }: UserSettingsFormProps) 
             <FormControlLabel
               control={
                 <Switch
-                  checked={formData.dashboardLayout.widgets.includes('calendar')}
+                  checked={formData.dashboardLayout.widgets.includes(
+                    'calendar'
+                  )}
                   onChange={handleWidgetChange('calendar')}
                   name="calendarWidget"
                 />
@@ -222,7 +233,9 @@ const UserSettingsForm = ({ settings, onSave, loading }: UserSettingsFormProps) 
             <FormControlLabel
               control={
                 <Switch
-                  checked={formData.dashboardLayout.widgets.includes('projects')}
+                  checked={formData.dashboardLayout.widgets.includes(
+                    'projects'
+                  )}
                   onChange={handleWidgetChange('projects')}
                   name="projectsWidget"
                 />
@@ -232,7 +245,9 @@ const UserSettingsForm = ({ settings, onSave, loading }: UserSettingsFormProps) 
             <FormControlLabel
               control={
                 <Switch
-                  checked={formData.dashboardLayout.widgets.includes('statistics')}
+                  checked={formData.dashboardLayout.widgets.includes(
+                    'statistics'
+                  )}
                   onChange={handleWidgetChange('statistics')}
                   name="statisticsWidget"
                 />
@@ -242,13 +257,13 @@ const UserSettingsForm = ({ settings, onSave, loading }: UserSettingsFormProps) 
           </FormGroup>
         </Grid>
       </Grid>
-      
+
       <Divider sx={{ my: 3 }} />
-      
+
       <Typography variant="h6" gutterBottom>
         Notification Settings
       </Typography>
-      
+
       <Grid container spacing={3} mb={4}>
         <Grid item xs={12}>
           <FormControlLabel
@@ -261,10 +276,12 @@ const UserSettingsForm = ({ settings, onSave, loading }: UserSettingsFormProps) 
             }
             label="Email Notifications"
           />
-          <FormHelperText>Receive updates, alerts, and notifications via email</FormHelperText>
+          <FormHelperText>
+            Receive updates, alerts, and notifications via email
+          </FormHelperText>
         </Grid>
       </Grid>
-      
+
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
         <Button
           type="submit"

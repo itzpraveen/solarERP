@@ -27,13 +27,18 @@ const NotFound = () => {
           <Typography component="h1" variant="h4" gutterBottom>
             404 - Page Not Found
           </Typography>
-          <Typography variant="body1" color="text.secondary" align="center" paragraph>
+          <Typography
+            variant="body1"
+            color="text.secondary"
+            align="center"
+            paragraph
+          >
             The page you are looking for doesn't exist or has been moved.
           </Typography>
-          <Button 
-            component={Link} 
-            to="/dashboard" 
-            variant="contained" 
+          <Button
+            component={Link}
+            to="/dashboard"
+            variant="contained"
             color="primary"
             sx={{ mt: 2 }}
           >

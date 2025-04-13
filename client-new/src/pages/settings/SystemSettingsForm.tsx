@@ -11,7 +11,7 @@ import {
   Typography,
   Divider,
   InputAdornment,
-  SelectChangeEvent
+  SelectChangeEvent,
 } from '@mui/material';
 import { SystemSettings, getCurrencySymbol } from '../../api/settingsService';
 
@@ -21,7 +21,11 @@ interface SystemSettingsFormProps {
   loading: boolean;
 }
 
-const SystemSettingsForm = ({ settings, onSave, loading }: SystemSettingsFormProps) => {
+const SystemSettingsForm = ({
+  settings,
+  onSave,
+  loading,
+}: SystemSettingsFormProps) => {
   const [formData, setFormData] = useState<SystemSettings>(settings);
 
   useEffect(() => {
@@ -31,11 +35,11 @@ const SystemSettingsForm = ({ settings, onSave, loading }: SystemSettingsFormPro
   const handleNumberChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
     const numValue = parseFloat(value);
-    
+
     // Handle nested fields
     if (name.startsWith('pricingDefaults.margins.')) {
       const marginField = name.split('.')[2];
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         pricingDefaults: {
           ...prev.pricingDefaults,
@@ -47,7 +51,7 @@ const SystemSettingsForm = ({ settings, onSave, loading }: SystemSettingsFormPro
       }));
     } else if (name.startsWith('pricingDefaults.')) {
       const pricingField = name.split('.')[1];
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         pricingDefaults: {
           ...prev.pricingDefaults,
@@ -59,11 +63,11 @@ const SystemSettingsForm = ({ settings, onSave, loading }: SystemSettingsFormPro
 
   const handleSelectChange = (event: SelectChangeEvent<string>) => {
     const { name, value } = event.target;
-    
+
     // Handle nested fields
     if (name.startsWith('unitPreferences.')) {
       const unitField = name.split('.')[1];
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         unitPreferences: {
           ...prev.unitPreferences,
@@ -72,7 +76,7 @@ const SystemSettingsForm = ({ settings, onSave, loading }: SystemSettingsFormPro
       }));
     } else if (name.startsWith('documentTemplates.')) {
       const templateField = name.split('.')[1];
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         documentTemplates: {
           ...prev.documentTemplates,
@@ -92,7 +96,7 @@ const SystemSettingsForm = ({ settings, onSave, loading }: SystemSettingsFormPro
       <Typography variant="h6" gutterBottom>
         Pricing Default Values
       </Typography>
-      
+
       <Grid container spacing={3} mb={4}>
         <Grid item xs={12} md={6}>
           <TextField
@@ -103,16 +107,18 @@ const SystemSettingsForm = ({ settings, onSave, loading }: SystemSettingsFormPro
             value={formData.pricingDefaults.taxRate}
             onChange={handleNumberChange}
             InputProps={{
-              startAdornment: <InputAdornment position="start">%</InputAdornment>,
-              inputProps: { 
-                min: 0, 
-                max: 100, 
-                step: 0.1
-              }
+              startAdornment: (
+                <InputAdornment position="start">%</InputAdornment>
+              ),
+              inputProps: {
+                min: 0,
+                max: 100,
+                step: 0.1,
+              },
             }}
           />
         </Grid>
-        
+
         <Grid item xs={12} md={6}>
           <TextField
             fullWidth
@@ -122,21 +128,25 @@ const SystemSettingsForm = ({ settings, onSave, loading }: SystemSettingsFormPro
             value={formData.pricingDefaults.hourlyRate}
             onChange={handleNumberChange}
             InputProps={{
-              startAdornment: <InputAdornment position="start">{getCurrencySymbol(formData.unitPreferences.currency)}</InputAdornment>,
-              inputProps: { 
-                min: 0, 
-                step: 0.1 
-              }
+              startAdornment: (
+                <InputAdornment position="start">
+                  {getCurrencySymbol(formData.unitPreferences.currency)}
+                </InputAdornment>
+              ),
+              inputProps: {
+                min: 0,
+                step: 0.1,
+              },
             }}
           />
         </Grid>
-        
+
         <Grid item xs={12}>
           <Typography variant="subtitle1" gutterBottom sx={{ mt: 2 }}>
             Default Margin Percentages
           </Typography>
         </Grid>
-        
+
         <Grid item xs={12} md={4}>
           <TextField
             fullWidth
@@ -146,17 +156,19 @@ const SystemSettingsForm = ({ settings, onSave, loading }: SystemSettingsFormPro
             value={formData.pricingDefaults.margins.equipment}
             onChange={handleNumberChange}
             InputProps={{
-              startAdornment: <InputAdornment position="start">%</InputAdornment>,
-              inputProps: { 
-                min: 0, 
-                max: 1, 
-                step: 0.01 
-              }
+              startAdornment: (
+                <InputAdornment position="start">%</InputAdornment>
+              ),
+              inputProps: {
+                min: 0,
+                max: 1,
+                step: 0.01,
+              },
             }}
             helperText="Enter as decimal (e.g., 0.2 = 20%)"
           />
         </Grid>
-        
+
         <Grid item xs={12} md={4}>
           <TextField
             fullWidth
@@ -166,17 +178,19 @@ const SystemSettingsForm = ({ settings, onSave, loading }: SystemSettingsFormPro
             value={formData.pricingDefaults.margins.labor}
             onChange={handleNumberChange}
             InputProps={{
-              startAdornment: <InputAdornment position="start">%</InputAdornment>,
-              inputProps: { 
-                min: 0, 
-                max: 1, 
-                step: 0.01 
-              }
+              startAdornment: (
+                <InputAdornment position="start">%</InputAdornment>
+              ),
+              inputProps: {
+                min: 0,
+                max: 1,
+                step: 0.01,
+              },
             }}
             helperText="Enter as decimal (e.g., 0.3 = 30%)"
           />
         </Grid>
-        
+
         <Grid item xs={12} md={4}>
           <TextField
             fullWidth
@@ -186,24 +200,26 @@ const SystemSettingsForm = ({ settings, onSave, loading }: SystemSettingsFormPro
             value={formData.pricingDefaults.margins.permits}
             onChange={handleNumberChange}
             InputProps={{
-              startAdornment: <InputAdornment position="start">%</InputAdornment>,
-              inputProps: { 
-                min: 0, 
-                max: 1, 
-                step: 0.01 
-              }
+              startAdornment: (
+                <InputAdornment position="start">%</InputAdornment>
+              ),
+              inputProps: {
+                min: 0,
+                max: 1,
+                step: 0.01,
+              },
             }}
             helperText="Enter as decimal (e.g., 0.1 = 10%)"
           />
         </Grid>
       </Grid>
-      
+
       <Divider sx={{ my: 3 }} />
-      
+
       <Typography variant="h6" gutterBottom>
         Unit Preferences
       </Typography>
-      
+
       <Grid container spacing={3} mb={4}>
         <Grid item xs={12} md={6}>
           <FormControl fullWidth>
@@ -225,7 +241,7 @@ const SystemSettingsForm = ({ settings, onSave, loading }: SystemSettingsFormPro
             </Select>
           </FormControl>
         </Grid>
-        
+
         <Grid item xs={12} md={6}>
           <FormControl fullWidth>
             <InputLabel id="distance-select-label">Distance Unit</InputLabel>
@@ -242,7 +258,7 @@ const SystemSettingsForm = ({ settings, onSave, loading }: SystemSettingsFormPro
             </Select>
           </FormControl>
         </Grid>
-        
+
         <Grid item xs={12} md={6}>
           <FormControl fullWidth>
             <InputLabel id="power-select-label">Power Unit</InputLabel>
@@ -260,7 +276,7 @@ const SystemSettingsForm = ({ settings, onSave, loading }: SystemSettingsFormPro
             </Select>
           </FormControl>
         </Grid>
-        
+
         <Grid item xs={12} md={6}>
           <FormControl fullWidth>
             <InputLabel id="energy-select-label">Energy Unit</InputLabel>
@@ -279,17 +295,19 @@ const SystemSettingsForm = ({ settings, onSave, loading }: SystemSettingsFormPro
           </FormControl>
         </Grid>
       </Grid>
-      
+
       <Divider sx={{ my: 3 }} />
-      
+
       <Typography variant="h6" gutterBottom>
         Document Templates
       </Typography>
-      
+
       <Grid container spacing={3} mb={4}>
         <Grid item xs={12} md={4}>
           <FormControl fullWidth>
-            <InputLabel id="proposal-template-label">Proposal Template</InputLabel>
+            <InputLabel id="proposal-template-label">
+              Proposal Template
+            </InputLabel>
             <Select
               labelId="proposal-template-label"
               id="documentTemplates.proposal"
@@ -305,10 +323,12 @@ const SystemSettingsForm = ({ settings, onSave, loading }: SystemSettingsFormPro
             </Select>
           </FormControl>
         </Grid>
-        
+
         <Grid item xs={12} md={4}>
           <FormControl fullWidth>
-            <InputLabel id="contract-template-label">Contract Template</InputLabel>
+            <InputLabel id="contract-template-label">
+              Contract Template
+            </InputLabel>
             <Select
               labelId="contract-template-label"
               id="documentTemplates.contract"
@@ -324,10 +344,12 @@ const SystemSettingsForm = ({ settings, onSave, loading }: SystemSettingsFormPro
             </Select>
           </FormControl>
         </Grid>
-        
+
         <Grid item xs={12} md={4}>
           <FormControl fullWidth>
-            <InputLabel id="invoice-template-label">Invoice Template</InputLabel>
+            <InputLabel id="invoice-template-label">
+              Invoice Template
+            </InputLabel>
             <Select
               labelId="invoice-template-label"
               id="documentTemplates.invoice"
@@ -344,7 +366,7 @@ const SystemSettingsForm = ({ settings, onSave, loading }: SystemSettingsFormPro
           </FormControl>
         </Grid>
       </Grid>
-      
+
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
         <Button
           type="submit"

@@ -17,12 +17,12 @@ const createDemoUser = async () => {
     }
 
     // Create demo user
-    const demoUser = await User.create({
+    await User.create({
       firstName: 'Demo',
       lastName: 'User',
       email: 'demo@example.com',
-      password: 'password123',
-      role: 'admin'
+      password: 'password123', // Note: Consider hashing this password
+      role: 'admin',
     });
 
     console.log('Demo user created successfully');

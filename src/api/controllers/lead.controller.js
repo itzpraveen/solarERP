@@ -5,35 +5,41 @@ const catchAsync = require('../../utils/catchAsync');
 // Get all leads with filtering, sorting, and pagination
 exports.getAllLeads = catchAsync(async (req, res, next) => {
   // BUILD QUERY
-  // 1) Filtering
-  const queryObj = { ...req.query };
-  const excludedFields = ['page', 'sort', 'limit', 'fields'];
-  excludedFields.forEach(el => delete queryObj[el]);
-  
-  // 2) Advanced filtering
-  let queryStr = JSON.stringify(queryObj);
-  queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, match => `$${match}`);
-  // Parse the query string
-  const parsedQuery = JSON.parse(queryStr);
-  // Handle includeConverted parameter
+  // BUILD FILTER CONDITIONS
+  const filterConditions = {};
+
+  // 1) Add standard filters (status, category, etc.) from req.query
+  const standardFilters = { ...req.query };
+  // Exclude fields handled separately (pagination, sorting, etc.) or specific controls
+  const excludedFields = ['page', 'sort', 'limit', 'fields', '_cb', 'includeConverted'];
+  excludedFields.forEach(el => delete standardFilters[el]);
+
+  Object.keys(standardFilters).forEach(key => {
+    if (standardFilters[key] !== '' && standardFilters[key] !== undefined && standardFilters[key] !== null) {
+      // Basic equality check for most fields
+      filterConditions[key] = standardFilters[key];
+      // Add logic here if range filters (gte, lte) are needed for specific fields
+    }
+  });
+  console.log('getAllLeads - Standard filters applied:', JSON.stringify(filterConditions));
+
+  // 2) Add 'converted' filter based on includeConverted param
   const includeConverted = req.query.includeConverted;
   console.log('getAllLeads - includeConverted parameter:', includeConverted);
-  console.log('getAllLeads - parsedQuery before:', JSON.stringify(parsedQuery));
-  
   if (includeConverted === 'true') {
-    // If includeConverted is true, we explicitly set converted to undefined
-    // This will override the middleware's default behavior
-    delete parsedQuery.converted;
-    console.log('getAllLeads - Including converted leads in results');
+    // If true, don't add any 'converted' filter (show both converted and non-converted)
+    console.log('getAllLeads - Not filtering by converted status (showing all)');
   } else {
-    // If includeConverted is false or not provided, we need to exclude converted leads
-    parsedQuery.converted = { $ne: true };
-    console.log('getAllLeads - Excluding converted leads from results');
+    // Default behavior (false or undefined): only show non-converted leads
+    filterConditions.converted = { $ne: true };
+    console.log('getAllLeads - Applying filter: converted != true');
   }
-  console.log('getAllLeads - parsedQuery after:', JSON.stringify(parsedQuery));
-  let query = Lead.find(parsedQuery);
-  
-  
+
+  console.log('getAllLeads - Final filter conditions before find:', JSON.stringify(filterConditions));
+
+  // BUILD QUERY (Find + Sort + Paginate)
+  // Apply all calculated filters at once. The 'active' filter is added by pre-find middleware.
+  let query = Lead.find(filterConditions);
   
   // 3) Sorting
   if (req.query.sort) {
@@ -109,9 +115,14 @@ exports.createLead = catchAsync(async (req, res, next) => {
 
 // Update lead
 exports.updateLead = catchAsync(async (req, res, next) => {
-  const lead = await Lead.findByIdAndUpdate(req.params.id, req.body, {
+  // Exclude fields that shouldn't be updated via this generic route
+  const excludedFields = ['createdBy', 'assignedTo', 'status', 'converted', 'active', 'notes', 'interactions', 'proposals'];
+  const filteredBody = { ...req.body };
+  excludedFields.forEach(el => delete filteredBody[el]);
+
+  const lead = await Lead.findByIdAndUpdate(req.params.id, filteredBody, {
     new: true,
-    runValidators: true
+    runValidators: true,
   });
   
   if (!lead) {

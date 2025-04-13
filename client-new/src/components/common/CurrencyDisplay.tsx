@@ -12,7 +12,11 @@ interface CurrencyDisplayProps {
  * Component to display currency values consistently throughout the application
  * Automatically uses system currency settings unless overridden
  */
-const CurrencyDisplay = ({ amount, currencyCode, className }: CurrencyDisplayProps) => {
+const CurrencyDisplay = ({
+  amount,
+  currencyCode,
+  className,
+}: CurrencyDisplayProps) => {
   const [formattedValue, setFormattedValue] = useState<string>('');
 
   useEffect(() => {
@@ -24,7 +28,9 @@ const CurrencyDisplay = ({ amount, currencyCode, className }: CurrencyDisplayPro
         } else {
           // Otherwise use the system setting
           const settings = await getSystemSettings();
-          setFormattedValue(formatCurrencySync(amount, settings.unitPreferences.currency));
+          setFormattedValue(
+            formatCurrencySync(amount, settings.unitPreferences.currency)
+          );
         }
       } catch (error) {
         console.error('Error loading currency settings:', error);

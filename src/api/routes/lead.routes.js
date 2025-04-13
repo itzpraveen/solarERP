@@ -33,17 +33,17 @@ router.get('/stats', authController.restrictTo('admin', 'manager'), leadControll
 
 // Lead routes
 router.route('/')
-  .get(leadController.getAllLeads)
-  .post(validateLead, leadController.createLead);
+  .get(authController.restrictTo('admin', 'manager', 'sales'), leadController.getAllLeads)
+  .post(authController.restrictTo('admin', 'manager', 'sales'), validateLead, leadController.createLead);
 
 router.route('/:id')
-  .get(leadController.getLead)
-  .patch(leadController.updateLead)
+  .get(authController.restrictTo('admin', 'manager', 'sales'), leadController.getLead)
+  .patch(authController.restrictTo('admin', 'manager', 'sales'), leadController.updateLead)
   .delete(authController.restrictTo('admin', 'manager'), leadController.deleteLead);
 
 // Lead notes
 router.route('/:id/notes')
-  .post(check('text', 'Note text is required').not().isEmpty(), leadController.addLeadNote);
+  .post(authController.restrictTo('admin', 'manager', 'sales'), check('text', 'Note text is required').not().isEmpty(), leadController.addLeadNote);
 
 // Lead interactions
 router.route('/:id/interactions')
@@ -60,6 +60,7 @@ router.route('/:id/interactions')
       ]),
       check('summary', 'Interaction summary is required').not().isEmpty()
     ],
+    authController.restrictTo('admin', 'manager', 'sales'),
     leadController.addLeadInteraction
   );
 
@@ -67,6 +68,7 @@ router.route('/:id/interactions')
 router.route('/:id/assign')
   .patch(
     check('userId', 'User ID is required').isMongoId(),
+    authController.restrictTo('admin', 'manager'),
     leadController.assignLead
   );
 
@@ -82,6 +84,7 @@ router.route('/:id/status')
       'lost',
       'inactive'
     ]),
+    authController.restrictTo('admin', 'manager', 'sales'),
     leadController.updateLeadStatus
   );
 

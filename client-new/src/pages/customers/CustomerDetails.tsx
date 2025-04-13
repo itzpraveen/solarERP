@@ -36,10 +36,10 @@ import {
   TableCell,
   TableContainer,
   TableHead,
-  TableRow
+  TableRow,
 } from '@mui/material';
 import {
-  Person as PersonIcon,
+  // Person as PersonIcon, // Removed unused import
   Edit as EditIcon,
   Delete as DeleteIcon,
   Save as SaveIcon,
@@ -50,7 +50,7 @@ import {
   Phone as PhoneIcon,
   Home as HomeIcon,
   EventNote as NoteIcon,
-  Assignment as ProjectIcon
+  Assignment as ProjectIcon,
 } from '@mui/icons-material';
 import customerService, { Customer } from '../../api/customerService';
 import CurrencyDisplay from '../../components/common/CurrencyDisplay';
@@ -73,11 +73,7 @@ function TabPanel(props: TabPanelProps) {
       aria-labelledby={`customer-tab-${index}`}
       {...other}
     >
-      {value === index && (
-        <Box sx={{ p: 3 }}>
-          {children}
-        </Box>
-      )}
+      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
     </div>
   );
 }
@@ -91,7 +87,7 @@ const sampleProjects = [
     startDate: '2024-03-05',
     estimatedCompletionDate: '2024-04-15',
     systemSize: 7.5,
-    totalCost: 24000
+    totalCost: 24000,
   },
   {
     id: 'proj2',
@@ -100,8 +96,8 @@ const sampleProjects = [
     startDate: '2024-04-20',
     estimatedCompletionDate: '2024-05-10',
     systemSize: 0,
-    totalCost: 12000
-  }
+    totalCost: 12000,
+  },
 ];
 
 // Project status colors for visual indication
@@ -110,7 +106,7 @@ const projectStatusColors = {
   approved: 'secondary',
   in_progress: 'warning',
   completed: 'success',
-  cancelled: 'error'
+  cancelled: 'error',
 } as const;
 
 const CustomerDetails = () => {
@@ -121,29 +117,29 @@ const CustomerDetails = () => {
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // State for edit mode
   const [editMode, setEditMode] = useState(false);
   const [editData, setEditData] = useState<Partial<Customer>>({});
-  
+
   // State for tabs
   const [tabValue, setTabValue] = useState(0);
-  
+
   // State for dialogs
   const [deleteDialog, setDeleteDialog] = useState(false);
   const [noteDialog, setNoteDialog] = useState(false);
-  
+
   // State for new note
   const [newNote, setNewNote] = useState('');
 
   // Fetch customer data
   const fetchCustomer = async () => {
     if (!id) return;
-    
+
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await customerService.getCustomer(id);
       setCustomer(response.data.customer);
       setEditData(response.data.customer);
@@ -156,8 +152,24 @@ const CustomerDetails = () => {
 
   // Initial data fetch
   useEffect(() => {
-    fetchCustomer();
-  }, [id]);
+    // Define the async function inside useEffect
+    const loadCustomer = async () => {
+      if (!id) return;
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await customerService.getCustomer(id);
+        setCustomer(response.data.customer);
+        setEditData(response.data.customer); // Initialize edit data
+        setLoading(false);
+      } catch (err: any) {
+        setError(err?.message || 'Failed to fetch customer');
+        setLoading(false);
+      }
+    };
+
+    loadCustomer(); // Call the async function
+  }, [id]); // Only depend on id
 
   // Handle tab change
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
@@ -165,22 +177,24 @@ const CustomerDetails = () => {
   };
 
   // Handle edit form changes
-  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleEditChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
-    
+
     if (name.includes('.')) {
       const [parent, child] = name.split('.');
       setEditData({
         ...editData,
         [parent]: {
-          ...editData[parent as keyof typeof editData] as any,
-          [child]: value
-        }
+          ...(editData[parent as keyof typeof editData] as any),
+          [child]: value,
+        },
       });
     } else {
       setEditData({
         ...editData,
-        [name]: value
+        [name]: value,
       });
     }
   };
@@ -190,7 +204,7 @@ const CustomerDetails = () => {
     const { name, value } = e.target;
     setEditData({
       ...editData,
-      [name]: value
+      [name]: value,
     });
   };
 
@@ -206,7 +220,7 @@ const CustomerDetails = () => {
   // Save customer changes
   const saveCustomer = async () => {
     if (!id || !editData) return;
-    
+
     try {
       setLoading(true);
       await customerService.updateCustomer(id, editData);
@@ -221,7 +235,7 @@ const CustomerDetails = () => {
   // Delete customer
   const deleteCustomer = async () => {
     if (!id) return;
-    
+
     try {
       await customerService.deleteCustomer(id);
       navigate('/customers');
@@ -233,7 +247,7 @@ const CustomerDetails = () => {
   // Add note
   const addNote = async () => {
     if (!id || !newNote.trim()) return;
-    
+
     try {
       await customerService.addNote(id, newNote);
       setNewNote('');
@@ -272,19 +286,36 @@ const CustomerDetails = () => {
     <Box sx={{ flexGrow: 1 }}>
       {/* Breadcrumbs navigation */}
       <Breadcrumbs sx={{ mb: 2 }}>
-        <Link component={RouterLink} color="inherit" to="/dashboard" underline="hover">
+        <Link
+          component={RouterLink}
+          color="inherit"
+          to="/dashboard"
+          underline="hover"
+        >
           Dashboard
         </Link>
-        <Link component={RouterLink} color="inherit" to="/customers" underline="hover">
+        <Link
+          component={RouterLink}
+          color="inherit"
+          to="/customers"
+          underline="hover"
+        >
           Customers
         </Link>
         <Typography color="text.primary">
           {customer.firstName} {customer.lastName}
         </Typography>
       </Breadcrumbs>
-      
+
       {/* Header with actions */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 3,
+        }}
+      >
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <IconButton sx={{ mr: 1 }} onClick={() => navigate('/customers')}>
             <ArrowBackIcon />
@@ -293,21 +324,21 @@ const CustomerDetails = () => {
             {customer.firstName} {customer.lastName}
           </Typography>
         </Box>
-        
+
         <Box>
           {!editMode ? (
             <>
-              <Button 
-                variant="outlined" 
-                startIcon={<EditIcon />} 
+              <Button
+                variant="outlined"
+                startIcon={<EditIcon />}
                 onClick={toggleEditMode}
                 sx={{ mr: 1 }}
               >
                 Edit
               </Button>
-              <Button 
-                variant="outlined" 
-                color="error" 
+              <Button
+                variant="outlined"
+                color="error"
                 startIcon={<DeleteIcon />}
                 onClick={() => setDeleteDialog(true)}
               >
@@ -316,17 +347,17 @@ const CustomerDetails = () => {
             </>
           ) : (
             <>
-              <Button 
-                variant="contained" 
-                color="primary" 
-                startIcon={<SaveIcon />} 
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<SaveIcon />}
                 onClick={saveCustomer}
                 sx={{ mr: 1 }}
               >
                 Save
               </Button>
-              <Button 
-                variant="outlined" 
+              <Button
+                variant="outlined"
                 startIcon={<CancelIcon />}
                 onClick={toggleEditMode}
               >
@@ -336,17 +367,17 @@ const CustomerDetails = () => {
           )}
         </Box>
       </Box>
-      
+
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
         </Alert>
       )}
-      
+
       {/* Tabs */}
       <Paper sx={{ mb: 3 }}>
-        <Tabs 
-          value={tabValue} 
+        <Tabs
+          value={tabValue}
           onChange={handleTabChange}
           variant="scrollable"
           scrollButtons="auto"
@@ -356,7 +387,7 @@ const CustomerDetails = () => {
           <Tab label="Projects" />
           <Tab label="Notes" />
         </Tabs>
-        
+
         {/* Overview Tab */}
         <TabPanel value={tabValue} index={0}>
           <Grid container spacing={3}>
@@ -367,50 +398,76 @@ const CustomerDetails = () => {
                     Customer Information
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
-                  
+
                   <Grid container spacing={2}>
                     <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">Name</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Name
+                      </Typography>
                       <Typography variant="body1" sx={{ mt: 0.5 }}>
                         {customer.firstName} {customer.lastName}
                       </Typography>
                     </Grid>
-                    
+
                     <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">Status</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Status
+                      </Typography>
                       <Box sx={{ mt: 0.5 }}>
-                        <Chip 
-                          label={customer.active ? 'Active' : 'Inactive'} 
-                          color={customer.active ? 'success' : 'default'} 
+                        <Chip
+                          label={customer.active ? 'Active' : 'Inactive'}
+                          color={customer.active ? 'success' : 'default'}
                           size="small"
                         />
                       </Box>
                     </Grid>
-                    
+
                     <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">Email</Typography>
-                      <Typography variant="body1" sx={{ mt: 0.5, display: 'flex', alignItems: 'center' }}>
-                        <EmailIcon fontSize="small" sx={{ mr: 0.5, color: 'action.active' }} />
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Email
+                      </Typography>
+                      <Typography
+                        variant="body1"
+                        sx={{ mt: 0.5, display: 'flex', alignItems: 'center' }}
+                      >
+                        <EmailIcon
+                          fontSize="small"
+                          sx={{ mr: 0.5, color: 'action.active' }}
+                        />
                         {customer.email}
                       </Typography>
                     </Grid>
-                    
+
                     <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">Phone</Typography>
-                      <Typography variant="body1" sx={{ mt: 0.5, display: 'flex', alignItems: 'center' }}>
-                        <PhoneIcon fontSize="small" sx={{ mr: 0.5, color: 'action.active' }} />
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Phone
+                      </Typography>
+                      <Typography
+                        variant="body1"
+                        sx={{ mt: 0.5, display: 'flex', alignItems: 'center' }}
+                      >
+                        <PhoneIcon
+                          fontSize="small"
+                          sx={{ mr: 0.5, color: 'action.active' }}
+                        />
                         {customer.phone}
                       </Typography>
                     </Grid>
-                    
+
                     <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">Preferred Contact Method</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Preferred Contact Method
+                      </Typography>
                       {editMode ? (
                         <FormControl fullWidth size="small" sx={{ mt: 0.5 }}>
                           <InputLabel>Preferred Contact</InputLabel>
                           <Select
                             name="preferredContactMethod"
-                            value={editData.preferredContactMethod || customer.preferredContactMethod || 'email'}
+                            value={
+                              editData.preferredContactMethod ||
+                              customer.preferredContactMethod ||
+                              'email'
+                            }
                             label="Preferred Contact"
                             onChange={handleSelectChange}
                           >
@@ -421,53 +478,74 @@ const CustomerDetails = () => {
                         </FormControl>
                       ) : (
                         <Typography variant="body1" sx={{ mt: 0.5 }}>
-                          {customer.preferredContactMethod ? 
-                            customer.preferredContactMethod.charAt(0).toUpperCase() + customer.preferredContactMethod.slice(1) : 
-                            'Email'}
+                          {customer.preferredContactMethod
+                            ? customer.preferredContactMethod
+                                .charAt(0)
+                                .toUpperCase() +
+                              customer.preferredContactMethod.slice(1)
+                            : 'Email'}
                         </Typography>
                       )}
                     </Grid>
-                    
+
                     <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">Lead Source</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Lead Source
+                      </Typography>
                       {editMode ? (
                         <FormControl fullWidth size="small" sx={{ mt: 0.5 }}>
                           <InputLabel>Lead Source</InputLabel>
                           <Select
                             name="leadSource"
-                            value={editData.leadSource || customer.leadSource || 'direct'}
+                            value={
+                              editData.leadSource ||
+                              customer.leadSource ||
+                              'direct'
+                            }
                             label="Lead Source"
                             onChange={handleSelectChange}
                           >
                             <MenuItem value="direct">Direct</MenuItem>
                             <MenuItem value="referral">Referral</MenuItem>
                             <MenuItem value="website">Website</MenuItem>
-                            <MenuItem value="social_media">Social Media</MenuItem>
+                            <MenuItem value="social_media">
+                              Social Media
+                            </MenuItem>
                             <MenuItem value="partner">Partner</MenuItem>
                             <MenuItem value="other">Other</MenuItem>
                           </Select>
                         </FormControl>
                       ) : (
                         <Typography variant="body1" sx={{ mt: 0.5 }}>
-                          {customer.leadSource ? 
-                            customer.leadSource.charAt(0).toUpperCase() + customer.leadSource.slice(1).replace('_', ' ') : 
-                            'Direct'}
+                          {customer.leadSource
+                            ? customer.leadSource.charAt(0).toUpperCase() +
+                              customer.leadSource.slice(1).replace('_', ' ')
+                            : 'Direct'}
                         </Typography>
                       )}
                     </Grid>
-                    
+
                     <Grid item xs={12}>
-                      <Typography variant="subtitle2" color="text.secondary">Address</Typography>
-                      <Typography variant="body1" sx={{ mt: 0.5, display: 'flex', alignItems: 'center' }}>
-                        <HomeIcon fontSize="small" sx={{ mr: 0.5, color: 'action.active' }} />
-                        {customer.address.street}, {customer.address.city}, {customer.address.state} {customer.address.zipCode}
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Address
+                      </Typography>
+                      <Typography
+                        variant="body1"
+                        sx={{ mt: 0.5, display: 'flex', alignItems: 'center' }}
+                      >
+                        <HomeIcon
+                          fontSize="small"
+                          sx={{ mr: 0.5, color: 'action.active' }}
+                        />
+                        {customer.address.street}, {customer.address.city},{' '}
+                        {customer.address.state} {customer.address.zipCode}
                       </Typography>
                     </Grid>
                   </Grid>
                 </CardContent>
               </Card>
             </Grid>
-            
+
             <Grid item xs={12} md={6}>
               <Card>
                 <CardContent>
@@ -475,14 +553,14 @@ const CustomerDetails = () => {
                     Projects Summary
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
-                  
+
                   {sampleProjects.length === 0 ? (
                     <Box sx={{ textAlign: 'center', py: 2 }}>
                       <Typography variant="body1" color="text.secondary">
                         No projects found for this customer.
                       </Typography>
-                      <Button 
-                        variant="outlined" 
+                      <Button
+                        variant="outlined"
                         startIcon={<AddIcon />}
                         sx={{ mt: 2 }}
                         component={RouterLink}
@@ -499,8 +577,8 @@ const CustomerDetails = () => {
                             key={project.id}
                             divider
                             secondaryAction={
-                              <Button 
-                                variant="outlined" 
+                              <Button
+                                variant="outlined"
                                 size="small"
                                 component={RouterLink}
                                 to={`/projects/${project.id}`}
@@ -518,15 +596,29 @@ const CustomerDetails = () => {
                               primary={project.name}
                               secondary={
                                 <>
-                                  <Chip 
-                                    label={project.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                  <Chip
+                                    label={project.status
+                                      .replace('_', ' ')
+                                      .replace(/\b\w/g, (l) => l.toUpperCase())}
                                     size="small"
-                                    color={projectStatusColors[project.status as keyof typeof projectStatusColors] || 'default'}
+                                    color={
+                                      projectStatusColors[
+                                        project.status as keyof typeof projectStatusColors
+                                      ] || 'default'
+                                    }
                                     sx={{ mr: 1, my: 0.5 }}
                                   />
-                                  <Typography variant="body2" component="span" color="text.secondary">
-                                    {project.systemSize > 0 ? `${project.systemSize} kW • ` : ''}
-                                    <CurrencyDisplay amount={project.totalCost} />
+                                  <Typography
+                                    variant="body2"
+                                    component="span"
+                                    color="text.secondary"
+                                  >
+                                    {project.systemSize > 0
+                                      ? `${project.systemSize} kW • `
+                                      : ''}
+                                    <CurrencyDisplay
+                                      amount={project.totalCost}
+                                    />
                                   </Typography>
                                 </>
                               }
@@ -534,27 +626,25 @@ const CustomerDetails = () => {
                           </ListItem>
                         ))}
                       </List>
-                      <Box sx={{ textAlign: 'right', mt: 2 }}>
-                        <Button 
-                          component={RouterLink}
-                          to={`/customers/${customer._id}/projects`}
-                        >
-                          View All Projects
-                        </Button>
-                      </Box>
+                      {/* Removed incorrect "View All Projects" button - Use Projects tab instead */}
                     </>
                   )}
                 </CardContent>
               </Card>
-              
+
               <Card sx={{ mt: 2 }}>
                 <CardContent>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                    <Typography variant="h6">
-                      Recent Notes
-                    </Typography>
-                    <Button 
-                      size="small" 
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      mb: 1,
+                    }}
+                  >
+                    <Typography variant="h6">Recent Notes</Typography>
+                    <Button
+                      size="small"
                       startIcon={<AddIcon />}
                       onClick={() => setNoteDialog(true)}
                     >
@@ -562,7 +652,7 @@ const CustomerDetails = () => {
                     </Button>
                   </Box>
                   <Divider sx={{ mb: 2 }} />
-                  
+
                   {!customer.notes || customer.notes.length === 0 ? (
                     <Typography variant="body2" color="text.secondary">
                       No notes have been added yet.
@@ -570,15 +660,26 @@ const CustomerDetails = () => {
                   ) : (
                     <List dense>
                       {(customer.notes.slice(0, 2) || []).map((note, index) => (
-                        <ListItem key={index} divider={index < Math.min(customer.notes?.length || 0, 2) - 1}>
+                        <ListItem
+                          key={index}
+                          divider={
+                            index < Math.min(customer.notes?.length || 0, 2) - 1
+                          }
+                        >
                           <ListItemAvatar>
                             <Avatar>
                               <NoteIcon />
                             </Avatar>
                           </ListItemAvatar>
                           <ListItemText
-                            primary={new Date(note.createdAt).toLocaleDateString()}
-                            secondary={note.text.length > 60 ? `${note.text.substring(0, 60)}...` : note.text}
+                            primary={new Date(
+                              note.createdAt
+                            ).toLocaleDateString()}
+                            secondary={
+                              note.text.length > 60
+                                ? `${note.text.substring(0, 60)}...`
+                                : note.text
+                            }
                           />
                         </ListItem>
                       ))}
@@ -596,7 +697,7 @@ const CustomerDetails = () => {
             </Grid>
           </Grid>
         </TabPanel>
-        
+
         {/* Contact Info Tab */}
         <TabPanel value={tabValue} index={1}>
           <Grid container spacing={3}>
@@ -607,10 +708,12 @@ const CustomerDetails = () => {
                     Personal Information
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
-                  
+
                   <Grid container spacing={2}>
                     <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">First Name</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        First Name
+                      </Typography>
                       {editMode ? (
                         <TextField
                           fullWidth
@@ -626,9 +729,11 @@ const CustomerDetails = () => {
                         </Typography>
                       )}
                     </Grid>
-                    
+
                     <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">Last Name</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Last Name
+                      </Typography>
                       {editMode ? (
                         <TextField
                           fullWidth
@@ -644,11 +749,18 @@ const CustomerDetails = () => {
                         </Typography>
                       )}
                     </Grid>
-                    
+
                     <Grid item xs={12}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                        <EmailIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
-                        <Typography variant="subtitle2" color="text.secondary">Email</Typography>
+                      <Box
+                        sx={{ display: 'flex', alignItems: 'center', mt: 1 }}
+                      >
+                        <EmailIcon
+                          fontSize="small"
+                          sx={{ mr: 1, color: 'text.secondary' }}
+                        />
+                        <Typography variant="subtitle2" color="text.secondary">
+                          Email
+                        </Typography>
                       </Box>
                       {editMode ? (
                         <TextField
@@ -666,11 +778,18 @@ const CustomerDetails = () => {
                         </Typography>
                       )}
                     </Grid>
-                    
+
                     <Grid item xs={12}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                        <PhoneIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
-                        <Typography variant="subtitle2" color="text.secondary">Phone</Typography>
+                      <Box
+                        sx={{ display: 'flex', alignItems: 'center', mt: 1 }}
+                      >
+                        <PhoneIcon
+                          fontSize="small"
+                          sx={{ mr: 1, color: 'text.secondary' }}
+                        />
+                        <Typography variant="subtitle2" color="text.secondary">
+                          Phone
+                        </Typography>
                       </Box>
                       {editMode ? (
                         <TextField
@@ -687,15 +806,25 @@ const CustomerDetails = () => {
                         </Typography>
                       )}
                     </Grid>
-                    
+
                     <Grid item xs={12}>
-                      <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 2 }}>Preferred Contact Method</Typography>
+                      <Typography
+                        variant="subtitle2"
+                        color="text.secondary"
+                        sx={{ mt: 2 }}
+                      >
+                        Preferred Contact Method
+                      </Typography>
                       {editMode ? (
                         <FormControl fullWidth size="small" sx={{ mt: 1 }}>
                           <InputLabel>Preferred Contact</InputLabel>
                           <Select
                             name="preferredContactMethod"
-                            value={editData.preferredContactMethod || customer.preferredContactMethod || 'email'}
+                            value={
+                              editData.preferredContactMethod ||
+                              customer.preferredContactMethod ||
+                              'email'
+                            }
                             label="Preferred Contact"
                             onChange={handleSelectChange}
                           >
@@ -706,9 +835,12 @@ const CustomerDetails = () => {
                         </FormControl>
                       ) : (
                         <Typography variant="body1" sx={{ mt: 1 }}>
-                          {customer.preferredContactMethod ? 
-                            customer.preferredContactMethod.charAt(0).toUpperCase() + customer.preferredContactMethod.slice(1) : 
-                            'Email'}
+                          {customer.preferredContactMethod
+                            ? customer.preferredContactMethod
+                                .charAt(0)
+                                .toUpperCase() +
+                              customer.preferredContactMethod.slice(1)
+                            : 'Email'}
                         </Typography>
                       )}
                     </Grid>
@@ -716,7 +848,7 @@ const CustomerDetails = () => {
                 </CardContent>
               </Card>
             </Grid>
-            
+
             <Grid item xs={12} md={6}>
               <Card>
                 <CardContent>
@@ -724,19 +856,26 @@ const CustomerDetails = () => {
                     Address
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
-                  
+
                   <Grid container spacing={2}>
                     <Grid item xs={12}>
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <HomeIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
-                        <Typography variant="subtitle2" color="text.secondary">Street</Typography>
+                        <HomeIcon
+                          fontSize="small"
+                          sx={{ mr: 1, color: 'text.secondary' }}
+                        />
+                        <Typography variant="subtitle2" color="text.secondary">
+                          Street
+                        </Typography>
                       </Box>
                       {editMode ? (
                         <TextField
                           fullWidth
                           size="small"
                           name="address.street"
-                          value={editData.address?.street || customer.address.street}
+                          value={
+                            editData.address?.street || customer.address.street
+                          }
                           onChange={handleEditChange}
                           sx={{ mt: 1 }}
                         />
@@ -746,15 +885,19 @@ const CustomerDetails = () => {
                         </Typography>
                       )}
                     </Grid>
-                    
+
                     <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">City</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        City
+                      </Typography>
                       {editMode ? (
                         <TextField
                           fullWidth
                           size="small"
                           name="address.city"
-                          value={editData.address?.city || customer.address.city}
+                          value={
+                            editData.address?.city || customer.address.city
+                          }
                           onChange={handleEditChange}
                           sx={{ mt: 1 }}
                         />
@@ -764,15 +907,19 @@ const CustomerDetails = () => {
                         </Typography>
                       )}
                     </Grid>
-                    
+
                     <Grid item xs={12} sm={3}>
-                      <Typography variant="subtitle2" color="text.secondary">State</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        State
+                      </Typography>
                       {editMode ? (
                         <TextField
                           fullWidth
                           size="small"
                           name="address.state"
-                          value={editData.address?.state || customer.address.state}
+                          value={
+                            editData.address?.state || customer.address.state
+                          }
                           onChange={handleEditChange}
                           sx={{ mt: 1 }}
                         />
@@ -782,15 +929,20 @@ const CustomerDetails = () => {
                         </Typography>
                       )}
                     </Grid>
-                    
+
                     <Grid item xs={12} sm={3}>
-                      <Typography variant="subtitle2" color="text.secondary">ZIP Code</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        ZIP Code
+                      </Typography>
                       {editMode ? (
                         <TextField
                           fullWidth
                           size="small"
                           name="address.zipCode"
-                          value={editData.address?.zipCode || customer.address.zipCode}
+                          value={
+                            editData.address?.zipCode ||
+                            customer.address.zipCode
+                          }
                           onChange={handleEditChange}
                           sx={{ mt: 1 }}
                         />
@@ -806,15 +958,20 @@ const CustomerDetails = () => {
             </Grid>
           </Grid>
         </TabPanel>
-        
+
         {/* Projects Tab */}
         <TabPanel value={tabValue} index={2}>
-          <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="h6">
-              Customer Projects
-            </Typography>
-            <Button 
-              variant="contained" 
+          <Box
+            sx={{
+              mb: 3,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <Typography variant="h6">Customer Projects</Typography>
+            <Button
+              variant="contained"
               startIcon={<AddIcon />}
               component={RouterLink}
               to="/projects/new"
@@ -823,14 +980,14 @@ const CustomerDetails = () => {
               Create New Project
             </Button>
           </Box>
-          
+
           {sampleProjects.length === 0 ? (
             <Paper sx={{ p: 4, textAlign: 'center' }}>
               <Typography variant="body1" color="text.secondary" gutterBottom>
                 No projects have been created for this customer yet.
               </Typography>
-              <Button 
-                variant="outlined" 
+              <Button
+                variant="outlined"
                 startIcon={<AddIcon />}
                 sx={{ mt: 2 }}
                 component={RouterLink}
@@ -858,29 +1015,41 @@ const CustomerDetails = () => {
                     <TableRow key={project.id} hover>
                       <TableCell>{project.name}</TableCell>
                       <TableCell>
-                        <Chip 
-                          label={project.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())} 
-                          color={projectStatusColors[project.status as keyof typeof projectStatusColors] || 'default'} 
+                        <Chip
+                          label={project.status
+                            .replace('_', ' ')
+                            .replace(/\b\w/g, (l) => l.toUpperCase())}
+                          color={
+                            projectStatusColors[
+                              project.status as keyof typeof projectStatusColors
+                            ] || 'default'
+                          }
                           size="small"
                         />
                       </TableCell>
                       <TableCell>
                         <Typography variant="body2">
-                          Start: {new Date(project.startDate).toLocaleDateString()}
+                          Start:{' '}
+                          {new Date(project.startDate).toLocaleDateString()}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          Est. Completion: {new Date(project.estimatedCompletionDate).toLocaleDateString()}
+                          Est. Completion:{' '}
+                          {new Date(
+                            project.estimatedCompletionDate
+                          ).toLocaleDateString()}
                         </Typography>
                       </TableCell>
                       <TableCell>
-                        {project.systemSize > 0 ? `${project.systemSize} kW` : 'N/A'}
+                        {project.systemSize > 0
+                          ? `${project.systemSize} kW`
+                          : 'N/A'}
                       </TableCell>
                       <TableCell>
                         <CurrencyDisplay amount={project.totalCost} />
                       </TableCell>
                       <TableCell>
-                        <Button 
-                          variant="outlined" 
+                        <Button
+                          variant="outlined"
                           size="small"
                           component={RouterLink}
                           to={`/projects/${project.id}`}
@@ -895,29 +1064,34 @@ const CustomerDetails = () => {
             </TableContainer>
           )}
         </TabPanel>
-        
+
         {/* Notes Tab */}
         <TabPanel value={tabValue} index={3}>
-          <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="h6">
-              Customer Notes
-            </Typography>
-            <Button 
-              variant="contained" 
+          <Box
+            sx={{
+              mb: 3,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <Typography variant="h6">Customer Notes</Typography>
+            <Button
+              variant="contained"
               startIcon={<AddIcon />}
               onClick={() => setNoteDialog(true)}
             >
               Add Note
             </Button>
           </Box>
-          
+
           {!customer.notes || customer.notes.length === 0 ? (
             <Paper sx={{ p: 4, textAlign: 'center' }}>
               <Typography variant="body1" color="text.secondary" gutterBottom>
                 No notes have been added for this customer yet.
               </Typography>
-              <Button 
-                variant="outlined" 
+              <Button
+                variant="outlined"
                 startIcon={<AddIcon />}
                 sx={{ mt: 2 }}
                 onClick={() => setNoteDialog(true)}
@@ -928,7 +1102,11 @@ const CustomerDetails = () => {
           ) : (
             <List sx={{ bgcolor: 'background.paper' }}>
               {(customer.notes || [])
-                .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                .sort(
+                  (a, b) =>
+                    new Date(b.createdAt).getTime() -
+                    new Date(a.createdAt).getTime()
+                )
                 .map((note, index) => (
                   <Paper sx={{ mb: 2 }} key={index}>
                     <ListItem alignItems="flex-start">
@@ -940,7 +1118,8 @@ const CustomerDetails = () => {
                       <ListItemText
                         primary={
                           <Typography variant="subtitle2">
-                            {new Date(note.createdAt).toLocaleDateString()} at {new Date(note.createdAt).toLocaleTimeString()}
+                            {new Date(note.createdAt).toLocaleDateString()} at{' '}
+                            {new Date(note.createdAt).toLocaleTimeString()}
                           </Typography>
                         }
                         secondary={
@@ -960,19 +1139,22 @@ const CustomerDetails = () => {
           )}
         </TabPanel>
       </Paper>
-      
+
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialog} onClose={() => setDeleteDialog(false)}>
         <DialogTitle>Confirm Delete</DialogTitle>
         <DialogContent>
-          Are you sure you want to delete this customer? This action cannot be undone and will remove all customer data.
+          Are you sure you want to delete this customer? This action cannot be
+          undone and will remove all customer data.
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteDialog(false)}>Cancel</Button>
-          <Button onClick={deleteCustomer} color="error" variant="contained">Delete</Button>
+          <Button onClick={deleteCustomer} color="error" variant="contained">
+            Delete
+          </Button>
         </DialogActions>
       </Dialog>
-      
+
       {/* Add Note Dialog */}
       <Dialog open={noteDialog} onClose={() => setNoteDialog(false)}>
         <DialogTitle>Add Note</DialogTitle>
@@ -989,9 +1171,9 @@ const CustomerDetails = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setNoteDialog(false)}>Cancel</Button>
-          <Button 
-            onClick={addNote} 
-            color="primary" 
+          <Button
+            onClick={addNote}
+            color="primary"
             variant="contained"
             disabled={!newNote.trim()}
           >

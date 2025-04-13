@@ -26,7 +26,7 @@ import {
   DialogContent,
   DialogActions,
   Chip,
-  Tooltip
+  Tooltip,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -35,16 +35,27 @@ import {
   Delete as DeleteIcon,
   Refresh as RefreshIcon,
   FilterAlt as FilterIcon,
-  Engineering as EngineeringIcon
+  Engineering as EngineeringIcon,
 } from '@mui/icons-material';
-import serviceRequestService, { ServiceRequest, ServiceRequestFilter } from '../../api/serviceRequestService';
+import serviceRequestService, {
+  ServiceRequest,
+  ServiceRequestFilter,
+} from '../../api/serviceRequestService';
 import customerService from '../../api/customerService';
 import projectService from '../../api/projectService';
 
 // Status chips with appropriate colors
 const StatusChip = ({ status }: { status: ServiceRequest['status'] }) => {
-  let color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' | undefined;
-  
+  let color:
+    | 'default'
+    | 'primary'
+    | 'secondary'
+    | 'error'
+    | 'info'
+    | 'success'
+    | 'warning'
+    | undefined;
+
   switch (status) {
     case 'new':
       color = 'info';
@@ -67,21 +78,33 @@ const StatusChip = ({ status }: { status: ServiceRequest['status'] }) => {
     default:
       color = 'default';
   }
-  
+
   return (
-    <Chip 
-      label={status.replace('_', ' ').toUpperCase()} 
-      color={color} 
-      size="small" 
+    <Chip
+      label={status.replace('_', ' ').toUpperCase()}
+      color={color}
+      size="small"
       sx={{ textTransform: 'capitalize' }}
     />
   );
 };
 
 // Priority indicator with colors
-const PriorityChip = ({ priority }: { priority: ServiceRequest['priority'] }) => {
-  let color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' | undefined;
-  
+const PriorityChip = ({
+  priority,
+}: {
+  priority: ServiceRequest['priority'];
+}) => {
+  let color:
+    | 'default'
+    | 'primary'
+    | 'secondary'
+    | 'error'
+    | 'info'
+    | 'success'
+    | 'warning'
+    | undefined;
+
   switch (priority) {
     case 'low':
       color = 'success';
@@ -98,13 +121,13 @@ const PriorityChip = ({ priority }: { priority: ServiceRequest['priority'] }) =>
     default:
       color = 'default';
   }
-  
+
   return (
-    <Chip 
-      label={priority.toUpperCase()} 
-      color={color} 
-      size="small" 
-      variant="outlined" 
+    <Chip
+      label={priority.toUpperCase()}
+      color={color}
+      size="small"
+      variant="outlined"
       sx={{ textTransform: 'capitalize' }}
     />
   );
@@ -112,33 +135,33 @@ const PriorityChip = ({ priority }: { priority: ServiceRequest['priority'] }) =>
 
 const ServiceRequests = () => {
   const navigate = useNavigate();
-  
+
   // State for service requests data
   const [serviceRequests, setServiceRequests] = useState<ServiceRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  
+
   // State for pagination
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalRequests, setTotalRequests] = useState(0);
-  
+
   // State for filters
   const [filters, setFilters] = useState<ServiceRequestFilter>({
-    sort: '-createdAt'
+    sort: '-createdAt',
   });
-  
+
   // State for search
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   // State for delete confirmation
   const [deleteDialog, setDeleteDialog] = useState({
     open: false,
     requestId: '',
-    requestTitle: ''
+    requestTitle: '',
   });
-  
+
   // Filter options
   const [filterDialogOpen, setFilterDialogOpen] = useState(false);
   const [customers, setCustomers] = useState<any[]>([]);
@@ -149,16 +172,16 @@ const ServiceRequests = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await serviceRequestService.getServiceRequests({
         ...filters,
         page: page + 1,
         limit: rowsPerPage,
-        search: searchTerm
+        search: searchTerm,
       });
-      
+
       console.log('Service requests response:', response);
-      
+
       // Check the structure of the response and handle both possible formats
       if (response.serviceRequests) {
         // Direct format: { serviceRequests: [...], totalCount: n }
@@ -174,7 +197,7 @@ const ServiceRequests = () => {
         setTotalRequests(0);
         console.error('Unexpected response format:', response);
       }
-      
+
       setLoading(false);
     } catch (err: any) {
       console.error('Service request fetch error:', err);
@@ -182,77 +205,79 @@ const ServiceRequests = () => {
       setLoading(false);
     }
   }, [filters, page, rowsPerPage, searchTerm]);
-  
+
   // Fetch customers and projects for filters
   const fetchFilterOptions = useCallback(async () => {
     try {
       const [customerResponse, projectResponse] = await Promise.all([
         customerService.getCustomers({ limit: 100 }),
-        projectService.getProjects({ limit: 100 })
+        projectService.getProjects({ limit: 100 }),
       ]);
-      
+
       setCustomers(customerResponse.data.customers);
       setProjects(projectResponse.data.projects);
     } catch (err: any) {
       console.error('Failed to fetch filter options:', err);
     }
   }, []);
-  
+
   // Initial data fetch
   useEffect(() => {
     fetchServiceRequests();
     fetchFilterOptions();
   }, [page, rowsPerPage, filters, fetchServiceRequests, fetchFilterOptions]);
-  
+
   // Handle page change
   const handleChangePage = (_: unknown, newPage: number) => {
     setPage(newPage);
   };
-  
+
   // Handle rows per page change
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
-  
+
   // Handle filter changes
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFilters({
       ...filters,
-      [name]: value
+      [name]: value,
     });
     setPage(0);
   };
-  
+
   // Handle search
   const handleSearch = () => {
     setPage(0);
     fetchServiceRequests();
   };
-  
+
   // Apply filters
   const handleApplyFilters = () => {
     setFilterDialogOpen(false);
     fetchServiceRequests();
   };
-  
+
   // Reset filters
   const handleResetFilters = () => {
     setFilters({ sort: '-createdAt' });
     setFilterDialogOpen(false);
   };
-  
+
   // Handle service request creation
   const handleCreateRequest = () => {
     navigate('/services/new');
   };
-  
+
   // Handle service request edit
   const handleEditRequest = (id: string) => {
     navigate(`/services/${id}/edit`);
   };
-  
+
   // Handle service request delete
   const handleDeleteRequest = async () => {
     try {
@@ -264,34 +289,43 @@ const ServiceRequests = () => {
       setError(err?.message || 'Failed to delete service request');
     }
   };
-  
+
   return (
     <Box sx={{ flexGrow: 1 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4">
-          Service Requests
-        </Typography>
-        <Button 
-          variant="contained" 
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 3,
+        }}
+      >
+        <Typography variant="h4">Service Requests</Typography>
+        <Button
+          variant="contained"
           startIcon={<AddIcon />}
           onClick={handleCreateRequest}
         >
           New Service Request
         </Button>
       </Box>
-      
+
       {error && (
         <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
           {error}
         </Alert>
       )}
-      
+
       {successMessage && (
-        <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccessMessage(null)}>
+        <Alert
+          severity="success"
+          sx={{ mb: 2 }}
+          onClose={() => setSuccessMessage(null)}
+        >
           {successMessage}
         </Alert>
       )}
-      
+
       {/* Search and Filter Bar */}
       <Paper sx={{ p: 2, mb: 3 }}>
         <Grid container spacing={2} alignItems="center">
@@ -306,7 +340,7 @@ const ServiceRequests = () => {
                   <IconButton onClick={handleSearch}>
                     <SearchIcon />
                   </IconButton>
-                )
+                ),
               }}
             />
           </Grid>
@@ -351,7 +385,7 @@ const ServiceRequests = () => {
           </Grid>
         </Grid>
       </Paper>
-      
+
       {/* Service Requests Table */}
       <TableContainer component={Paper}>
         <Table sx={{ minWidth: 650 }}>
@@ -388,10 +422,16 @@ const ServiceRequests = () => {
                         {request.title}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {request.requestType.charAt(0).toUpperCase() + request.requestType.slice(1).replace('_', ' ')}
+                        {request.requestType.charAt(0).toUpperCase() +
+                          request.requestType.slice(1).replace('_', ' ')}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                        Created: {new Date(request.createdAt).toLocaleDateString()}
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ mt: 1 }}
+                      >
+                        Created:{' '}
+                        {new Date(request.createdAt).toLocaleDateString()}
                       </Typography>
                     </Box>
                   </TableCell>
@@ -412,42 +452,53 @@ const ServiceRequests = () => {
                     <PriorityChip priority={request.priority} />
                   </TableCell>
                   <TableCell>
-                    {request.scheduledDate ? 
-                      new Date(request.scheduledDate).toLocaleDateString() : 
-                      <Typography variant="body2" color="text.secondary">Not scheduled</Typography>
-                    }
+                    {request.scheduledDate ? (
+                      new Date(request.scheduledDate).toLocaleDateString()
+                    ) : (
+                      <Typography variant="body2" color="text.secondary">
+                        Not scheduled
+                      </Typography>
+                    )}
                   </TableCell>
                   <TableCell>
                     {request.assignedTechnician ? (
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <EngineeringIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
+                        <EngineeringIcon
+                          fontSize="small"
+                          sx={{ mr: 1, color: 'text.secondary' }}
+                        />
                         <Typography variant="body2">
-                          {request.assignedTechnician.firstName} {request.assignedTechnician.lastName}
+                          {request.assignedTechnician.firstName}{' '}
+                          {request.assignedTechnician.lastName}
                         </Typography>
                       </Box>
                     ) : (
-                      <Typography variant="body2" color="text.secondary">Unassigned</Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Unassigned
+                      </Typography>
                     )}
                   </TableCell>
                   <TableCell>
                     <Tooltip title="View Details">
-                      <IconButton 
-                        size="small" 
-                        color="primary" 
+                      <IconButton
+                        size="small"
+                        color="primary"
                         onClick={() => handleEditRequest(request._id)}
                       >
                         <EditIcon />
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="Delete">
-                      <IconButton 
-                        size="small" 
+                      <IconButton
+                        size="small"
                         color="error"
-                        onClick={() => setDeleteDialog({
-                          open: true,
-                          requestId: request._id,
-                          requestTitle: request.title
-                        })}
+                        onClick={() =>
+                          setDeleteDialog({
+                            open: true,
+                            requestId: request._id,
+                            requestTitle: request.title,
+                          })
+                        }
                       >
                         <DeleteIcon />
                       </IconButton>
@@ -468,9 +519,14 @@ const ServiceRequests = () => {
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
       </TableContainer>
-      
+
       {/* Advanced Filter Dialog */}
-      <Dialog open={filterDialogOpen} onClose={() => setFilterDialogOpen(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={filterDialogOpen}
+        onClose={() => setFilterDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>Advanced Filters</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
@@ -484,7 +540,7 @@ const ServiceRequests = () => {
                   onChange={handleFilterChange as any}
                 >
                   <MenuItem value="">All Customers</MenuItem>
-                  {customers.map(customer => (
+                  {customers.map((customer) => (
                     <MenuItem key={customer._id} value={customer._id}>
                       {customer.firstName} {customer.lastName}
                     </MenuItem>
@@ -502,7 +558,7 @@ const ServiceRequests = () => {
                   onChange={handleFilterChange as any}
                 >
                   <MenuItem value="">All Projects</MenuItem>
-                  {projects.map(project => (
+                  {projects.map((project) => (
                     <MenuItem key={project._id} value={project._id}>
                       {project.name}
                     </MenuItem>
@@ -580,8 +636,12 @@ const ServiceRequests = () => {
                   <MenuItem value="createdAt">Oldest First</MenuItem>
                   <MenuItem value="-priority">Highest Priority</MenuItem>
                   <MenuItem value="priority">Lowest Priority</MenuItem>
-                  <MenuItem value="scheduledDate">Scheduled Date (Ascending)</MenuItem>
-                  <MenuItem value="-scheduledDate">Scheduled Date (Descending)</MenuItem>
+                  <MenuItem value="scheduledDate">
+                    Scheduled Date (Ascending)
+                  </MenuItem>
+                  <MenuItem value="-scheduledDate">
+                    Scheduled Date (Descending)
+                  </MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -590,19 +650,35 @@ const ServiceRequests = () => {
         <DialogActions>
           <Button onClick={handleResetFilters}>Reset Filters</Button>
           <Button onClick={() => setFilterDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleApplyFilters} variant="contained">Apply Filters</Button>
+          <Button onClick={handleApplyFilters} variant="contained">
+            Apply Filters
+          </Button>
         </DialogActions>
       </Dialog>
-      
+
       {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteDialog.open} onClose={() => setDeleteDialog({ ...deleteDialog, open: false })}>
+      <Dialog
+        open={deleteDialog.open}
+        onClose={() => setDeleteDialog({ ...deleteDialog, open: false })}
+      >
         <DialogTitle>Confirm Delete</DialogTitle>
         <DialogContent>
-          Are you sure you want to delete the service request "{deleteDialog.requestTitle}"? This action cannot be undone.
+          Are you sure you want to delete the service request "
+          {deleteDialog.requestTitle}"? This action cannot be undone.
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteDialog({ ...deleteDialog, open: false })}>Cancel</Button>
-          <Button onClick={handleDeleteRequest} color="error" variant="contained">Delete</Button>
+          <Button
+            onClick={() => setDeleteDialog({ ...deleteDialog, open: false })}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleDeleteRequest}
+            color="error"
+            variant="contained"
+          >
+            Delete
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

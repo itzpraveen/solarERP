@@ -25,14 +25,14 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions
+  DialogActions,
 } from '@mui/material';
 import {
   Add as AddIcon,
   Search as SearchIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  Refresh as RefreshIcon
+  Refresh as RefreshIcon,
 } from '@mui/icons-material';
 import leadService, { Lead, LeadFilter } from '../../api/leadService';
 
@@ -44,19 +44,19 @@ const statusColors = {
   proposal: 'warning',
   won: 'success',
   lost: 'error',
-  inactive: 'default'
+  inactive: 'default',
 } as const;
 
 // Lead form component for creating new leads
-const LeadForm = ({ 
-  open, 
-  onClose, 
-  onSubmit, 
-  loading 
-}: { 
-  open: boolean; 
-  onClose: () => void; 
-  onSubmit: (leadData: any) => void; 
+const LeadForm = ({
+  open,
+  onClose,
+  onSubmit,
+  loading,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onSubmit: (leadData: any) => void;
   loading: boolean;
 }) => {
   const [formData, setFormData] = useState({
@@ -69,30 +69,32 @@ const LeadForm = ({
       city: '',
       state: '',
       zipCode: '',
-      country: 'USA'
+      country: 'USA',
     },
     source: 'website',
     status: 'new',
     category: 'warm',
-    monthlyElectricBill: ''
+    monthlyElectricBill: '',
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
-    
+
     if (name.includes('.')) {
       const [parent, child] = name.split('.');
       setFormData({
         ...formData,
         [parent]: {
-          ...formData[parent as keyof typeof formData] as any,
-          [child]: value
-        }
+          ...(formData[parent as keyof typeof formData] as any),
+          [child]: value,
+        },
       });
     } else {
       setFormData({
         ...formData,
-        [name]: value
+        [name]: value,
       });
     }
   };
@@ -101,7 +103,7 @@ const LeadForm = ({
     const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: value
+      [name]: value,
     });
   };
 
@@ -110,8 +112,9 @@ const LeadForm = ({
     // Convert any numeric strings to numbers
     const processedData = {
       ...formData,
-      monthlyElectricBill: formData.monthlyElectricBill ? 
-        parseFloat(formData.monthlyElectricBill as string) : undefined
+      monthlyElectricBill: formData.monthlyElectricBill
+        ? parseFloat(formData.monthlyElectricBill as string)
+        : undefined,
     };
     onSubmit(processedData);
   };
@@ -251,9 +254,9 @@ const LeadForm = ({
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose}>Cancel</Button>
-          <Button 
-            type="submit" 
-            variant="contained" 
+          <Button
+            type="submit"
+            variant="contained"
             disabled={loading}
             startIcon={loading ? <CircularProgress size={20} /> : null}
           >
@@ -267,28 +270,28 @@ const LeadForm = ({
 
 const Leads = () => {
   const navigate = useNavigate();
-  
+
   // State for leads data
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // State for pagination
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalLeads, setTotalLeads] = useState(0);
-  
+
   // State for filters
   const [filters, setFilters] = useState<LeadFilter>({
     status: '',
     category: '',
     sort: '-createdAt',
-    includeConverted: 'false' // Default to excluding converted leads
+    includeConverted: 'false', // Default to excluding converted leads
   });
 
   // State for search
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   // State for new lead form
   const [formOpen, setFormOpen] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
@@ -297,22 +300,22 @@ const Leads = () => {
   const [deleteDialog, setDeleteDialog] = useState({
     open: false,
     leadId: '',
-    leadName: ''
+    leadName: '',
   });
-  
+
   // Fetch leads data
   const fetchLeads = async () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       console.log('Fetching leads with filters:', JSON.stringify(filters));
       const response = await leadService.getLeads({
         ...filters,
         page: page + 1,
-        limit: rowsPerPage
+        limit: rowsPerPage,
       });
-      
+
       console.log('Leads response:', JSON.stringify(response));
       setLeads(response.data.leads);
       setTotalLeads(response.results);
@@ -323,39 +326,41 @@ const Leads = () => {
       setLoading(false);
     }
   };
-  
+
   // Initial data fetch
   useEffect(() => {
     fetchLeads();
   }, [page, rowsPerPage, filters]);
-  
+
   // Handle page change
   const handleChangePage = (_: unknown, newPage: number) => {
     setPage(newPage);
   };
-  
+
   // Handle rows per page change
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
-  
+
   // Handle filter changes
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFilters({
       ...filters,
-      [name]: value
+      [name]: value,
     });
     setPage(0);
   };
-  
+
   // Handle search
   const handleSearch = () => {
     // Implement search functionality (would likely require backend support)
     alert('Search functionality to be implemented in future release');
   };
-  
+
   // Handle lead creation
   const handleCreateLead = async (leadData: any) => {
     try {
@@ -373,12 +378,12 @@ const Leads = () => {
       setFormLoading(false);
     }
   };
-  
+
   // Handle lead edit
   const handleEditLead = (id: string) => {
     navigate(`/leads/${id}`);
   };
-  
+
   // Handle lead delete
   const handleDeleteLead = async () => {
     try {
@@ -389,28 +394,33 @@ const Leads = () => {
       setError(err?.message || 'Failed to delete lead');
     }
   };
-  
+
   return (
     <Box sx={{ flexGrow: 1 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4">
-          Leads
-        </Typography>
-        <Button 
-          variant="contained" 
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 3,
+        }}
+      >
+        <Typography variant="h4">Leads</Typography>
+        <Button
+          variant="contained"
           startIcon={<AddIcon />}
           onClick={() => setFormOpen(true)}
         >
           Add New Lead
         </Button>
       </Box>
-      
+
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
         </Alert>
       )}
-      
+
       {/* Filters */}
       <Paper sx={{ p: 2, mb: 3 }}>
         <Grid container spacing={2} alignItems="center">
@@ -425,7 +435,7 @@ const Leads = () => {
                   <IconButton onClick={handleSearch}>
                     <SearchIcon />
                   </IconButton>
-                )
+                ),
               }}
             />
           </Grid>
@@ -506,7 +516,7 @@ const Leads = () => {
           </Grid>
         </Grid>
       </Paper>
-      
+
       {/* Leads Table */}
       <TableContainer component={Paper}>
         <Table sx={{ minWidth: 650 }}>
@@ -542,7 +552,9 @@ const Leads = () => {
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2">{lead.email}</Typography>
-                    <Typography variant="body2" color="text.secondary">{lead.phone}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {lead.phone}
+                    </Typography>
                   </TableCell>
                   <TableCell>
                     {lead.address.city}, {lead.address.state}
@@ -550,8 +562,15 @@ const Leads = () => {
                   <TableCell>
                     <Box sx={{ display: 'flex', gap: 1 }}>
                       <Chip
-                        label={lead.status.charAt(0).toUpperCase() + lead.status.slice(1).replace('_', ' ')}
-                        color={statusColors[lead.status as keyof typeof statusColors] || 'default'}
+                        label={
+                          lead.status.charAt(0).toUpperCase() +
+                          lead.status.slice(1).replace('_', ' ')
+                        }
+                        color={
+                          statusColors[
+                            lead.status as keyof typeof statusColors
+                          ] || 'default'
+                        }
                         size="small"
                       />
                       {lead.converted && (
@@ -565,8 +584,11 @@ const Leads = () => {
                     </Box>
                   </TableCell>
                   <TableCell>
-                    <Chip 
-                      label={lead.category.charAt(0).toUpperCase() + lead.category.slice(1)} 
+                    <Chip
+                      label={
+                        lead.category.charAt(0).toUpperCase() +
+                        lead.category.slice(1)
+                      }
                       variant="outlined"
                       size="small"
                     />
@@ -575,21 +597,23 @@ const Leads = () => {
                     {new Date(lead.createdAt).toLocaleDateString()}
                   </TableCell>
                   <TableCell>
-                    <IconButton 
-                      size="small" 
-                      color="primary" 
+                    <IconButton
+                      size="small"
+                      color="primary"
                       onClick={() => handleEditLead(lead._id)}
                     >
                       <EditIcon />
                     </IconButton>
-                    <IconButton 
-                      size="small" 
+                    <IconButton
+                      size="small"
                       color="error"
-                      onClick={() => setDeleteDialog({
-                        open: true,
-                        leadId: lead._id,
-                        leadName: `${lead.firstName} ${lead.lastName}`
-                      })}
+                      onClick={() =>
+                        setDeleteDialog({
+                          open: true,
+                          leadId: lead._id,
+                          leadName: `${lead.firstName} ${lead.lastName}`,
+                        })
+                      }
                     >
                       <DeleteIcon />
                     </IconButton>
@@ -609,7 +633,7 @@ const Leads = () => {
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
       </TableContainer>
-      
+
       {/* Add Lead Form */}
       <LeadForm
         open={formOpen}
@@ -617,16 +641,26 @@ const Leads = () => {
         onSubmit={handleCreateLead}
         loading={formLoading}
       />
-      
+
       {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteDialog.open} onClose={() => setDeleteDialog({ ...deleteDialog, open: false })}>
+      <Dialog
+        open={deleteDialog.open}
+        onClose={() => setDeleteDialog({ ...deleteDialog, open: false })}
+      >
         <DialogTitle>Confirm Delete</DialogTitle>
         <DialogContent>
-          Are you sure you want to delete the lead for {deleteDialog.leadName}? This action cannot be undone.
+          Are you sure you want to delete the lead for {deleteDialog.leadName}?
+          This action cannot be undone.
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteDialog({ ...deleteDialog, open: false })}>Cancel</Button>
-          <Button onClick={handleDeleteLead} color="error" variant="contained">Delete</Button>
+          <Button
+            onClick={() => setDeleteDialog({ ...deleteDialog, open: false })}
+          >
+            Cancel
+          </Button>
+          <Button onClick={handleDeleteLead} color="error" variant="contained">
+            Delete
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

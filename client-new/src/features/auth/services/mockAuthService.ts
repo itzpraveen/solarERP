@@ -26,37 +26,42 @@ const mockAuthService = {
    * @param password User password
    * @returns Promise with login result
    */
-  login: async (email: string, password: string): Promise<{ success: boolean; error?: string; token?: string; user?: User }> => {
+  login: async (
+    email: string,
+    password: string
+  ): Promise<{
+    success: boolean;
+    error?: string;
+    token?: string;
+    user?: User;
+  }> => {
     // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
+    await new Promise((resolve) => setTimeout(resolve, 500));
     // Check if credentials match demo user
     if (email === DEMO_EMAIL && password === DEMO_PASSWORD) {
       return {
         success: true,
         token: MOCK_TOKEN,
-        user: MOCK_USER
+        user: MOCK_USER,
       };
     }
-    
     // Return error for invalid credentials
     return {
       success: false,
-      error: 'Invalid credentials'
+      error: 'Invalid credentials',
     };
   },
-  
   /**
    * Mock get current user function
    * @returns Promise with user data
    */
   getCurrentUser: async (): Promise<User | null> => {
     // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
+    await new Promise((resolve) => setTimeout(resolve, 300));
+
     // Return mock user
     return MOCK_USER;
-  }
+  },
 };
 
 export default mockAuthService;

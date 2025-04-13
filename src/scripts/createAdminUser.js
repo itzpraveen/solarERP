@@ -1,29 +1,19 @@
 require('dotenv').config();
 
 // Exit gracefully if running in a container during build/install phase
-if (process.env.NODE_ENV === 'production' && process.env.MONGODB_URI === undefined) {
-  console.log('Skipping admin user creation: Running in production without database connection');
+if (
+  process.env.NODE_ENV === 'production' &&
+  process.env.MONGODB_URI === undefined
+) {
+  console.log(
+    'Skipping admin user creation: Running in production without database connection'
+  );
   process.exit(0);
 }
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-const path = require('path');
-
-// Check if user model is available in the current path
-const userModelPath = path.join(__dirname, '../api/models/user.model');
-let User;
-try {
-  User = require(userModelPath);
-} catch (err) {
-  console.error(`Error loading user model from ${userModelPath}:`, err);
-  console.log('Attempting to load from alternative path...');
-  try {
-    User = require('../models/user.model');
-  } catch (err) {
-    console.error('Error loading user model from alternative path:', err);
-    process.exit(1);
-  }
-}
+// const path = require('path'); // Removed unused path require
+const User = require('../api/models/user.model'); // Require User model directly
 
 const createAdminUser = async () => {
   try {
@@ -53,11 +43,13 @@ const createAdminUser = async () => {
       firstName: adminFirstName,
       lastName: adminLastName,
       role: 'admin',
-      isActive: true
+      isActive: true,
     });
 
     await newAdmin.save();
-    console.log(`Admin user created with email: ${adminEmail} and password: ${adminPassword}`);
+    console.log(
+      `Admin user created with email: ${adminEmail} and password: ${adminPassword}`
+    );
 
     // Disconnect from MongoDB
     await mongoose.disconnect();

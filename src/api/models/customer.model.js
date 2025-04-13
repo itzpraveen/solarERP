@@ -151,7 +151,14 @@ customerSchema.index({ originalLead: 1 });
 
 // Query middleware to only find active customers
 customerSchema.pre(/^find/, function(next) {
-  this.find({ active: { $ne: false } });
+  // Ensure the active filter is added without overwriting other conditions
+  const currentQuery = this.getQuery();
+  if (currentQuery.active === undefined) {
+    this.where({ active: { $ne: false } });
+    console.log('Customer find middleware - Adding active filter: { active: { $ne: false } }');
+  } else {
+     console.log('Customer find middleware - Active filter already present:', currentQuery.active);
+  }
   next();
 });
 

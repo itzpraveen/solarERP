@@ -3,13 +3,25 @@ import apiService from './apiService';
 export interface Report {
   _id: string;
   title: string;
-  type: 'financial' | 'performance' | 'project' | 'sales' | 'inventory' | 'custom';
+  type:
+    | 'financial'
+    | 'performance'
+    | 'project'
+    | 'sales'
+    | 'inventory'
+    | 'custom';
   description?: string;
   createdBy: string;
   createdAt: string;
   updatedAt?: string;
   parameters?: Record<string, any>;
-  scheduledFrequency?: 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'annually' | 'none';
+  scheduledFrequency?:
+    | 'daily'
+    | 'weekly'
+    | 'monthly'
+    | 'quarterly'
+    | 'annually'
+    | 'none';
   lastRun?: string;
   status: 'active' | 'archived' | 'scheduled';
   recipients?: string[];
@@ -88,7 +100,10 @@ const reportService = {
   },
 
   // Schedule a report
-  scheduleReport: async (id: string, schedule: { frequency: string; recipients: string[] }) => {
+  scheduleReport: async (
+    id: string,
+    schedule: { frequency: string; recipients: string[] }
+  ) => {
     try {
       return await apiService.post(`/api/reports/${id}/schedule`, schedule);
     } catch (error) {
@@ -113,16 +128,18 @@ const reportService = {
       throw error;
     }
   },
-  
+
   // Export report data
   exportReport: async (id: string, format: 'pdf' | 'csv' | 'excel') => {
     try {
-      return await apiService.get(`/api/reports/${id}/export/${format}`, { responseType: 'blob' });
+      return await apiService.get(`/api/reports/${id}/export/${format}`, {
+        responseType: 'blob',
+      });
     } catch (error) {
       throw error;
     }
   },
-  
+
   // Get dashboard summary reports
   getDashboardReports: async () => {
     try {
@@ -130,7 +147,7 @@ const reportService = {
     } catch (error) {
       throw error;
     }
-  }
+  },
 };
 
 export default reportService;

@@ -27,18 +27,19 @@ router.get('/stats', authController.restrictTo('admin', 'manager'), projectContr
 
 // Project routes
 router.route('/')
-  .get(projectController.getAllProjects)
-  .post(validateProject, projectController.createProject);
+  .get(authController.restrictTo('admin', 'manager', 'sales', 'installer'), projectController.getAllProjects)
+  .post(authController.restrictTo('admin', 'manager', 'sales'), validateProject, projectController.createProject);
 
 router.route('/:id')
-  .get(projectController.getProject)
-  .patch(projectController.updateProject)
+  .get(authController.restrictTo('admin', 'manager', 'sales', 'installer'), projectController.getProject)
+  .patch(authController.restrictTo('admin', 'manager'), projectController.updateProject)
   .delete(authController.restrictTo('admin', 'manager'), projectController.deleteProject);
 
 // Project status
 router.route('/:id/status')
   .patch(
     check('status', 'Valid status is required').isIn(['active', 'on_hold', 'completed', 'cancelled']),
+    authController.restrictTo('admin', 'manager'),
     projectController.updateProjectStatus
   );
 
@@ -46,6 +47,7 @@ router.route('/:id/status')
 router.route('/:id/stage')
   .patch(
     check('stage', 'Valid stage is required').isIn(['planning', 'permitting', 'scheduled', 'in_progress', 'inspection', 'completed']),
+    authController.restrictTo('admin', 'manager'),
     projectController.updateProjectStage
   );
 
@@ -53,6 +55,7 @@ router.route('/:id/stage')
 router.route('/:id/notes')
   .post(
     check('text', 'Note text is required').not().isEmpty(),
+    authController.restrictTo('admin', 'manager', 'sales', 'installer'),
     projectController.addProjectNote
   );
 
@@ -62,10 +65,10 @@ router.route('/:id/issues')
     check('title', 'Issue title is required').not().isEmpty(),
     check('description', 'Issue description is required').not().isEmpty(),
     check('priority', 'Valid priority is required').isIn(['low', 'medium', 'high', 'critical'])
-  ], projectController.addProjectIssue);
+  ], authController.restrictTo('admin', 'manager', 'sales', 'installer'), projectController.addProjectIssue);
 
 router.route('/:id/issues/:issueId')
-  .patch(projectController.updateProjectIssue);
+  .patch(authController.restrictTo('admin', 'manager', 'sales', 'installer'), projectController.updateProjectIssue);
 
 // Project documents
 router.route('/:id/documents')
@@ -73,7 +76,7 @@ router.route('/:id/documents')
     check('type', 'Document type is required').isIn(['permit', 'contract', 'design', 'inspection', 'utility', 'warranty', 'other']),
     check('name', 'Document name is required').not().isEmpty(),
     check('fileUrl', 'File URL is required').not().isEmpty()
-  ], projectController.addProjectDocument);
+  ], authController.restrictTo('admin', 'manager', 'sales'), projectController.addProjectDocument);
 
 // Project equipment
 router.route('/:id/equipment')
@@ -82,11 +85,11 @@ router.route('/:id/equipment')
     check('manufacturer', 'Manufacturer is required').not().isEmpty(),
     check('model', 'Model is required').not().isEmpty(),
     check('quantity', 'Quantity is required').isNumeric()
-  ], projectController.addProjectEquipment);
+  ], authController.restrictTo('admin', 'manager', 'installer'), projectController.addProjectEquipment);
 
 // Project team
 router.route('/:id/team')
-  .patch(projectController.updateProjectTeam);
+  .patch(authController.restrictTo('admin', 'manager'), projectController.updateProjectTeam);
 
 // Project expenses
 router.route('/:id/expenses')
@@ -94,13 +97,13 @@ router.route('/:id/expenses')
     check('category', 'Valid expense category is required').isIn(['equipment', 'labor', 'permits', 'subcontractor', 'other']),
     check('description', 'Expense description is required').not().isEmpty(),
     check('amount', 'Expense amount is required').isNumeric()
-  ], projectController.addProjectExpense);
+  ], authController.restrictTo('admin', 'manager', 'finance'), projectController.addProjectExpense);
 
 // Project payments
 router.route('/:id/payments')
   .post([
     check('name', 'Payment name is required').not().isEmpty(),
     check('amount', 'Payment amount is required').isNumeric()
-  ], projectController.addProjectPayment);
+  ], authController.restrictTo('admin', 'manager', 'finance'), projectController.addProjectPayment);
 
 module.exports = router;

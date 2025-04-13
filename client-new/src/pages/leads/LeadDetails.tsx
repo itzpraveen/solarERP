@@ -30,7 +30,7 @@ import {
   DialogActions,
   IconButton,
   Breadcrumbs,
-  Link
+  Link,
 } from '@mui/material';
 import {
   Person as PersonIcon,
@@ -45,7 +45,7 @@ import {
   Home as HomeIcon,
   MonetizationOn as MoneyIcon,
   EventNote as NoteIcon,
-  Forum as InteractionIcon
+  Forum as InteractionIcon,
 } from '@mui/icons-material';
 import leadService, { Lead } from '../../api/leadService';
 
@@ -67,11 +67,7 @@ function TabPanel(props: TabPanelProps) {
       aria-labelledby={`lead-tab-${index}`}
       {...other}
     >
-      {value === index && (
-        <Box sx={{ p: 3 }}>
-          {children}
-        </Box>
-      )}
+      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
     </div>
   );
 }
@@ -84,7 +80,7 @@ const statusColors = {
   proposal: 'warning',
   won: 'success',
   lost: 'error',
-  inactive: 'default'
+  inactive: 'default',
 } as const;
 
 // Lead status options
@@ -95,14 +91,14 @@ const statusOptions = [
   { value: 'proposal', label: 'Proposal' },
   { value: 'won', label: 'Won' },
   { value: 'lost', label: 'Lost' },
-  { value: 'inactive', label: 'Inactive' }
+  { value: 'inactive', label: 'Inactive' },
 ];
 
 // Lead category options
 const categoryOptions = [
   { value: 'hot', label: 'Hot' },
   { value: 'warm', label: 'Warm' },
-  { value: 'cold', label: 'Cold' }
+  { value: 'cold', label: 'Cold' },
 ];
 
 // Lead source options
@@ -113,7 +109,7 @@ const sourceOptions = [
   { value: 'cold_call', label: 'Cold Call' },
   { value: 'event', label: 'Event' },
   { value: 'social_media', label: 'Social Media' },
-  { value: 'other', label: 'Other' }
+  { value: 'other', label: 'Other' },
 ];
 
 // Interaction type options
@@ -124,7 +120,7 @@ const interactionTypes = [
   { value: 'site_visit', label: 'Site Visit' },
   { value: 'proposal', label: 'Proposal' },
   { value: 'follow_up', label: 'Follow Up' },
-  { value: 'other', label: 'Other' }
+  { value: 'other', label: 'Other' },
 ];
 
 // Property type options
@@ -134,7 +130,7 @@ const propertyTypes = [
   { value: 'commercial', label: 'Commercial' },
   { value: 'industrial', label: 'Industrial' },
   { value: 'agricultural', label: 'Agricultural' },
-  { value: 'other', label: 'Other' }
+  { value: 'other', label: 'Other' },
 ];
 
 // Roof type options
@@ -143,7 +139,7 @@ const roofTypes = [
   { value: 'metal', label: 'Metal' },
   { value: 'tile', label: 'Tile' },
   { value: 'flat', label: 'Flat' },
-  { value: 'other', label: 'Other' }
+  { value: 'other', label: 'Other' },
 ];
 
 // Shading options
@@ -151,7 +147,7 @@ const shadingOptions = [
   { value: 'none', label: 'None' },
   { value: 'light', label: 'Light' },
   { value: 'moderate', label: 'Moderate' },
-  { value: 'heavy', label: 'Heavy' }
+  { value: 'heavy', label: 'Heavy' },
 ];
 
 const LeadDetails = () => {
@@ -162,35 +158,35 @@ const LeadDetails = () => {
   const [lead, setLead] = useState<Lead | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // State for edit mode
   const [editMode, setEditMode] = useState(false);
   const [editData, setEditData] = useState<Partial<Lead>>({});
-  
+
   // State for tabs
   const [tabValue, setTabValue] = useState(0);
-  
+
   // State for dialogs
   const [deleteDialog, setDeleteDialog] = useState(false);
   const [noteDialog, setNoteDialog] = useState(false);
   const [interactionDialog, setInteractionDialog] = useState(false);
-  
+
   // State for new note and interaction
   const [newNote, setNewNote] = useState('');
   const [newInteraction, setNewInteraction] = useState({
     type: 'phone',
     summary: '',
-    date: new Date().toISOString().split('T')[0]
+    date: new Date().toISOString().split('T')[0],
   });
 
   // Fetch lead data
   const fetchLead = async () => {
     if (!id) return;
-    
+
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await leadService.getLead(id);
       setLead(response.data.lead);
       setEditData(response.data.lead);
@@ -212,22 +208,24 @@ const LeadDetails = () => {
   };
 
   // Handle edit form changes
-  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleEditChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
-    
+
     if (name.includes('.')) {
       const [parent, child] = name.split('.');
       setEditData({
         ...editData,
         [parent]: {
-          ...editData[parent as keyof typeof editData] as any,
-          [child]: value
-        }
+          ...(editData[parent as keyof typeof editData] as any),
+          [child]: value,
+        },
       });
     } else {
       setEditData({
         ...editData,
-        [name]: value
+        [name]: value,
       });
     }
   };
@@ -237,7 +235,7 @@ const LeadDetails = () => {
     const { name, value } = e.target;
     setEditData({
       ...editData,
-      [name]: value
+      [name]: value,
     });
   };
 
@@ -253,7 +251,7 @@ const LeadDetails = () => {
   // Save lead changes
   const saveLead = async () => {
     if (!id || !editData) return;
-    
+
     try {
       console.log('Saving lead with data:', JSON.stringify(editData, null, 2));
       setLoading(true);
@@ -271,7 +269,7 @@ const LeadDetails = () => {
   // Delete lead
   const deleteLead = async () => {
     if (!id) return;
-    
+
     try {
       await leadService.deleteLead(id);
       navigate('/leads');
@@ -283,7 +281,7 @@ const LeadDetails = () => {
   // Add note
   const addNote = async () => {
     if (!id || !newNote.trim()) return;
-    
+
     try {
       await leadService.addNote(id, newNote);
       setNewNote('');
@@ -297,13 +295,13 @@ const LeadDetails = () => {
   // Add interaction
   const addInteraction = async () => {
     if (!id || !newInteraction.summary.trim()) return;
-    
+
     try {
       await leadService.addInteraction(id, newInteraction);
       setNewInteraction({
         type: 'phone',
         summary: '',
-        date: new Date().toISOString().split('T')[0]
+        date: new Date().toISOString().split('T')[0],
       });
       setInteractionDialog(false);
       fetchLead();
@@ -315,7 +313,7 @@ const LeadDetails = () => {
   // Update lead status - returns a promise so it can be chained
   const updateStatus = async (status: string) => {
     if (!id) return Promise.reject('No lead ID provided');
-    
+
     try {
       const result = await leadService.updateStatus(id, status);
       await fetchLead();
@@ -365,9 +363,16 @@ const LeadDetails = () => {
           {lead.firstName} {lead.lastName}
         </Typography>
       </Breadcrumbs>
-      
+
       {/* Header with actions */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 3,
+        }}
+      >
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <IconButton sx={{ mr: 1 }} onClick={() => navigate('/leads')}>
             <ArrowBackIcon />
@@ -375,52 +380,73 @@ const LeadDetails = () => {
           <Typography variant="h4">
             {lead.firstName} {lead.lastName}
           </Typography>
-          <Chip 
-            label={lead.status.charAt(0).toUpperCase() + lead.status.slice(1).replace('_', ' ')}
-            color={statusColors[lead.status as keyof typeof statusColors] === 'default' ? 'primary' : (statusColors[lead.status as keyof typeof statusColors] as any)}
+          <Chip
+            label={
+              lead.status.charAt(0).toUpperCase() +
+              lead.status.slice(1).replace('_', ' ')
+            }
+            color={
+              statusColors[lead.status as keyof typeof statusColors] ===
+              'default'
+                ? 'primary'
+                : (statusColors[
+                    lead.status as keyof typeof statusColors
+                  ] as any)
+            }
             sx={{ ml: 2 }}
           />
-          <Chip 
-            label={lead.category.charAt(0).toUpperCase() + lead.category.slice(1)}
+          <Chip
+            label={
+              lead.category.charAt(0).toUpperCase() + lead.category.slice(1)
+            }
             variant="outlined"
             sx={{ ml: 1 }}
           />
         </Box>
-        
+
         <Box>
           {!editMode ? (
             <>
-              <Button 
-                variant="contained" 
-                color="success" 
-                startIcon={<PersonIcon />} 
+              <Button
+                variant="contained"
+                color="success"
+                startIcon={<PersonIcon />}
                 onClick={async () => {
                   try {
                     setLoading(true);
-                    
+
                     // First update the lead status to qualified if needed
                     if (lead.status !== 'qualified' && lead.status !== 'won') {
                       try {
-                        console.log("Updating lead status to qualified before conversion");
+                        console.log(
+                          'Updating lead status to qualified before conversion'
+                        );
                         await leadService.updateStatus(id!, 'qualified');
-                        
+
                         // Wait for the lead data to refresh to ensure we have the latest status
                         await fetchLead();
-                        console.log("Lead status updated successfully");
+                        console.log('Lead status updated successfully');
                       } catch (err) {
-                        console.error("Failed to update lead status before conversion:", err);
-                        setError("Failed to update lead status. Please try again.");
+                        console.error(
+                          'Failed to update lead status before conversion:',
+                          err
+                        );
+                        setError(
+                          'Failed to update lead status. Please try again.'
+                        );
                         setLoading(false);
                         return; // Stop the conversion process if status update fails
                       }
                     }
-                    
+
                     // Navigate to customer conversion page with the lead ID
-                    console.log("Navigating to customer conversion page");
+                    console.log('Navigating to customer conversion page');
                     navigate(`/customers?convertLead=${id}`);
                   } catch (error) {
-                    console.error("Error during lead conversion:", error);
-                    setError("Failed to start conversion process. Please try again.");
+                    console.error('Error during lead conversion:', error);
+                    setError(
+                      'Failed to start conversion process. Please try again.'
+                    );
                     setLoading(false);
                   }
                 }}
@@ -429,17 +455,17 @@ const LeadDetails = () => {
               >
                 Convert to Customer
               </Button>
-              <Button 
-                variant="outlined" 
-                startIcon={<EditIcon />} 
+              <Button
+                variant="outlined"
+                startIcon={<EditIcon />}
                 onClick={toggleEditMode}
                 sx={{ mr: 1 }}
               >
                 Edit
               </Button>
-              <Button 
-                variant="outlined" 
-                color="error" 
+              <Button
+                variant="outlined"
+                color="error"
                 startIcon={<DeleteIcon />}
                 onClick={() => setDeleteDialog(true)}
               >
@@ -448,17 +474,17 @@ const LeadDetails = () => {
             </>
           ) : (
             <>
-              <Button 
-                variant="contained" 
-                color="primary" 
-                startIcon={<SaveIcon />} 
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<SaveIcon />}
                 onClick={saveLead}
                 sx={{ mr: 1 }}
               >
                 Save
               </Button>
-              <Button 
-                variant="outlined" 
+              <Button
+                variant="outlined"
                 startIcon={<CancelIcon />}
                 onClick={toggleEditMode}
               >
@@ -468,17 +494,17 @@ const LeadDetails = () => {
           )}
         </Box>
       </Box>
-      
+
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
         </Alert>
       )}
-      
+
       {/* Tabs */}
       <Paper sx={{ mb: 3 }}>
-        <Tabs 
-          value={tabValue} 
+        <Tabs
+          value={tabValue}
           onChange={handleTabChange}
           variant="scrollable"
           scrollButtons="auto"
@@ -488,7 +514,7 @@ const LeadDetails = () => {
           <Tab label="Property Details" />
           <Tab label="Notes & Interactions" />
         </Tabs>
-        
+
         {/* Overview Tab */}
         <TabPanel value={tabValue} index={0}>
           <Grid container spacing={3}>
@@ -499,10 +525,12 @@ const LeadDetails = () => {
                     Lead Information
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
-                  
+
                   <Grid container spacing={2}>
                     <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">Status</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Status
+                      </Typography>
                       {editMode ? (
                         <FormControl fullWidth size="small" sx={{ mt: 1 }}>
                           <InputLabel>Status</InputLabel>
@@ -512,7 +540,7 @@ const LeadDetails = () => {
                             label="Status"
                             onChange={handleSelectChange}
                           >
-                            {statusOptions.map(option => (
+                            {statusOptions.map((option) => (
                               <MenuItem key={option.value} value={option.value}>
                                 {option.label}
                               </MenuItem>
@@ -521,17 +549,30 @@ const LeadDetails = () => {
                         </FormControl>
                       ) : (
                         <Box sx={{ mt: 1 }}>
-                          <Chip 
-                            label={lead.status.charAt(0).toUpperCase() + lead.status.slice(1).replace('_', ' ')}
-                            color={statusColors[lead.status as keyof typeof statusColors] === 'default' ? 'primary' : (statusColors[lead.status as keyof typeof statusColors] as any)}
+                          <Chip
+                            label={
+                              lead.status.charAt(0).toUpperCase() +
+                              lead.status.slice(1).replace('_', ' ')
+                            }
+                            color={
+                              statusColors[
+                                lead.status as keyof typeof statusColors
+                              ] === 'default'
+                                ? 'primary'
+                                : (statusColors[
+                                    lead.status as keyof typeof statusColors
+                                  ] as any)
+                            }
                             size="small"
                           />
                         </Box>
                       )}
                     </Grid>
-                    
+
                     <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">Category</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Category
+                      </Typography>
                       {editMode ? (
                         <FormControl fullWidth size="small" sx={{ mt: 1 }}>
                           <InputLabel>Category</InputLabel>
@@ -541,7 +582,7 @@ const LeadDetails = () => {
                             label="Category"
                             onChange={handleSelectChange}
                           >
-                            {categoryOptions.map(option => (
+                            {categoryOptions.map((option) => (
                               <MenuItem key={option.value} value={option.value}>
                                 {option.label}
                               </MenuItem>
@@ -550,13 +591,16 @@ const LeadDetails = () => {
                         </FormControl>
                       ) : (
                         <Typography variant="body1" sx={{ mt: 1 }}>
-                          {lead.category.charAt(0).toUpperCase() + lead.category.slice(1)}
+                          {lead.category.charAt(0).toUpperCase() +
+                            lead.category.slice(1)}
                         </Typography>
                       )}
                     </Grid>
-                    
+
                     <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">Source</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Source
+                      </Typography>
                       {editMode ? (
                         <FormControl fullWidth size="small" sx={{ mt: 1 }}>
                           <InputLabel>Source</InputLabel>
@@ -566,7 +610,7 @@ const LeadDetails = () => {
                             label="Source"
                             onChange={handleSelectChange}
                           >
-                            {sourceOptions.map(option => (
+                            {sourceOptions.map((option) => (
                               <MenuItem key={option.value} value={option.value}>
                                 {option.label}
                               </MenuItem>
@@ -575,20 +619,25 @@ const LeadDetails = () => {
                         </FormControl>
                       ) : (
                         <Typography variant="body1" sx={{ mt: 1 }}>
-                          {lead.source.charAt(0).toUpperCase() + lead.source.slice(1).replace('_', ' ')}
+                          {lead.source.charAt(0).toUpperCase() +
+                            lead.source.slice(1).replace('_', ' ')}
                         </Typography>
                       )}
                     </Grid>
-                    
+
                     <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">Created</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Created
+                      </Typography>
                       <Typography variant="body1" sx={{ mt: 1 }}>
                         {new Date(lead.createdAt).toLocaleDateString()}
                       </Typography>
                     </Grid>
-                    
+
                     <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">Monthly Electric Bill</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Monthly Electric Bill
+                      </Typography>
                       {editMode ? (
                         <TextField
                           fullWidth
@@ -599,28 +648,36 @@ const LeadDetails = () => {
                           onChange={handleEditChange}
                           label="Amount"
                           InputProps={{
-                            startAdornment: <Typography sx={{ mr: 1 }}>₹</Typography>
+                            startAdornment: (
+                              <Typography sx={{ mr: 1 }}>₹</Typography>
+                            ),
                           }}
                           sx={{ mt: 1 }}
                         />
                       ) : (
                         <Typography variant="body1" sx={{ mt: 1 }}>
-                          {lead.monthlyElectricBill ? `₹${lead.monthlyElectricBill.toLocaleString()}` : 'Not specified'}
+                          {lead.monthlyElectricBill
+                            ? `₹${lead.monthlyElectricBill.toLocaleString()}`
+                            : 'Not specified'}
                         </Typography>
                       )}
                     </Grid>
-                    
+
                     <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">Assigned To</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Assigned To
+                      </Typography>
                       <Typography variant="body1" sx={{ mt: 1 }}>
-                        {lead.assignedTo ? `${lead.assignedTo.firstName} ${lead.assignedTo.lastName}` : 'Unassigned'}
+                        {lead.assignedTo
+                          ? `${lead.assignedTo.firstName} ${lead.assignedTo.lastName}`
+                          : 'Unassigned'}
                       </Typography>
                     </Grid>
                   </Grid>
                 </CardContent>
               </Card>
             </Grid>
-            
+
             <Grid item xs={12} md={6}>
               <Card>
                 <CardContent>
@@ -628,19 +685,31 @@ const LeadDetails = () => {
                     Quick Actions
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
-                  
+
                   <Grid container spacing={2}>
                     <Grid item xs={12}>
                       <Typography variant="subtitle2" gutterBottom>
                         Update Status
                       </Typography>
                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                        {statusOptions.map(option => (
+                        {statusOptions.map((option) => (
                           <Button
                             key={option.value}
-                            variant={lead.status === option.value ? 'contained' : 'outlined'}
+                            variant={
+                              lead.status === option.value
+                                ? 'contained'
+                                : 'outlined'
+                            }
                             size="small"
-                            color={statusColors[option.value as keyof typeof statusColors] === 'default' ? 'primary' : (statusColors[option.value as keyof typeof statusColors] as any)}
+                            color={
+                              statusColors[
+                                option.value as keyof typeof statusColors
+                              ] === 'default'
+                                ? 'primary'
+                                : (statusColors[
+                                    option.value as keyof typeof statusColors
+                                  ] as any)
+                            }
                             onClick={() => updateStatus(option.value)}
                           >
                             {option.label}
@@ -648,7 +717,7 @@ const LeadDetails = () => {
                         ))}
                       </Box>
                     </Grid>
-                    
+
                     <Grid item xs={12}>
                       <Typography variant="subtitle2" gutterBottom>
                         Add Information
@@ -675,14 +744,14 @@ const LeadDetails = () => {
                   </Grid>
                 </CardContent>
               </Card>
-              
+
               <Card sx={{ mt: 2 }}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
                     Recent Activity
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
-                  
+
                   {!lead.interactions || lead.interactions.length === 0 ? (
                     <Typography variant="body2" color="text.secondary">
                       No recent activity recorded.
@@ -690,7 +759,11 @@ const LeadDetails = () => {
                   ) : (
                     <List dense>
                       {[...lead.interactions]
-                        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                        .sort(
+                          (a, b) =>
+                            new Date(b.date).getTime() -
+                            new Date(a.date).getTime()
+                        )
                         .slice(0, 3)
                         .map((interaction, index) => (
                           <ListItem key={index} alignItems="flex-start">
@@ -700,11 +773,20 @@ const LeadDetails = () => {
                               </Avatar>
                             </ListItemAvatar>
                             <ListItemText
-                              primary={interaction.type.charAt(0).toUpperCase() + interaction.type.slice(1).replace('_', ' ')}
+                              primary={
+                                interaction.type.charAt(0).toUpperCase() +
+                                interaction.type.slice(1).replace('_', ' ')
+                              }
                               secondary={
                                 <>
-                                  <Typography component="span" variant="body2" color="text.primary">
-                                    {new Date(interaction.date).toLocaleDateString()}
+                                  <Typography
+                                    component="span"
+                                    variant="body2"
+                                    color="text.primary"
+                                  >
+                                    {new Date(
+                                      interaction.date
+                                    ).toLocaleDateString()}
                                   </Typography>
                                   {` — ${interaction.summary}`}
                                 </>
@@ -719,7 +801,7 @@ const LeadDetails = () => {
             </Grid>
           </Grid>
         </TabPanel>
-        
+
         {/* Contact Info Tab */}
         <TabPanel value={tabValue} index={1}>
           <Grid container spacing={3}>
@@ -730,10 +812,12 @@ const LeadDetails = () => {
                     Personal Information
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
-                  
+
                   <Grid container spacing={2}>
                     <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">First Name</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        First Name
+                      </Typography>
                       {editMode ? (
                         <TextField
                           fullWidth
@@ -749,9 +833,11 @@ const LeadDetails = () => {
                         </Typography>
                       )}
                     </Grid>
-                    
+
                     <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">Last Name</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Last Name
+                      </Typography>
                       {editMode ? (
                         <TextField
                           fullWidth
@@ -767,11 +853,18 @@ const LeadDetails = () => {
                         </Typography>
                       )}
                     </Grid>
-                    
+
                     <Grid item xs={12}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                        <EmailIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
-                        <Typography variant="subtitle2" color="text.secondary">Email</Typography>
+                      <Box
+                        sx={{ display: 'flex', alignItems: 'center', mt: 1 }}
+                      >
+                        <EmailIcon
+                          fontSize="small"
+                          sx={{ mr: 1, color: 'text.secondary' }}
+                        />
+                        <Typography variant="subtitle2" color="text.secondary">
+                          Email
+                        </Typography>
                       </Box>
                       {editMode ? (
                         <TextField
@@ -789,11 +882,18 @@ const LeadDetails = () => {
                         </Typography>
                       )}
                     </Grid>
-                    
+
                     <Grid item xs={12}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                        <PhoneIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
-                        <Typography variant="subtitle2" color="text.secondary">Phone</Typography>
+                      <Box
+                        sx={{ display: 'flex', alignItems: 'center', mt: 1 }}
+                      >
+                        <PhoneIcon
+                          fontSize="small"
+                          sx={{ mr: 1, color: 'text.secondary' }}
+                        />
+                        <Typography variant="subtitle2" color="text.secondary">
+                          Phone
+                        </Typography>
                       </Box>
                       {editMode ? (
                         <TextField
@@ -814,7 +914,7 @@ const LeadDetails = () => {
                 </CardContent>
               </Card>
             </Grid>
-            
+
             <Grid item xs={12} md={6}>
               <Card>
                 <CardContent>
@@ -822,19 +922,26 @@ const LeadDetails = () => {
                     Address
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
-                  
+
                   <Grid container spacing={2}>
                     <Grid item xs={12}>
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <HomeIcon fontSize="small" sx={{ mr: 1, color: 'text.secondary' }} />
-                        <Typography variant="subtitle2" color="text.secondary">Street</Typography>
+                        <HomeIcon
+                          fontSize="small"
+                          sx={{ mr: 1, color: 'text.secondary' }}
+                        />
+                        <Typography variant="subtitle2" color="text.secondary">
+                          Street
+                        </Typography>
                       </Box>
                       {editMode ? (
                         <TextField
                           fullWidth
                           size="small"
                           name="address.street"
-                          value={editData.address?.street || lead.address.street}
+                          value={
+                            editData.address?.street || lead.address.street
+                          }
                           onChange={handleEditChange}
                           sx={{ mt: 1 }}
                         />
@@ -844,9 +951,11 @@ const LeadDetails = () => {
                         </Typography>
                       )}
                     </Grid>
-                    
+
                     <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">City</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        City
+                      </Typography>
                       {editMode ? (
                         <TextField
                           fullWidth
@@ -862,9 +971,11 @@ const LeadDetails = () => {
                         </Typography>
                       )}
                     </Grid>
-                    
+
                     <Grid item xs={12} sm={3}>
-                      <Typography variant="subtitle2" color="text.secondary">State</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        State
+                      </Typography>
                       {editMode ? (
                         <TextField
                           fullWidth
@@ -880,15 +991,19 @@ const LeadDetails = () => {
                         </Typography>
                       )}
                     </Grid>
-                    
+
                     <Grid item xs={12} sm={3}>
-                      <Typography variant="subtitle2" color="text.secondary">ZIP Code</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        ZIP Code
+                      </Typography>
                       {editMode ? (
                         <TextField
                           fullWidth
                           size="small"
                           name="address.zipCode"
-                          value={editData.address?.zipCode || lead.address.zipCode}
+                          value={
+                            editData.address?.zipCode || lead.address.zipCode
+                          }
                           onChange={handleEditChange}
                           sx={{ mt: 1 }}
                         />
@@ -904,7 +1019,7 @@ const LeadDetails = () => {
             </Grid>
           </Grid>
         </TabPanel>
-        
+
         {/* Property Details Tab */}
         <TabPanel value={tabValue} index={2}>
           <Grid container spacing={3}>
@@ -915,20 +1030,24 @@ const LeadDetails = () => {
                     Property Information
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
-                  
+
                   <Grid container spacing={2}>
                     <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">Property Type</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Property Type
+                      </Typography>
                       {editMode ? (
                         <FormControl fullWidth size="small" sx={{ mt: 1 }}>
                           <InputLabel>Property Type</InputLabel>
                           <Select
                             name="propertyType"
-                            value={editData.propertyType || lead.propertyType || ''}
+                            value={
+                              editData.propertyType || lead.propertyType || ''
+                            }
                             label="Property Type"
                             onChange={handleSelectChange}
                           >
-                            {propertyTypes.map(option => (
+                            {propertyTypes.map((option) => (
                               <MenuItem key={option.value} value={option.value}>
                                 {option.label}
                               </MenuItem>
@@ -937,15 +1056,19 @@ const LeadDetails = () => {
                         </FormControl>
                       ) : (
                         <Typography variant="body1" sx={{ mt: 1 }}>
-                          {lead.propertyType ? 
-                            propertyTypes.find(t => t.value === lead.propertyType)?.label || lead.propertyType :
-                            'Not specified'}
+                          {lead.propertyType
+                            ? propertyTypes.find(
+                                (t) => t.value === lead.propertyType
+                              )?.label || lead.propertyType
+                            : 'Not specified'}
                         </Typography>
                       )}
                     </Grid>
-                    
+
                     <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">Roof Type</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Roof Type
+                      </Typography>
                       {editMode ? (
                         <FormControl fullWidth size="small" sx={{ mt: 1 }}>
                           <InputLabel>Roof Type</InputLabel>
@@ -955,7 +1078,7 @@ const LeadDetails = () => {
                             label="Roof Type"
                             onChange={handleSelectChange}
                           >
-                            {roofTypes.map(option => (
+                            {roofTypes.map((option) => (
                               <MenuItem key={option.value} value={option.value}>
                                 {option.label}
                               </MenuItem>
@@ -964,15 +1087,18 @@ const LeadDetails = () => {
                         </FormControl>
                       ) : (
                         <Typography variant="body1" sx={{ mt: 1 }}>
-                          {lead.roofType ? 
-                            roofTypes.find(t => t.value === lead.roofType)?.label || lead.roofType :
-                            'Not specified'}
+                          {lead.roofType
+                            ? roofTypes.find((t) => t.value === lead.roofType)
+                                ?.label || lead.roofType
+                            : 'Not specified'}
                         </Typography>
                       )}
                     </Grid>
-                    
+
                     <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">Roof Age (years)</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Roof Age (years)
+                      </Typography>
                       {editMode ? (
                         <TextField
                           fullWidth
@@ -985,13 +1111,17 @@ const LeadDetails = () => {
                         />
                       ) : (
                         <Typography variant="body1" sx={{ mt: 1 }}>
-                          {lead.roofAge !== undefined ? lead.roofAge : 'Not specified'}
+                          {lead.roofAge !== undefined
+                            ? lead.roofAge
+                            : 'Not specified'}
                         </Typography>
                       )}
                     </Grid>
-                    
+
                     <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">Shading</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Shading
+                      </Typography>
                       {editMode ? (
                         <FormControl fullWidth size="small" sx={{ mt: 1 }}>
                           <InputLabel>Shading</InputLabel>
@@ -1001,7 +1131,7 @@ const LeadDetails = () => {
                             label="Shading"
                             onChange={handleSelectChange}
                           >
-                            {shadingOptions.map(option => (
+                            {shadingOptions.map((option) => (
                               <MenuItem key={option.value} value={option.value}>
                                 {option.label}
                               </MenuItem>
@@ -1010,9 +1140,11 @@ const LeadDetails = () => {
                         </FormControl>
                       ) : (
                         <Typography variant="body1" sx={{ mt: 1 }}>
-                          {lead.shading ? 
-                            shadingOptions.find(t => t.value === lead.shading)?.label || lead.shading :
-                            'Not specified'}
+                          {lead.shading
+                            ? shadingOptions.find(
+                                (t) => t.value === lead.shading
+                              )?.label || lead.shading
+                            : 'Not specified'}
                         </Typography>
                       )}
                     </Grid>
@@ -1020,7 +1152,7 @@ const LeadDetails = () => {
                 </CardContent>
               </Card>
             </Grid>
-            
+
             <Grid item xs={12} md={6}>
               <Card>
                 <CardContent>
@@ -1028,10 +1160,12 @@ const LeadDetails = () => {
                     System Requirements
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
-                  
+
                   <Grid container spacing={2}>
                     <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">Monthly Electric Bill</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Monthly Electric Bill
+                      </Typography>
                       {editMode ? (
                         <TextField
                           fullWidth
@@ -1042,19 +1176,25 @@ const LeadDetails = () => {
                           onChange={handleEditChange}
                           label="Amount"
                           InputProps={{
-                            startAdornment: <Typography sx={{ mr: 1 }}>₹</Typography>
+                            startAdornment: (
+                              <Typography sx={{ mr: 1 }}>₹</Typography>
+                            ),
                           }}
                           sx={{ mt: 1 }}
                         />
                       ) : (
                         <Typography variant="body1" sx={{ mt: 1 }}>
-                          {lead.monthlyElectricBill ? `₹${lead.monthlyElectricBill.toLocaleString()}` : 'Not specified'}
+                          {lead.monthlyElectricBill
+                            ? `₹${lead.monthlyElectricBill.toLocaleString()}`
+                            : 'Not specified'}
                         </Typography>
                       )}
                     </Grid>
-                    
+
                     <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">Estimated System Size (kW)</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Estimated System Size (kW)
+                      </Typography>
                       {editMode ? (
                         <TextField
                           fullWidth
@@ -1067,7 +1207,9 @@ const LeadDetails = () => {
                         />
                       ) : (
                         <Typography variant="body1" sx={{ mt: 1 }}>
-                          {lead.estimatedSystemSize ? `${lead.estimatedSystemSize} kW` : 'Not estimated yet'}
+                          {lead.estimatedSystemSize
+                            ? `${lead.estimatedSystemSize} kW`
+                            : 'Not estimated yet'}
                         </Typography>
                       )}
                     </Grid>
@@ -1077,19 +1219,24 @@ const LeadDetails = () => {
             </Grid>
           </Grid>
         </TabPanel>
-        
+
         {/* Notes & Interactions Tab */}
         <TabPanel value={tabValue} index={3}>
           <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
               <Card>
                 <CardContent>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                    <Typography variant="h6">
-                      Notes
-                    </Typography>
-                    <Button 
-                      size="small" 
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      mb: 1,
+                    }}
+                  >
+                    <Typography variant="h6">Notes</Typography>
+                    <Button
+                      size="small"
                       startIcon={<AddIcon />}
                       onClick={() => setNoteDialog(true)}
                     >
@@ -1097,7 +1244,7 @@ const LeadDetails = () => {
                     </Button>
                   </Box>
                   <Divider sx={{ mb: 2 }} />
-                  
+
                   {!lead.notes || lead.notes.length === 0 ? (
                     <Typography variant="body2" color="text.secondary">
                       No notes have been added yet.
@@ -1105,9 +1252,17 @@ const LeadDetails = () => {
                   ) : (
                     <List>
                       {[...lead.notes]
-                        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                        .sort(
+                          (a, b) =>
+                            new Date(b.createdAt).getTime() -
+                            new Date(a.createdAt).getTime()
+                        )
                         .map((note, index) => (
-                          <ListItem key={index} alignItems="flex-start" divider={index < lead.notes!.length - 1}>
+                          <ListItem
+                            key={index}
+                            alignItems="flex-start"
+                            divider={index < lead.notes!.length - 1}
+                          >
                             <ListItemAvatar>
                               <Avatar>
                                 <NoteIcon />
@@ -1116,7 +1271,13 @@ const LeadDetails = () => {
                             <ListItemText
                               primary={
                                 <Typography variant="subtitle2">
-                                  {new Date(note.createdAt).toLocaleDateString()} at {new Date(note.createdAt).toLocaleTimeString()}
+                                  {new Date(
+                                    note.createdAt
+                                  ).toLocaleDateString()}{' '}
+                                  at{' '}
+                                  {new Date(
+                                    note.createdAt
+                                  ).toLocaleTimeString()}
                                 </Typography>
                               }
                               secondary={note.text}
@@ -1128,16 +1289,21 @@ const LeadDetails = () => {
                 </CardContent>
               </Card>
             </Grid>
-            
+
             <Grid item xs={12} md={6}>
               <Card>
                 <CardContent>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                    <Typography variant="h6">
-                      Interactions
-                    </Typography>
-                    <Button 
-                      size="small" 
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      mb: 1,
+                    }}
+                  >
+                    <Typography variant="h6">Interactions</Typography>
+                    <Button
+                      size="small"
                       startIcon={<AddIcon />}
                       onClick={() => setInteractionDialog(true)}
                     >
@@ -1145,7 +1311,7 @@ const LeadDetails = () => {
                     </Button>
                   </Box>
                   <Divider sx={{ mb: 2 }} />
-                  
+
                   {!lead.interactions || lead.interactions.length === 0 ? (
                     <Typography variant="body2" color="text.secondary">
                       No interactions have been recorded yet.
@@ -1153,9 +1319,17 @@ const LeadDetails = () => {
                   ) : (
                     <List>
                       {[...lead.interactions]
-                        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                        .sort(
+                          (a, b) =>
+                            new Date(b.date).getTime() -
+                            new Date(a.date).getTime()
+                        )
                         .map((interaction, index) => (
-                          <ListItem key={index} alignItems="flex-start" divider={index < lead.interactions!.length - 1}>
+                          <ListItem
+                            key={index}
+                            alignItems="flex-start"
+                            divider={index < lead.interactions!.length - 1}
+                          >
                             <ListItemAvatar>
                               <Avatar>
                                 <InteractionIcon />
@@ -1163,16 +1337,25 @@ const LeadDetails = () => {
                             </ListItemAvatar>
                             <ListItemText
                               primary={
-                                <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                  <Chip 
-                                    label={interaction.type.charAt(0).toUpperCase() + interaction.type.slice(1).replace('_', ' ')}
+                                <Box
+                                  sx={{ display: 'flex', alignItems: 'center' }}
+                                >
+                                  <Chip
+                                    label={
+                                      interaction.type.charAt(0).toUpperCase() +
+                                      interaction.type
+                                        .slice(1)
+                                        .replace('_', ' ')
+                                    }
                                     size="small"
                                     color="primary"
                                     variant="outlined"
                                     sx={{ mr: 1 }}
                                   />
                                   <Typography variant="subtitle2">
-                                    {new Date(interaction.date).toLocaleDateString()}
+                                    {new Date(
+                                      interaction.date
+                                    ).toLocaleDateString()}
                                   </Typography>
                                 </Box>
                               }
@@ -1188,19 +1371,22 @@ const LeadDetails = () => {
           </Grid>
         </TabPanel>
       </Paper>
-      
+
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialog} onClose={() => setDeleteDialog(false)}>
         <DialogTitle>Confirm Delete</DialogTitle>
         <DialogContent>
-          Are you sure you want to delete this lead? This action cannot be undone.
+          Are you sure you want to delete this lead? This action cannot be
+          undone.
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteDialog(false)}>Cancel</Button>
-          <Button onClick={deleteLead} color="error" variant="contained">Delete</Button>
+          <Button onClick={deleteLead} color="error" variant="contained">
+            Delete
+          </Button>
         </DialogActions>
       </Dialog>
-      
+
       {/* Add Note Dialog */}
       <Dialog open={noteDialog} onClose={() => setNoteDialog(false)}>
         <DialogTitle>Add Note</DialogTitle>
@@ -1217,9 +1403,9 @@ const LeadDetails = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setNoteDialog(false)}>Cancel</Button>
-          <Button 
-            onClick={addNote} 
-            color="primary" 
+          <Button
+            onClick={addNote}
+            color="primary"
             variant="contained"
             disabled={!newNote.trim()}
           >
@@ -1227,9 +1413,12 @@ const LeadDetails = () => {
           </Button>
         </DialogActions>
       </Dialog>
-      
+
       {/* Add Interaction Dialog */}
-      <Dialog open={interactionDialog} onClose={() => setInteractionDialog(false)}>
+      <Dialog
+        open={interactionDialog}
+        onClose={() => setInteractionDialog(false)}
+      >
         <DialogTitle>Add Interaction</DialogTitle>
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 0.5 }}>
@@ -1239,12 +1428,14 @@ const LeadDetails = () => {
                 <Select
                   value={newInteraction.type}
                   label="Type"
-                  onChange={(e) => setNewInteraction({
-                    ...newInteraction,
-                    type: e.target.value as string
-                  })}
+                  onChange={(e) =>
+                    setNewInteraction({
+                      ...newInteraction,
+                      type: e.target.value as string,
+                    })
+                  }
                 >
-                  {interactionTypes.map(option => (
+                  {interactionTypes.map((option) => (
                     <MenuItem key={option.value} value={option.value}>
                       {option.label}
                     </MenuItem>
@@ -1258,10 +1449,12 @@ const LeadDetails = () => {
                 label="Date"
                 type="date"
                 value={newInteraction.date}
-                onChange={(e) => setNewInteraction({
-                  ...newInteraction,
-                  date: e.target.value
-                })}
+                onChange={(e) =>
+                  setNewInteraction({
+                    ...newInteraction,
+                    date: e.target.value,
+                  })
+                }
                 InputLabelProps={{ shrink: true }}
               />
             </Grid>
@@ -1272,19 +1465,21 @@ const LeadDetails = () => {
                 multiline
                 rows={3}
                 value={newInteraction.summary}
-                onChange={(e) => setNewInteraction({
-                  ...newInteraction,
-                  summary: e.target.value
-                })}
+                onChange={(e) =>
+                  setNewInteraction({
+                    ...newInteraction,
+                    summary: e.target.value,
+                  })
+                }
               />
             </Grid>
           </Grid>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setInteractionDialog(false)}>Cancel</Button>
-          <Button 
-            onClick={addInteraction} 
-            color="primary" 
+          <Button
+            onClick={addInteraction}
+            color="primary"
             variant="contained"
             disabled={!newInteraction.summary.trim()}
           >

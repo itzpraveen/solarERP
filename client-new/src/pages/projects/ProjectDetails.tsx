@@ -38,7 +38,7 @@ import {
   TableHead,
   TableRow,
   FormControlLabel,
-  Switch
+  Switch,
 } from '@mui/material';
 import {
   Assignment as ProjectIcon,
@@ -57,16 +57,16 @@ import {
   Warning as WarningIcon,
   People as TeamIcon,
   AttachMoney as MoneyIcon,
-  Timeline as TimelineIcon
+  Timeline as TimelineIcon,
 } from '@mui/icons-material';
-import projectService, { 
-  Project, 
-  ProjectDocument, 
-  ProjectEquipment, 
+import projectService, {
+  Project,
+  ProjectDocument,
+  ProjectEquipment,
   ProjectIssue,
   ProjectNote,
   ProjectTeam,
-  ProjectDates 
+  ProjectDates,
 } from '../../api/projectService';
 import CurrencyDisplay from '../../components/common/CurrencyDisplay';
 
@@ -88,11 +88,7 @@ function TabPanel(props: TabPanelProps) {
       aria-labelledby={`project-tab-${index}`}
       {...other}
     >
-      {value === index && (
-        <Box sx={{ p: 3 }}>
-          {children}
-        </Box>
-      )}
+      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
     </div>
   );
 }
@@ -102,7 +98,7 @@ const statusColors = {
   active: 'primary',
   on_hold: 'warning',
   completed: 'success',
-  cancelled: 'error'
+  cancelled: 'error',
 } as const;
 
 // Stage labels and colors
@@ -112,7 +108,7 @@ const stageLabels = {
   scheduled: 'Scheduled',
   in_progress: 'In Progress',
   inspection: 'Inspection',
-  completed: 'Completed'
+  completed: 'Completed',
 };
 
 const stageColors = {
@@ -121,7 +117,7 @@ const stageColors = {
   scheduled: 'info',
   in_progress: 'warning',
   inspection: 'secondary',
-  completed: 'success'
+  completed: 'success',
 } as const;
 
 // Issue priority colors
@@ -129,7 +125,7 @@ const priorityColors = {
   low: 'info',
   medium: 'success',
   high: 'warning',
-  critical: 'error'
+  critical: 'error',
 } as const;
 
 const ProjectDetails = () => {
@@ -140,33 +136,33 @@ const ProjectDetails = () => {
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // State for edit mode
   const [editMode, setEditMode] = useState(false);
   const [editData, setEditData] = useState<Partial<Project>>({});
-  
+
   // State for tabs
   const [tabValue, setTabValue] = useState(0);
-  
+
   // State for dialogs
   const [deleteDialog, setDeleteDialog] = useState(false);
   const [noteDialog, setNoteDialog] = useState(false);
   const [issueDialog, setIssueDialog] = useState(false);
   const [documentDialog, setDocumentDialog] = useState(false);
   const [equipmentDialog, setEquipmentDialog] = useState(false);
-  
+
   // State for new items
   const [newNote, setNewNote] = useState('');
   const [newIssue, setNewIssue] = useState({
     title: '',
     description: '',
-    priority: 'medium'
+    priority: 'medium',
   });
   const [newDocument, setNewDocument] = useState({
     type: 'design',
     name: '',
     fileUrl: '',
-    notes: ''
+    notes: '',
   });
   const [newEquipment, setNewEquipment] = useState({
     type: 'panel',
@@ -174,17 +170,17 @@ const ProjectDetails = () => {
     model: '',
     quantity: 1,
     serialNumber: '',
-    notes: ''
+    notes: '',
   });
 
   // Fetch project data
   const fetchProject = async () => {
     if (!id) return;
-    
+
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await projectService.getProject(id);
       setProject(response.data.project);
       setEditData(response.data.project);
@@ -206,22 +202,24 @@ const ProjectDetails = () => {
   };
 
   // Handle edit form changes
-  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleEditChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
-    
+
     if (name.includes('.')) {
       const [parent, child] = name.split('.');
       setEditData({
         ...editData,
         [parent]: {
-          ...editData[parent as keyof typeof editData] as any,
-          [child]: value
-        }
+          ...(editData[parent as keyof typeof editData] as any),
+          [child]: value,
+        },
       });
     } else {
       setEditData({
         ...editData,
-        [name]: value
+        [name]: value,
       });
     }
   };
@@ -231,7 +229,7 @@ const ProjectDetails = () => {
     const { name, value } = e.target;
     setEditData({
       ...editData,
-      [name]: value
+      [name]: value,
     });
   };
 
@@ -240,27 +238,27 @@ const ProjectDetails = () => {
     const { name, checked } = e.target;
     setEditData({
       ...editData,
-      [name]: checked
+      [name]: checked,
     });
   };
 
   // Handle number changes
   const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    
+
     if (name.includes('.')) {
       const [parent, child] = name.split('.');
       setEditData({
         ...editData,
         [parent]: {
-          ...editData[parent as keyof typeof editData] as any,
-          [child]: parseFloat(value) || 0
-        }
+          ...(editData[parent as keyof typeof editData] as any),
+          [child]: parseFloat(value) || 0,
+        },
       });
     } else {
       setEditData({
         ...editData,
-        [name]: parseFloat(value) || 0
+        [name]: parseFloat(value) || 0,
       });
     }
   };
@@ -277,7 +275,7 @@ const ProjectDetails = () => {
   // Save project changes
   const saveProject = async () => {
     if (!id || !editData) return;
-    
+
     try {
       setLoading(true);
       await projectService.updateProject(id, editData);
@@ -292,7 +290,7 @@ const ProjectDetails = () => {
   // Delete project
   const deleteProject = async () => {
     if (!id) return;
-    
+
     try {
       await projectService.deleteProject(id);
       navigate('/projects');
@@ -304,7 +302,7 @@ const ProjectDetails = () => {
   // Add note
   const addNote = async () => {
     if (!id || !newNote.trim()) return;
-    
+
     try {
       await projectService.addNote(id, newNote);
       setNewNote('');
@@ -318,13 +316,13 @@ const ProjectDetails = () => {
   // Add issue
   const addIssue = async () => {
     if (!id || !newIssue.title.trim()) return;
-    
+
     try {
       await projectService.addIssue(id, newIssue);
       setNewIssue({
         title: '',
         description: '',
-        priority: 'medium'
+        priority: 'medium',
       });
       setIssueDialog(false);
       fetchProject();
@@ -334,11 +332,13 @@ const ProjectDetails = () => {
   };
 
   // Handle issue change
-  const handleIssueChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleIssueChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
     setNewIssue({
       ...newIssue,
-      [name]: value
+      [name]: value,
     });
   };
 
@@ -347,14 +347,16 @@ const ProjectDetails = () => {
     const { name, value } = e.target;
     setNewIssue({
       ...newIssue,
-      [name]: value
+      [name]: value,
     });
   };
 
   // Update project status
-  const updateStatus = async (status: 'active' | 'on_hold' | 'completed' | 'cancelled') => {
+  const updateStatus = async (
+    status: 'active' | 'on_hold' | 'completed' | 'cancelled'
+  ) => {
     if (!id) return;
-    
+
     try {
       await projectService.updateStatus(id, status);
       fetchProject();
@@ -364,9 +366,17 @@ const ProjectDetails = () => {
   };
 
   // Update project stage
-  const updateStage = async (stage: 'planning' | 'permitting' | 'scheduled' | 'in_progress' | 'inspection' | 'completed') => {
+  const updateStage = async (
+    stage:
+      | 'planning'
+      | 'permitting'
+      | 'scheduled'
+      | 'in_progress'
+      | 'inspection'
+      | 'completed'
+  ) => {
     if (!id) return;
-    
+
     try {
       await projectService.updateStage(id, stage);
       fetchProject();
@@ -409,42 +419,55 @@ const ProjectDetails = () => {
     <Box sx={{ flexGrow: 1 }}>
       {/* Breadcrumbs navigation */}
       <Breadcrumbs sx={{ mb: 2 }}>
-        <Link component={RouterLink} color="inherit" to="/dashboard" underline="hover">
+        <Link
+          component={RouterLink}
+          color="inherit"
+          to="/dashboard"
+          underline="hover"
+        >
           Dashboard
         </Link>
-        <Link component={RouterLink} color="inherit" to="/projects" underline="hover">
+        <Link
+          component={RouterLink}
+          color="inherit"
+          to="/projects"
+          underline="hover"
+        >
           Projects
         </Link>
-        <Typography color="text.primary">
-          {project.name}
-        </Typography>
+        <Typography color="text.primary">{project.name}</Typography>
       </Breadcrumbs>
-      
+
       {/* Header with actions */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 3,
+        }}
+      >
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <IconButton sx={{ mr: 1 }} onClick={() => navigate('/projects')}>
             <ArrowBackIcon />
           </IconButton>
-          <Typography variant="h4">
-            {project.name}
-          </Typography>
+          <Typography variant="h4">{project.name}</Typography>
         </Box>
-        
+
         <Box>
           {!editMode ? (
             <>
-              <Button 
-                variant="outlined" 
-                startIcon={<EditIcon />} 
+              <Button
+                variant="outlined"
+                startIcon={<EditIcon />}
                 onClick={toggleEditMode}
                 sx={{ mr: 1 }}
               >
                 Edit
               </Button>
-              <Button 
-                variant="outlined" 
-                color="error" 
+              <Button
+                variant="outlined"
+                color="error"
                 startIcon={<DeleteIcon />}
                 onClick={() => setDeleteDialog(true)}
               >
@@ -453,17 +476,17 @@ const ProjectDetails = () => {
             </>
           ) : (
             <>
-              <Button 
-                variant="contained" 
-                color="primary" 
-                startIcon={<SaveIcon />} 
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<SaveIcon />}
                 onClick={saveProject}
                 sx={{ mr: 1 }}
               >
                 Save
               </Button>
-              <Button 
-                variant="outlined" 
+              <Button
+                variant="outlined"
                 startIcon={<CancelIcon />}
                 onClick={toggleEditMode}
               >
@@ -473,29 +496,39 @@ const ProjectDetails = () => {
           )}
         </Box>
       </Box>
-      
+
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
         </Alert>
       )}
-      
+
       {/* Status and Stage Pills */}
       <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
-        <Chip 
-          label={project.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-          color={statusColors[project.status as keyof typeof statusColors] || 'default'}
+        <Chip
+          label={project.status
+            .replace('_', ' ')
+            .replace(/\b\w/g, (l) => l.toUpperCase())}
+          color={
+            statusColors[project.status as keyof typeof statusColors] ||
+            'default'
+          }
         />
-        <Chip 
-          label={stageLabels[project.stage as keyof typeof stageLabels] || project.stage}
-          color={stageColors[project.stage as keyof typeof stageColors] || 'default'}
+        <Chip
+          label={
+            stageLabels[project.stage as keyof typeof stageLabels] ||
+            project.stage
+          }
+          color={
+            stageColors[project.stage as keyof typeof stageColors] || 'default'
+          }
         />
       </Box>
-      
+
       {/* Tabs */}
       <Paper sx={{ mb: 3 }}>
-        <Tabs 
-          value={tabValue} 
+        <Tabs
+          value={tabValue}
           onChange={handleTabChange}
           variant="scrollable"
           scrollButtons="auto"
@@ -509,7 +542,7 @@ const ProjectDetails = () => {
           <Tab label="Financials" />
           <Tab label="Notes" />
         </Tabs>
-        
+
         {/* Overview Tab */}
         <TabPanel value={tabValue} index={0}>
           <Grid container spacing={3}>
@@ -520,10 +553,12 @@ const ProjectDetails = () => {
                     Project Information
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
-                  
+
                   <Grid container spacing={2}>
                     <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">Project Name</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Project Name
+                      </Typography>
                       {editMode ? (
                         <TextField
                           fullWidth
@@ -539,9 +574,11 @@ const ProjectDetails = () => {
                         </Typography>
                       )}
                     </Grid>
-                    
+
                     <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">Status</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Status
+                      </Typography>
                       {editMode ? (
                         <FormControl fullWidth size="small" sx={{ mt: 1 }}>
                           <InputLabel>Status</InputLabel>
@@ -559,17 +596,25 @@ const ProjectDetails = () => {
                         </FormControl>
                       ) : (
                         <Box sx={{ mt: 0.5 }}>
-                          <Chip 
-                            label={project.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                            color={statusColors[project.status as keyof typeof statusColors] || 'default'} 
+                          <Chip
+                            label={project.status
+                              .replace('_', ' ')
+                              .replace(/\b\w/g, (l) => l.toUpperCase())}
+                            color={
+                              statusColors[
+                                project.status as keyof typeof statusColors
+                              ] || 'default'
+                            }
                             size="small"
                           />
                         </Box>
                       )}
                     </Grid>
-                    
+
                     <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">Stage</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Stage
+                      </Typography>
                       {editMode ? (
                         <FormControl fullWidth size="small" sx={{ mt: 1 }}>
                           <InputLabel>Stage</InputLabel>
@@ -589,43 +634,66 @@ const ProjectDetails = () => {
                         </FormControl>
                       ) : (
                         <Box sx={{ mt: 0.5 }}>
-                          <Chip 
-                            label={stageLabels[project.stage as keyof typeof stageLabels] || project.stage}
-                            color={stageColors[project.stage as keyof typeof stageColors] || 'default'} 
+                          <Chip
+                            label={
+                              stageLabels[
+                                project.stage as keyof typeof stageLabels
+                              ] || project.stage
+                            }
+                            color={
+                              stageColors[
+                                project.stage as keyof typeof stageColors
+                              ] || 'default'
+                            }
                             size="small"
                           />
                         </Box>
                       )}
                     </Grid>
-                    
+
                     <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">Customer</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Customer
+                      </Typography>
                       <Typography variant="body1" sx={{ mt: 0.5 }}>
                         {project.customer.firstName} {project.customer.lastName}
                       </Typography>
                     </Grid>
-                    
+
                     <Grid item xs={12}>
-                      <Typography variant="subtitle2" color="text.secondary">Installation Address</Typography>
-                      <Typography variant="body1" sx={{ mt: 0.5, display: 'flex', alignItems: 'center' }}>
-                        <HomeIcon fontSize="small" sx={{ mr: 0.5, color: 'action.active' }} />
-                        {project.installAddress.street}, {project.installAddress.city}, {project.installAddress.state} {project.installAddress.zipCode}
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Installation Address
+                      </Typography>
+                      <Typography
+                        variant="body1"
+                        sx={{ mt: 0.5, display: 'flex', alignItems: 'center' }}
+                      >
+                        <HomeIcon
+                          fontSize="small"
+                          sx={{ mr: 0.5, color: 'action.active' }}
+                        />
+                        {project.installAddress.street},{' '}
+                        {project.installAddress.city},{' '}
+                        {project.installAddress.state}{' '}
+                        {project.installAddress.zipCode}
                       </Typography>
                     </Grid>
                   </Grid>
                 </CardContent>
               </Card>
-              
+
               <Card sx={{ mt: 2 }}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
                     System Specifications
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
-                  
+
                   <Grid container spacing={2}>
                     <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">System Size</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        System Size
+                      </Typography>
                       {editMode ? (
                         <TextField
                           fullWidth
@@ -643,9 +711,11 @@ const ProjectDetails = () => {
                         </Typography>
                       )}
                     </Grid>
-                    
+
                     <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">Panel Count</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Panel Count
+                      </Typography>
                       {editMode ? (
                         <TextField
                           fullWidth
@@ -663,9 +733,11 @@ const ProjectDetails = () => {
                         </Typography>
                       )}
                     </Grid>
-                    
+
                     <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">Panel Type</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Panel Type
+                      </Typography>
                       {editMode ? (
                         <TextField
                           fullWidth
@@ -681,9 +753,11 @@ const ProjectDetails = () => {
                         </Typography>
                       )}
                     </Grid>
-                    
+
                     <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">Inverter Type</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Inverter Type
+                      </Typography>
                       {editMode ? (
                         <TextField
                           fullWidth
@@ -699,22 +773,28 @@ const ProjectDetails = () => {
                         </Typography>
                       )}
                     </Grid>
-                    
+
                     <Grid item xs={12}>
-                      <Typography variant="subtitle2" color="text.secondary">Battery System</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Battery System
+                      </Typography>
                       {editMode ? (
                         <>
                           <FormControlLabel
                             control={
                               <Switch
-                                checked={editData.includesBattery || project.includesBattery}
+                                checked={
+                                  editData.includesBattery ||
+                                  project.includesBattery
+                                }
                                 onChange={handleBooleanChange}
                                 name="includesBattery"
                               />
                             }
                             label="Includes Battery"
                           />
-                          {(editData.includesBattery || project.includesBattery) && (
+                          {(editData.includesBattery ||
+                            project.includesBattery) && (
                             <Grid container spacing={2} sx={{ mt: 1 }}>
                               <Grid item xs={12} sm={6}>
                                 <TextField
@@ -722,7 +802,11 @@ const ProjectDetails = () => {
                                   size="small"
                                   label="Battery Type"
                                   name="batteryType"
-                                  value={editData.batteryType || project.batteryType || ''}
+                                  value={
+                                    editData.batteryType ||
+                                    project.batteryType ||
+                                    ''
+                                  }
                                   onChange={handleEditChange}
                                 />
                               </Grid>
@@ -734,7 +818,11 @@ const ProjectDetails = () => {
                                   name="batteryCount"
                                   type="number"
                                   inputProps={{ min: 0 }}
-                                  value={editData.batteryCount || project.batteryCount || 0}
+                                  value={
+                                    editData.batteryCount ||
+                                    project.batteryCount ||
+                                    0
+                                  }
                                   onChange={handleNumberChange}
                                 />
                               </Grid>
@@ -757,7 +845,7 @@ const ProjectDetails = () => {
                 </CardContent>
               </Card>
             </Grid>
-            
+
             <Grid item xs={12} md={6}>
               <Card>
                 <CardContent>
@@ -765,7 +853,7 @@ const ProjectDetails = () => {
                     Project Team
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
-                  
+
                   <List dense>
                     <ListItem>
                       <ListItemAvatar>
@@ -776,9 +864,9 @@ const ProjectDetails = () => {
                       <ListItemText
                         primary="Project Manager"
                         secondary={
-                          project.team.projectManager ? 
-                          `${project.team.projectManager.firstName} ${project.team.projectManager.lastName}` : 
-                          'Unassigned'
+                          project.team.projectManager
+                            ? `${project.team.projectManager.firstName} ${project.team.projectManager.lastName}`
+                            : 'Unassigned'
                         }
                       />
                     </ListItem>
@@ -791,9 +879,9 @@ const ProjectDetails = () => {
                       <ListItemText
                         primary="Sales Representative"
                         secondary={
-                          project.team.salesRep ? 
-                          `${project.team.salesRep.firstName} ${project.team.salesRep.lastName}` : 
-                          'Unassigned'
+                          project.team.salesRep
+                            ? `${project.team.salesRep.firstName} ${project.team.salesRep.lastName}`
+                            : 'Unassigned'
                         }
                       />
                     </ListItem>
@@ -806,14 +894,14 @@ const ProjectDetails = () => {
                       <ListItemText
                         primary="Designer"
                         secondary={
-                          project.team.designer ? 
-                          `${project.team.designer.firstName} ${project.team.designer.lastName}` : 
-                          'Unassigned'
+                          project.team.designer
+                            ? `${project.team.designer.firstName} ${project.team.designer.lastName}`
+                            : 'Unassigned'
                         }
                       />
                     </ListItem>
                   </List>
-                  
+
                   <Button
                     fullWidth
                     variant="outlined"
@@ -825,53 +913,65 @@ const ProjectDetails = () => {
                   </Button>
                 </CardContent>
               </Card>
-              
+
               <Card sx={{ mt: 2 }}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
                     Key Dates
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
-                  
+
                   <Grid container spacing={2}>
                     <Grid item xs={6}>
-                      <Typography variant="subtitle2" color="text.secondary">Planning Completed</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Planning Completed
+                      </Typography>
                       <Typography variant="body1">
                         {formatDate(project.dates?.planningCompleted)}
                       </Typography>
                     </Grid>
                     <Grid item xs={6}>
-                      <Typography variant="subtitle2" color="text.secondary">Permit Submitted</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Permit Submitted
+                      </Typography>
                       <Typography variant="body1">
                         {formatDate(project.dates?.permitSubmitted)}
                       </Typography>
                     </Grid>
                     <Grid item xs={6}>
-                      <Typography variant="subtitle2" color="text.secondary">Installation Scheduled</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Installation Scheduled
+                      </Typography>
                       <Typography variant="body1">
                         {formatDate(project.dates?.scheduledInstallation)}
                       </Typography>
                     </Grid>
                     <Grid item xs={6}>
-                      <Typography variant="subtitle2" color="text.secondary">Installation Completed</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Installation Completed
+                      </Typography>
                       <Typography variant="body1">
                         {formatDate(project.dates?.installationCompleted)}
                       </Typography>
                     </Grid>
                     <Grid item xs={6}>
-                      <Typography variant="subtitle2" color="text.secondary">Inspection Completed</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Inspection Completed
+                      </Typography>
                       <Typography variant="body1">
                         {formatDate(project.dates?.inspectionCompleted)}
                       </Typography>
                     </Grid>
                     <Grid item xs={6}>
-                      <Typography variant="subtitle2" color="text.secondary">System Activation</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        System Activation
+                      </Typography>
                       <Typography variant="body1">
                         {formatDate(project.dates?.systemActivation)}
                       </Typography>
                     </Grid>
                   </Grid>
-                  
+
                   <Button
                     fullWidth
                     variant="outlined"
@@ -883,15 +983,20 @@ const ProjectDetails = () => {
                   </Button>
                 </CardContent>
               </Card>
-              
+
               <Card sx={{ mt: 2 }}>
                 <CardContent>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                    <Typography variant="h6">
-                      Recent Issues
-                    </Typography>
-                    <Button 
-                      size="small" 
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      mb: 1,
+                    }}
+                  >
+                    <Typography variant="h6">Recent Issues</Typography>
+                    <Button
+                      size="small"
                       startIcon={<AddIcon />}
                       onClick={() => setIssueDialog(true)}
                     >
@@ -899,17 +1004,28 @@ const ProjectDetails = () => {
                     </Button>
                   </Box>
                   <Divider sx={{ mb: 2 }} />
-                  
+
                   {!project.issues || project.issues.length === 0 ? (
                     <Typography variant="body2" color="text.secondary">
                       No open issues for this project.
                     </Typography>
                   ) : (
                     <List dense>
-                      {(project.issues.filter(issue => issue.status !== 'closed').slice(0, 2) || []).map((issue, index) => (
+                      {(
+                        project.issues
+                          .filter((issue) => issue.status !== 'closed')
+                          .slice(0, 2) || []
+                      ).map((issue, index) => (
                         <ListItem key={index} divider={index < 1}>
                           <ListItemAvatar>
-                            <Avatar sx={{ bgcolor: priorityColors[issue.priority as keyof typeof priorityColors] || 'default' }}>
+                            <Avatar
+                              sx={{
+                                bgcolor:
+                                  priorityColors[
+                                    issue.priority as keyof typeof priorityColors
+                                  ] || 'default',
+                              }}
+                            >
                               <WarningIcon />
                             </Avatar>
                           </ListItemAvatar>
@@ -917,11 +1033,18 @@ const ProjectDetails = () => {
                             primary={issue.title}
                             secondary={
                               <>
-                                <Typography variant="caption" component="span" color="text.secondary">
-                                  {issue.priority.toUpperCase()} priority • {issue.status.replace('_', ' ')}
+                                <Typography
+                                  variant="caption"
+                                  component="span"
+                                  color="text.secondary"
+                                >
+                                  {issue.priority.toUpperCase()} priority •{' '}
+                                  {issue.status.replace('_', ' ')}
                                 </Typography>
                                 <Typography variant="body2" component="p">
-                                  {issue.description.length > 60 ? `${issue.description.substring(0, 60)}...` : issue.description}
+                                  {issue.description.length > 60
+                                    ? `${issue.description.substring(0, 60)}...`
+                                    : issue.description}
                                 </Typography>
                               </>
                             }
@@ -942,7 +1065,7 @@ const ProjectDetails = () => {
             </Grid>
           </Grid>
         </TabPanel>
-        
+
         {/* Customer Tab */}
         <TabPanel value={tabValue} index={1}>
           <Grid container spacing={3}>
@@ -953,40 +1076,69 @@ const ProjectDetails = () => {
                     Customer Information
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
-                  
+
                   <Grid container spacing={2}>
                     <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">Name</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Name
+                      </Typography>
                       <Typography variant="body1" sx={{ mt: 0.5 }}>
                         {project.customer.firstName} {project.customer.lastName}
                       </Typography>
                     </Grid>
-                    
+
                     <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">Email</Typography>
-                      <Typography variant="body1" sx={{ mt: 0.5, display: 'flex', alignItems: 'center' }}>
-                        <EmailIcon fontSize="small" sx={{ mr: 0.5, color: 'action.active' }} />
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Email
+                      </Typography>
+                      <Typography
+                        variant="body1"
+                        sx={{ mt: 0.5, display: 'flex', alignItems: 'center' }}
+                      >
+                        <EmailIcon
+                          fontSize="small"
+                          sx={{ mr: 0.5, color: 'action.active' }}
+                        />
                         {project.customer.email}
                       </Typography>
                     </Grid>
-                    
+
                     <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">Phone</Typography>
-                      <Typography variant="body1" sx={{ mt: 0.5, display: 'flex', alignItems: 'center' }}>
-                        <PhoneIcon fontSize="small" sx={{ mr: 0.5, color: 'action.active' }} />
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Phone
+                      </Typography>
+                      <Typography
+                        variant="body1"
+                        sx={{ mt: 0.5, display: 'flex', alignItems: 'center' }}
+                      >
+                        <PhoneIcon
+                          fontSize="small"
+                          sx={{ mr: 0.5, color: 'action.active' }}
+                        />
                         {project.customer.phone}
                       </Typography>
                     </Grid>
-                    
+
                     <Grid item xs={12}>
-                      <Typography variant="subtitle2" color="text.secondary">Customer Address</Typography>
-                      <Typography variant="body1" sx={{ mt: 0.5, display: 'flex', alignItems: 'center' }}>
-                        <HomeIcon fontSize="small" sx={{ mr: 0.5, color: 'action.active' }} />
-                        {project.customer.address.street}, {project.customer.address.city}, {project.customer.address.state} {project.customer.address.zipCode}
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Customer Address
+                      </Typography>
+                      <Typography
+                        variant="body1"
+                        sx={{ mt: 0.5, display: 'flex', alignItems: 'center' }}
+                      >
+                        <HomeIcon
+                          fontSize="small"
+                          sx={{ mr: 0.5, color: 'action.active' }}
+                        />
+                        {project.customer.address.street},{' '}
+                        {project.customer.address.city},{' '}
+                        {project.customer.address.state}{' '}
+                        {project.customer.address.zipCode}
                       </Typography>
                     </Grid>
                   </Grid>
-                  
+
                   <Button
                     fullWidth
                     variant="outlined"
@@ -999,7 +1151,7 @@ const ProjectDetails = () => {
                 </CardContent>
               </Card>
             </Grid>
-            
+
             <Grid item xs={12} md={6}>
               <Card>
                 <CardContent>
@@ -1007,7 +1159,7 @@ const ProjectDetails = () => {
                     Installation Address
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
-                  
+
                   {editMode ? (
                     <Grid container spacing={2}>
                       <Grid item xs={12}>
@@ -1016,7 +1168,10 @@ const ProjectDetails = () => {
                           size="small"
                           label="Street"
                           name="installAddress.street"
-                          value={editData.installAddress?.street || project.installAddress.street}
+                          value={
+                            editData.installAddress?.street ||
+                            project.installAddress.street
+                          }
                           onChange={handleEditChange}
                         />
                       </Grid>
@@ -1026,7 +1181,10 @@ const ProjectDetails = () => {
                           size="small"
                           label="City"
                           name="installAddress.city"
-                          value={editData.installAddress?.city || project.installAddress.city}
+                          value={
+                            editData.installAddress?.city ||
+                            project.installAddress.city
+                          }
                           onChange={handleEditChange}
                         />
                       </Grid>
@@ -1036,7 +1194,10 @@ const ProjectDetails = () => {
                           size="small"
                           label="State"
                           name="installAddress.state"
-                          value={editData.installAddress?.state || project.installAddress.state}
+                          value={
+                            editData.installAddress?.state ||
+                            project.installAddress.state
+                          }
                           onChange={handleEditChange}
                         />
                       </Grid>
@@ -1046,7 +1207,10 @@ const ProjectDetails = () => {
                           size="small"
                           label="ZIP Code"
                           name="installAddress.zipCode"
-                          value={editData.installAddress?.zipCode || project.installAddress.zipCode}
+                          value={
+                            editData.installAddress?.zipCode ||
+                            project.installAddress.zipCode
+                          }
                           onChange={handleEditChange}
                         />
                       </Grid>
@@ -1056,19 +1220,30 @@ const ProjectDetails = () => {
                           size="small"
                           label="Country"
                           name="installAddress.country"
-                          value={editData.installAddress?.country || project.installAddress.country}
+                          value={
+                            editData.installAddress?.country ||
+                            project.installAddress.country
+                          }
                           onChange={handleEditChange}
                         />
                       </Grid>
                     </Grid>
                   ) : (
                     <>
-                      <Typography variant="body1" sx={{ display: 'flex', alignItems: 'center' }}>
-                        <HomeIcon fontSize="small" sx={{ mr: 0.5, color: 'action.active' }} />
+                      <Typography
+                        variant="body1"
+                        sx={{ display: 'flex', alignItems: 'center' }}
+                      >
+                        <HomeIcon
+                          fontSize="small"
+                          sx={{ mr: 0.5, color: 'action.active' }}
+                        />
                         {project.installAddress.street}
                       </Typography>
                       <Typography variant="body1" sx={{ mt: 1 }}>
-                        {project.installAddress.city}, {project.installAddress.state} {project.installAddress.zipCode}
+                        {project.installAddress.city},{' '}
+                        {project.installAddress.state}{' '}
+                        {project.installAddress.zipCode}
                       </Typography>
                       <Typography variant="body1" sx={{ mt: 0.5 }}>
                         {project.installAddress.country}
@@ -1077,18 +1252,24 @@ const ProjectDetails = () => {
                   )}
                 </CardContent>
               </Card>
-              
+
               <Card sx={{ mt: 2 }}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
                     Site Details
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
-                  
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                    This section will contain site assessment information such as roof condition, shading analysis, and other site-specific details.
+
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mb: 2 }}
+                  >
+                    This section will contain site assessment information such
+                    as roof condition, shading analysis, and other site-specific
+                    details.
                   </Typography>
-                  
+
                   <Button
                     variant="outlined"
                     startIcon={<EditIcon />}
@@ -1101,29 +1282,34 @@ const ProjectDetails = () => {
             </Grid>
           </Grid>
         </TabPanel>
-        
+
         {/* Documents Tab */}
         <TabPanel value={tabValue} index={2}>
-          <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="h6">
-              Project Documents
-            </Typography>
-            <Button 
-              variant="contained" 
+          <Box
+            sx={{
+              mb: 3,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <Typography variant="h6">Project Documents</Typography>
+            <Button
+              variant="contained"
               startIcon={<AddIcon />}
               onClick={() => setDocumentDialog(true)}
             >
               Add Document
             </Button>
           </Box>
-          
+
           {!project.documents || project.documents.length === 0 ? (
             <Paper sx={{ p: 4, textAlign: 'center' }}>
               <Typography variant="body1" color="text.secondary" gutterBottom>
                 No documents have been added for this project yet.
               </Typography>
-              <Button 
-                variant="outlined" 
+              <Button
+                variant="outlined"
                 startIcon={<AddIcon />}
                 sx={{ mt: 2 }}
                 onClick={() => setDocumentDialog(true)}
@@ -1148,7 +1334,8 @@ const ProjectDetails = () => {
                     <TableRow key={doc._id} hover>
                       <TableCell>{doc.name}</TableCell>
                       <TableCell>
-                        {doc.type.charAt(0).toUpperCase() + doc.type.slice(1).replace('_', ' ')}
+                        {doc.type.charAt(0).toUpperCase() +
+                          doc.type.slice(1).replace('_', ' ')}
                       </TableCell>
                       <TableCell>
                         {doc.uploadedBy.firstName} {doc.uploadedBy.lastName}
@@ -1175,29 +1362,34 @@ const ProjectDetails = () => {
             </TableContainer>
           )}
         </TabPanel>
-        
+
         {/* Equipment Tab */}
         <TabPanel value={tabValue} index={3}>
-          <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="h6">
-              Project Equipment
-            </Typography>
-            <Button 
-              variant="contained" 
+          <Box
+            sx={{
+              mb: 3,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <Typography variant="h6">Project Equipment</Typography>
+            <Button
+              variant="contained"
               startIcon={<AddIcon />}
               onClick={() => setEquipmentDialog(true)}
             >
               Add Equipment
             </Button>
           </Box>
-          
+
           {!project.equipment || project.equipment.length === 0 ? (
             <Paper sx={{ p: 4, textAlign: 'center' }}>
               <Typography variant="body1" color="text.secondary" gutterBottom>
                 No equipment has been added for this project yet.
               </Typography>
-              <Button 
-                variant="outlined" 
+              <Button
+                variant="outlined"
                 startIcon={<AddIcon />}
                 sx={{ mt: 2 }}
                 onClick={() => setEquipmentDialog(true)}
@@ -1236,29 +1428,34 @@ const ProjectDetails = () => {
             </TableContainer>
           )}
         </TabPanel>
-        
+
         {/* Issues Tab */}
         <TabPanel value={tabValue} index={4}>
-          <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="h6">
-              Project Issues
-            </Typography>
-            <Button 
-              variant="contained" 
+          <Box
+            sx={{
+              mb: 3,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <Typography variant="h6">Project Issues</Typography>
+            <Button
+              variant="contained"
               startIcon={<AddIcon />}
               onClick={() => setIssueDialog(true)}
             >
               Report Issue
             </Button>
           </Box>
-          
+
           {!project.issues || project.issues.length === 0 ? (
             <Paper sx={{ p: 4, textAlign: 'center' }}>
               <Typography variant="body1" color="text.secondary" gutterBottom>
                 No issues have been reported for this project yet.
               </Typography>
-              <Button 
-                variant="outlined" 
+              <Button
+                variant="outlined"
                 startIcon={<AddIcon />}
                 sx={{ mt: 2 }}
                 onClick={() => setIssueDialog(true)}
@@ -1271,48 +1468,85 @@ const ProjectDetails = () => {
               {(project.issues || []).map((issue, index) => (
                 <Grid item xs={12} key={index}>
                   <Paper sx={{ p: 2 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Box
+                      sx={{ display: 'flex', justifyContent: 'space-between' }}
+                    >
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Avatar sx={{ bgcolor: priorityColors[issue.priority as keyof typeof priorityColors] || 'default', mr: 2 }}>
+                        <Avatar
+                          sx={{
+                            bgcolor:
+                              priorityColors[
+                                issue.priority as keyof typeof priorityColors
+                              ] || 'default',
+                            mr: 2,
+                          }}
+                        >
                           <WarningIcon />
                         </Avatar>
                         <Box>
                           <Typography variant="h6">{issue.title}</Typography>
                           <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
-                            <Chip 
-                              label={issue.priority.toUpperCase()} 
-                              size="small" 
-                              color={priorityColors[issue.priority as keyof typeof priorityColors] || 'default'} 
+                            <Chip
+                              label={issue.priority.toUpperCase()}
+                              size="small"
+                              color={
+                                priorityColors[
+                                  issue.priority as keyof typeof priorityColors
+                                ] || 'default'
+                              }
                             />
-                            <Chip 
-                              label={issue.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())} 
-                              size="small" 
+                            <Chip
+                              label={issue.status
+                                .replace('_', ' ')
+                                .replace(/\b\w/g, (l) => l.toUpperCase())}
+                              size="small"
                             />
                           </Box>
                         </Box>
                       </Box>
                       <Typography variant="body2" color="text.secondary">
-                        Reported: {new Date(issue.reportedAt).toLocaleDateString()}
+                        Reported:{' '}
+                        {new Date(issue.reportedAt).toLocaleDateString()}
                       </Typography>
                     </Box>
-                    
+
                     <Typography variant="body1" sx={{ mt: 2 }}>
                       {issue.description}
                     </Typography>
-                    
+
                     {issue.resolutionNotes && (
-                      <Box sx={{ mt: 2, p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
-                        <Typography variant="subtitle2">Resolution Notes:</Typography>
-                        <Typography variant="body2">{issue.resolutionNotes}</Typography>
+                      <Box
+                        sx={{
+                          mt: 2,
+                          p: 2,
+                          bgcolor: 'background.default',
+                          borderRadius: 1,
+                        }}
+                      >
+                        <Typography variant="subtitle2">
+                          Resolution Notes:
+                        </Typography>
+                        <Typography variant="body2">
+                          {issue.resolutionNotes}
+                        </Typography>
                       </Box>
                     )}
-                    
-                    <Box sx={{ mt: 2, display: 'flex', justifyContent: 'space-between' }}>
+
+                    <Box
+                      sx={{
+                        mt: 2,
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                      }}
+                    >
                       <Typography variant="body2" color="text.secondary">
-                        Reported by: {issue.reportedBy.firstName} {issue.reportedBy.lastName}
+                        Reported by: {issue.reportedBy.firstName}{' '}
+                        {issue.reportedBy.lastName}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        {issue.assignedTo ? `Assigned to: ${issue.assignedTo.firstName} ${issue.assignedTo.lastName}` : 'Unassigned'}
+                        {issue.assignedTo
+                          ? `Assigned to: ${issue.assignedTo.firstName} ${issue.assignedTo.lastName}`
+                          : 'Unassigned'}
                       </Typography>
                     </Box>
                   </Paper>
@@ -1321,17 +1555,19 @@ const ProjectDetails = () => {
             </Grid>
           )}
         </TabPanel>
-        
+
         {/* Timeline Tab */}
         <TabPanel value={tabValue} index={5}>
           <Typography variant="h6" gutterBottom>
             Project Timeline
           </Typography>
-          
+
           <Paper sx={{ p: 3 }}>
             <Grid container spacing={2}>
               <Grid item xs={12} md={4}>
-                <Typography variant="subtitle1" gutterBottom>Project Milestones</Typography>
+                <Typography variant="subtitle1" gutterBottom>
+                  Project Milestones
+                </Typography>
                 <List dense>
                   <ListItem>
                     <ListItemText
@@ -1359,14 +1595,18 @@ const ProjectDetails = () => {
                   </ListItem>
                 </List>
               </Grid>
-              
+
               <Grid item xs={12} md={4}>
-                <Typography variant="subtitle1" gutterBottom>Installation Phase</Typography>
+                <Typography variant="subtitle1" gutterBottom>
+                  Installation Phase
+                </Typography>
                 <List dense>
                   <ListItem>
                     <ListItemText
                       primary="Installation Scheduled"
-                      secondary={formatDate(project.dates?.scheduledInstallation)}
+                      secondary={formatDate(
+                        project.dates?.scheduledInstallation
+                      )}
                     />
                   </ListItem>
                   <ListItem>
@@ -1378,14 +1618,18 @@ const ProjectDetails = () => {
                   <ListItem>
                     <ListItemText
                       primary="Installation Completed"
-                      secondary={formatDate(project.dates?.installationCompleted)}
+                      secondary={formatDate(
+                        project.dates?.installationCompleted
+                      )}
                     />
                   </ListItem>
                 </List>
               </Grid>
-              
+
               <Grid item xs={12} md={4}>
-                <Typography variant="subtitle1" gutterBottom>Completion Phase</Typography>
+                <Typography variant="subtitle1" gutterBottom>
+                  Completion Phase
+                </Typography>
                 <List dense>
                   <ListItem>
                     <ListItemText
@@ -1402,7 +1646,9 @@ const ProjectDetails = () => {
                   <ListItem>
                     <ListItemText
                       primary="Utility Interconnection"
-                      secondary={formatDate(project.dates?.utilityInterconnection)}
+                      secondary={formatDate(
+                        project.dates?.utilityInterconnection
+                      )}
                     />
                   </ListItem>
                   <ListItem>
@@ -1420,20 +1666,17 @@ const ProjectDetails = () => {
                 </List>
               </Grid>
             </Grid>
-            
+
             {editMode && (
               <Box sx={{ mt: 3 }}>
-                <Button
-                  variant="outlined"
-                  startIcon={<EditIcon />}
-                >
+                <Button variant="outlined" startIcon={<EditIcon />}>
                   Edit Timeline Dates
                 </Button>
               </Box>
             )}
           </Paper>
         </TabPanel>
-        
+
         {/* Financials Tab */}
         <TabPanel value={tabValue} index={6}>
           <Grid container spacing={3}>
@@ -1444,10 +1687,12 @@ const ProjectDetails = () => {
                     Financial Summary
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
-                  
+
                   <Grid container spacing={2}>
                     <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">Contract Value</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Contract Value
+                      </Typography>
                       {editMode ? (
                         <TextField
                           fullWidth
@@ -1455,59 +1700,87 @@ const ProjectDetails = () => {
                           name="financials.totalContractValue"
                           type="number"
                           inputProps={{ min: 0, step: 0.01 }}
-                          value={editData.financials?.totalContractValue || project.financials.totalContractValue}
+                          value={
+                            editData.financials?.totalContractValue ||
+                            project.financials.totalContractValue
+                          }
                           onChange={handleNumberChange}
                           sx={{ mt: 1 }}
                         />
                       ) : (
                         <Typography variant="h6" sx={{ mt: 0.5 }}>
-                          <CurrencyDisplay amount={project.financials.totalContractValue} />
+                          <CurrencyDisplay
+                            amount={project.financials.totalContractValue}
+                          />
                         </Typography>
                       )}
                     </Grid>
-                    
+
                     <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">Total Expenses</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Total Expenses
+                      </Typography>
                       <Typography variant="h6" sx={{ mt: 0.5 }}>
-                        <CurrencyDisplay amount={(project.financials.totalExpenses || 0)} />
+                        <CurrencyDisplay
+                          amount={project.financials.totalExpenses || 0}
+                        />
                       </Typography>
                     </Grid>
-                    
+
                     <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">Projected Profit</Typography>
-                      <Typography variant="h6" sx={{ mt: 0.5, color: (project.financials.projectedProfit || 0) > 0 ? 'success.main' : 'error.main' }}>
-                        <CurrencyDisplay amount={(project.financials.projectedProfit || 0)} />
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Projected Profit
+                      </Typography>
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          mt: 0.5,
+                          color:
+                            (project.financials.projectedProfit || 0) > 0
+                              ? 'success.main'
+                              : 'error.main',
+                        }}
+                      >
+                        <CurrencyDisplay
+                          amount={project.financials.projectedProfit || 0}
+                        />
                       </Typography>
                     </Grid>
-                    
+
                     <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">Margin</Typography>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Margin
+                      </Typography>
                       <Typography variant="h6" sx={{ mt: 0.5 }}>
-                        {project.financials.projectedProfit && project.financials.totalContractValue ? 
-                          `${((project.financials.projectedProfit / project.financials.totalContractValue) * 100).toFixed(1)}%` : 
-                          'N/A'}
+                        {project.financials.projectedProfit &&
+                        project.financials.totalContractValue
+                          ? `${((project.financials.projectedProfit / project.financials.totalContractValue) * 100).toFixed(1)}%`
+                          : 'N/A'}
                       </Typography>
                     </Grid>
                   </Grid>
                 </CardContent>
               </Card>
-              
+
               <Card sx={{ mt: 2 }}>
                 <CardContent>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                    <Typography variant="h6">
-                      Payment Schedule
-                    </Typography>
-                    <Button 
-                      size="small" 
-                      startIcon={<AddIcon />}
-                    >
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      mb: 1,
+                    }}
+                  >
+                    <Typography variant="h6">Payment Schedule</Typography>
+                    <Button size="small" startIcon={<AddIcon />}>
                       Add Payment
                     </Button>
                   </Box>
                   <Divider sx={{ mb: 2 }} />
-                  
-                  {!project.financials.paymentSchedule || project.financials.paymentSchedule.length === 0 ? (
+
+                  {!project.financials.paymentSchedule ||
+                  project.financials.paymentSchedule.length === 0 ? (
                     <Typography variant="body2" color="text.secondary">
                       No payment schedule has been defined yet.
                     </Typography>
@@ -1523,20 +1796,39 @@ const ProjectDetails = () => {
                           </TableRow>
                         </TableHead>
                         <TableBody>
-                          {(project.financials.paymentSchedule || []).map((payment, index) => (
-                            <TableRow key={index} hover>
-                              <TableCell>{payment.name}</TableCell>
-                              <TableCell>${payment.amount.toLocaleString()}</TableCell>
-                              <TableCell>
-                                <Chip 
-                                  label={payment.status.charAt(0).toUpperCase() + payment.status.slice(1)} 
-                                  color={payment.status === 'paid' ? 'success' : payment.status === 'overdue' ? 'error' : 'default'} 
-                                  size="small"
-                                />
-                              </TableCell>
-                              <TableCell>{payment.dueDate ? new Date(payment.dueDate).toLocaleDateString() : 'N/A'}</TableCell>
-                            </TableRow>
-                          ))}
+                          {(project.financials.paymentSchedule || []).map(
+                            (payment, index) => (
+                              <TableRow key={index} hover>
+                                <TableCell>{payment.name}</TableCell>
+                                <TableCell>
+                                  ${payment.amount.toLocaleString()}
+                                </TableCell>
+                                <TableCell>
+                                  <Chip
+                                    label={
+                                      payment.status.charAt(0).toUpperCase() +
+                                      payment.status.slice(1)
+                                    }
+                                    color={
+                                      payment.status === 'paid'
+                                        ? 'success'
+                                        : payment.status === 'overdue'
+                                          ? 'error'
+                                          : 'default'
+                                    }
+                                    size="small"
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  {payment.dueDate
+                                    ? new Date(
+                                        payment.dueDate
+                                      ).toLocaleDateString()
+                                    : 'N/A'}
+                                </TableCell>
+                              </TableRow>
+                            )
+                          )}
                         </TableBody>
                       </Table>
                     </TableContainer>
@@ -1544,24 +1836,27 @@ const ProjectDetails = () => {
                 </CardContent>
               </Card>
             </Grid>
-            
+
             <Grid item xs={12} md={6}>
               <Card>
                 <CardContent>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                    <Typography variant="h6">
-                      Expenses
-                    </Typography>
-                    <Button 
-                      size="small" 
-                      startIcon={<AddIcon />}
-                    >
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      mb: 1,
+                    }}
+                  >
+                    <Typography variant="h6">Expenses</Typography>
+                    <Button size="small" startIcon={<AddIcon />}>
                       Add Expense
                     </Button>
                   </Box>
                   <Divider sx={{ mb: 2 }} />
-                  
-                  {!project.financials.expenses || project.financials.expenses.length === 0 ? (
+
+                  {!project.financials.expenses ||
+                  project.financials.expenses.length === 0 ? (
                     <Typography variant="body2" color="text.secondary">
                       No expenses have been recorded yet.
                     </Typography>
@@ -1577,50 +1872,76 @@ const ProjectDetails = () => {
                           </TableRow>
                         </TableHead>
                         <TableBody>
-                          {(project.financials.expenses || []).map((expense, index) => (
-                            <TableRow key={index} hover>
-                              <TableCell>{expense.category.charAt(0).toUpperCase() + expense.category.slice(1)}</TableCell>
-                              <TableCell>{expense.description}</TableCell>
-                              <TableCell>${expense.amount.toLocaleString()}</TableCell>
-                              <TableCell>{new Date(expense.date).toLocaleDateString()}</TableCell>
-                            </TableRow>
-                          ))}
+                          {(project.financials.expenses || []).map(
+                            (expense, index) => (
+                              <TableRow key={index} hover>
+                                <TableCell>
+                                  {expense.category.charAt(0).toUpperCase() +
+                                    expense.category.slice(1)}
+                                </TableCell>
+                                <TableCell>{expense.description}</TableCell>
+                                <TableCell>
+                                  ${expense.amount.toLocaleString()}
+                                </TableCell>
+                                <TableCell>
+                                  {new Date(expense.date).toLocaleDateString()}
+                                </TableCell>
+                              </TableRow>
+                            )
+                          )}
                         </TableBody>
                       </Table>
                     </TableContainer>
                   )}
                 </CardContent>
               </Card>
-              
+
               <Card sx={{ mt: 2 }}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
                     Financial Documents
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
-                  
+
                   <List dense>
-                    {project.documents?.filter(doc => ['contract', 'invoice', 'receipt'].includes(doc.type)).length ? (
-                      project.documents?.filter(doc => ['contract', 'invoice', 'receipt'].includes(doc.type)).map((doc, index) => (
-                        <ListItem key={index} divider={index < project.documents!.filter(doc => ['contract', 'invoice', 'receipt'].includes(doc.type)).length - 1}>
-                          <ListItemAvatar>
-                            <Avatar>
-                              <FileIcon />
-                            </Avatar>
-                          </ListItemAvatar>
-                          <ListItemText
-                            primary={doc.name}
-                            secondary={`${doc.type.charAt(0).toUpperCase() + doc.type.slice(1)} • ${new Date(doc.uploadedAt).toLocaleDateString()}`}
-                          />
-                          <Button
-                            size="small"
-                            href={doc.fileUrl}
-                            target="_blank"
+                    {project.documents?.filter((doc) =>
+                      ['contract', 'invoice', 'receipt'].includes(doc.type)
+                    ).length ? (
+                      project.documents
+                        ?.filter((doc) =>
+                          ['contract', 'invoice', 'receipt'].includes(doc.type)
+                        )
+                        .map((doc, index) => (
+                          <ListItem
+                            key={index}
+                            divider={
+                              index <
+                              project.documents!.filter((doc) =>
+                                ['contract', 'invoice', 'receipt'].includes(
+                                  doc.type
+                                )
+                              ).length -
+                                1
+                            }
                           >
-                            View
-                          </Button>
-                        </ListItem>
-                      ))
+                            <ListItemAvatar>
+                              <Avatar>
+                                <FileIcon />
+                              </Avatar>
+                            </ListItemAvatar>
+                            <ListItemText
+                              primary={doc.name}
+                              secondary={`${doc.type.charAt(0).toUpperCase() + doc.type.slice(1)} • ${new Date(doc.uploadedAt).toLocaleDateString()}`}
+                            />
+                            <Button
+                              size="small"
+                              href={doc.fileUrl}
+                              target="_blank"
+                            >
+                              View
+                            </Button>
+                          </ListItem>
+                        ))
                     ) : (
                       <Typography variant="body2" color="text.secondary">
                         No financial documents have been uploaded yet.
@@ -1632,29 +1953,34 @@ const ProjectDetails = () => {
             </Grid>
           </Grid>
         </TabPanel>
-        
+
         {/* Notes Tab */}
         <TabPanel value={tabValue} index={7}>
-          <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="h6">
-              Project Notes
-            </Typography>
-            <Button 
-              variant="contained" 
+          <Box
+            sx={{
+              mb: 3,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <Typography variant="h6">Project Notes</Typography>
+            <Button
+              variant="contained"
               startIcon={<AddIcon />}
               onClick={() => setNoteDialog(true)}
             >
               Add Note
             </Button>
           </Box>
-          
+
           {!project.notes || project.notes.length === 0 ? (
             <Paper sx={{ p: 4, textAlign: 'center' }}>
               <Typography variant="body1" color="text.secondary" gutterBottom>
                 No notes have been added for this project yet.
               </Typography>
-              <Button 
-                variant="outlined" 
+              <Button
+                variant="outlined"
                 startIcon={<AddIcon />}
                 sx={{ mt: 2 }}
                 onClick={() => setNoteDialog(true)}
@@ -1665,7 +1991,11 @@ const ProjectDetails = () => {
           ) : (
             <List sx={{ bgcolor: 'background.paper' }}>
               {(project.notes || [])
-                .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                .sort(
+                  (a, b) =>
+                    new Date(b.createdAt).getTime() -
+                    new Date(a.createdAt).getTime()
+                )
                 .map((note, index) => (
                   <Paper sx={{ mb: 2 }} key={index}>
                     <ListItem alignItems="flex-start">
@@ -1677,13 +2007,19 @@ const ProjectDetails = () => {
                       <ListItemText
                         primary={
                           <Typography variant="subtitle2">
-                            {new Date(note.createdAt).toLocaleDateString()} at {new Date(note.createdAt).toLocaleTimeString()}
+                            {new Date(note.createdAt).toLocaleDateString()} at{' '}
+                            {new Date(note.createdAt).toLocaleTimeString()}
                           </Typography>
                         }
                         secondary={
                           <>
-                            <Typography variant="caption" display="block" color="text.secondary">
-                              By: {note.createdBy.firstName} {note.createdBy.lastName}
+                            <Typography
+                              variant="caption"
+                              display="block"
+                              color="text.secondary"
+                            >
+                              By: {note.createdBy.firstName}{' '}
+                              {note.createdBy.lastName}
                             </Typography>
                             <Typography
                               variant="body2"
@@ -1702,19 +2038,22 @@ const ProjectDetails = () => {
           )}
         </TabPanel>
       </Paper>
-      
+
       {/* Delete Confirmation Dialog */}
       <Dialog open={deleteDialog} onClose={() => setDeleteDialog(false)}>
         <DialogTitle>Confirm Delete</DialogTitle>
         <DialogContent>
-          Are you sure you want to delete this project? This action cannot be undone and will remove all project data.
+          Are you sure you want to delete this project? This action cannot be
+          undone and will remove all project data.
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteDialog(false)}>Cancel</Button>
-          <Button onClick={deleteProject} color="error" variant="contained">Delete</Button>
+          <Button onClick={deleteProject} color="error" variant="contained">
+            Delete
+          </Button>
         </DialogActions>
       </Dialog>
-      
+
       {/* Add Note Dialog */}
       <Dialog open={noteDialog} onClose={() => setNoteDialog(false)}>
         <DialogTitle>Add Note</DialogTitle>
@@ -1731,9 +2070,9 @@ const ProjectDetails = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setNoteDialog(false)}>Cancel</Button>
-          <Button 
-            onClick={addNote} 
-            color="primary" 
+          <Button
+            onClick={addNote}
+            color="primary"
             variant="contained"
             disabled={!newNote.trim()}
           >
@@ -1741,7 +2080,7 @@ const ProjectDetails = () => {
           </Button>
         </DialogActions>
       </Dialog>
-      
+
       {/* Add Issue Dialog */}
       <Dialog open={issueDialog} onClose={() => setIssueDialog(false)}>
         <DialogTitle>Report Issue</DialogTitle>
@@ -1787,9 +2126,9 @@ const ProjectDetails = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setIssueDialog(false)}>Cancel</Button>
-          <Button 
-            onClick={addIssue} 
-            color="primary" 
+          <Button
+            onClick={addIssue}
+            color="primary"
             variant="contained"
             disabled={!newIssue.title.trim()}
           >

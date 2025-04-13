@@ -29,43 +29,43 @@ const validateEquipment = [
 ];
 
 // Special routes
-router.get('/low-stock', equipmentController.getLowStockEquipment);
+router.get('/low-stock', authController.restrictTo('admin', 'manager', 'installer', 'finance'), equipmentController.getLowStockEquipment);
 
 // Main routes
 router.route('/')
-  .get(equipmentController.getAllEquipment)
-  .post(validateEquipment, equipmentController.createEquipment);
+  .get(authController.restrictTo('admin', 'manager', 'installer', 'sales', 'finance'), equipmentController.getAllEquipment)
+  .post(authController.restrictTo('admin', 'manager'), validateEquipment, equipmentController.createEquipment);
 
 router.route('/:id')
-  .get(equipmentController.getEquipment)
-  .patch(equipmentController.updateEquipment)
+  .get(authController.restrictTo('admin', 'manager', 'installer', 'sales', 'finance'), equipmentController.getEquipment)
+  .patch(authController.restrictTo('admin', 'manager'), equipmentController.updateEquipment)
   .delete(authController.restrictTo('admin', 'manager'), equipmentController.deleteEquipment);
 
 // Equipment inventory
 router.route('/:id/inventory')
-  .patch(equipmentController.updateInventory);
+  .patch(authController.restrictTo('admin', 'manager', 'installer'), equipmentController.updateInventory);
 
 // Equipment suppliers
 router.route('/:id/suppliers')
   .post([
     check('name', 'Supplier name is required').not().isEmpty()
-  ], equipmentController.addSupplier);
+  ], authController.restrictTo('admin', 'manager'), equipmentController.addSupplier);
 
 router.route('/:id/suppliers/:supplierId')
-  .patch(equipmentController.updateSupplier);
+  .patch(authController.restrictTo('admin', 'manager'), equipmentController.updateSupplier);
 
 // Compatible products
 router.route('/:id/compatible-products')
   .post([
     check('compatibleProductId', 'Compatible product ID is required').isMongoId()
-  ], equipmentController.addCompatibleProduct);
+  ], authController.restrictTo('admin', 'manager'), equipmentController.addCompatibleProduct);
 
 // Discontinue equipment
 router.route('/:id/discontinue')
-  .patch(equipmentController.discontinueEquipment);
+  .patch(authController.restrictTo('admin', 'manager'), equipmentController.discontinueEquipment);
 
 // Equipment usage
 router.route('/:id/usage')
-  .get(equipmentController.getEquipmentUsage);
+  .get(authController.restrictTo('admin', 'manager', 'installer', 'sales', 'finance'), equipmentController.getEquipmentUsage);
 
 module.exports = router;

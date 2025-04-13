@@ -28,12 +28,12 @@ const validateProposal = [
 
 // Proposal routes
 router.route('/')
-  .get(proposalController.getAllProposals)
-  .post(validateProposal, proposalController.createProposal);
+  .get(authController.restrictTo('admin', 'manager', 'sales'), proposalController.getAllProposals)
+  .post(authController.restrictTo('admin', 'manager', 'sales'), validateProposal, proposalController.createProposal);
 
 router.route('/:id')
-  .get(proposalController.getProposal)
-  .patch(proposalController.updateProposal)
+  .get(authController.restrictTo('admin', 'manager', 'sales'), proposalController.getProposal)
+  .patch(authController.restrictTo('admin', 'manager', 'sales'), proposalController.updateProposal)
   .delete(authController.restrictTo('admin', 'manager', 'sales'), proposalController.deleteProposal);
 
 // Update proposal status
@@ -47,11 +47,12 @@ router.route('/:id/status')
       'rejected',
       'expired'
     ]),
+    authController.restrictTo('admin', 'manager', 'sales'),
     proposalController.updateProposalStatus
   );
 
 // Send proposal
 router.route('/:id/send')
-  .post(proposalController.sendProposal);
+  .post(authController.restrictTo('admin', 'manager', 'sales'), proposalController.sendProposal);
 
 module.exports = router;

@@ -4,51 +4,41 @@ const mongoose = require('mongoose');
 // Get all service requests with optional filtering
 exports.getServiceRequests = async (req, res) => {
   try {
-    const {
-      customer,
-      project,
-      assignedTechnician,
-      status,
-      requestType,
-      priority,
-      search,
-      startDate,
-      endDate,
-      page = 1,
-      limit = 10,
-      sort = '-createdAt'
-    } = req.query;
+    const { page = 1, limit = 10, sort = '-createdAt', search, startDate, endDate, ...filters } = req.query;
 
-    // Build query
-    const query = {};
+    // BUILD FILTER CONDITIONS
+    const filterConditions = {};
 
-    if (customer) query.customer = customer;
-    if (project) query.project = project;
-    if (assignedTechnician) query.assignedTechnician = assignedTechnician;
-    if (status) query.status = status;
-    if (requestType) query.requestType = requestType;
-    if (priority) query.priority = priority;
+    // 1) Add standard filters from req.query (customer, project, status, etc.)
+    Object.keys(filters).forEach(key => {
+      if (filters[key] !== '' && filters[key] !== undefined && filters[key] !== null) {
+        filterConditions[key] = filters[key];
+      }
+    });
 
-    // Date range
+    // 2) Add date range filter
     if (startDate || endDate) {
-      query.createdAt = {};
-      if (startDate) query.createdAt.$gte = new Date(startDate);
-      if (endDate) query.createdAt.$lte = new Date(endDate);
+      filterConditions.createdAt = {};
+      if (startDate) filterConditions.createdAt.$gte = new Date(startDate);
+      if (endDate) filterConditions.createdAt.$lte = new Date(endDate);
     }
 
-    // Search
+    // 3) Add search filter
     if (search) {
-      query.$or = [
+      filterConditions.$or = [
         { title: { $regex: search, $options: 'i' } },
         { description: { $regex: search, $options: 'i' } }
+        // Add other fields to search if needed (e.g., customer name after population?)
       ];
     }
+
+    console.log('getServiceRequests - Final filter conditions before find:', JSON.stringify(filterConditions)); // Keep this log
 
     // Pagination
     const skip = (parseInt(page) - 1) * parseInt(limit);
 
     // Execute query
-    const serviceRequests = await ServiceRequest.find(query)
+    const serviceRequests = await ServiceRequest.find(filterConditions)
       .populate('customer', 'firstName lastName email phone')
       .populate('project', 'name projectNumber')
       .populate('assignedTechnician', 'firstName lastName email')
@@ -58,7 +48,7 @@ exports.getServiceRequests = async (req, res) => {
       .limit(parseInt(limit));
 
     // Get total count
-    const total = await ServiceRequest.countDocuments(query);
+    const total = await ServiceRequest.countDocuments(filterConditions);
 
     res.status(200).json({
       status: 'success',
@@ -140,15 +130,30 @@ exports.createServiceRequest = async (req, res) => {
 // Update a service request
 exports.updateServiceRequest = async (req, res) => {
   try {
-    // Add updatedBy field
-    req.body.updatedBy = req.user.id;
-    
+    // Exclude fields managed by other routes or immutable fields
+    const excludedFields = [
+      'customer',
+      'project',
+      'createdBy',
+      'assignedTechnician',
+      'status',
+      'scheduledDate',
+      'completionDate',
+      'notes',
+      'updatedBy' // This should be set internally, not via request body
+    ];
+    const filteredBody = { ...req.body };
+    excludedFields.forEach(el => delete filteredBody[el]);
+
+    // Add updatedBy field internally
+    filteredBody.updatedBy = req.user.id;
+
     const serviceRequest = await ServiceRequest.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      filteredBody, // Use the filtered body
       {
         new: true,
-        runValidators: true
+        runValidators: true,
       }
     )
       .populate('customer', 'firstName lastName email phone')

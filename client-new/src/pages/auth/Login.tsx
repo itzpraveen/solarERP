@@ -9,7 +9,7 @@ import {
   Paper,
   Alert,
   Grid,
-  CircularProgress
+  CircularProgress,
 } from '@mui/material';
 import { AuthContext } from '../../features/auth/context/AuthContext';
 
@@ -21,28 +21,28 @@ interface FormData {
 const Login = () => {
   const [formData, setFormData] = useState<FormData>({
     email: '',
-    password: ''
+    password: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  
+
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
-  
+
   const { email, password } = formData;
-  
+
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
     setError('');
   };
-  
+
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       const result = await login(email, password);
-      
+
       if (result.success) {
         navigate('/dashboard');
       } else {
@@ -54,7 +54,7 @@ const Login = () => {
       setLoading(false);
     }
   };
-  
+
   return (
     <Container component="main" maxWidth="xs">
       <Box
@@ -81,14 +81,19 @@ const Login = () => {
           <Typography component="h2" variant="subtitle1" sx={{ mt: 1, mb: 3 }}>
             Sign in to your account
           </Typography>
-          
+
           {error && (
             <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
               {error}
             </Alert>
           )}
-          
-          <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1, width: '100%' }}>
+
+          <Box
+            component="form"
+            onSubmit={handleSubmit}
+            noValidate
+            sx={{ mt: 1, width: '100%' }}
+          >
             <TextField
               margin="normal"
               required

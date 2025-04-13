@@ -184,7 +184,14 @@ proposalSchema.index({ createdAt: -1 });
 
 // Only query active proposals
 proposalSchema.pre(/^find/, function(next) {
-  this.find({ active: { $ne: false } });
+  // Ensure the active filter is added without overwriting other conditions
+  const currentQuery = this.getQuery();
+  if (currentQuery.active === undefined) {
+    this.where({ active: { $ne: false } });
+    console.log('Proposal find middleware - Adding active filter: { active: { $ne: false } }');
+  } else {
+     console.log('Proposal find middleware - Active filter already present:', currentQuery.active);
+  }
   next();
 });
 

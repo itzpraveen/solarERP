@@ -3,7 +3,14 @@ import apiService from './apiService';
 export interface Equipment {
   _id: string;
   name: string;
-  type: 'panel' | 'inverter' | 'battery' | 'optimizers' | 'racking' | 'monitoring' | 'other';
+  type:
+    | 'panel'
+    | 'inverter'
+    | 'battery'
+    | 'optimizers'
+    | 'racking'
+    | 'monitoring'
+    | 'other';
   manufacturer: string;
   model: string;
   unitPrice: number;
@@ -84,9 +91,15 @@ const equipmentService = {
   },
 
   // Adjust stock quantity
-  adjustStock: async (id: string, adjustment: { quantity: number; reason: string }) => {
+  adjustStock: async (
+    id: string,
+    adjustment: { quantity: number; reason: string }
+  ) => {
     try {
-      return await apiService.post(`/api/equipment/${id}/stock-adjustment`, adjustment);
+      return await apiService.post(
+        `/api/equipment/${id}/stock-adjustment`,
+        adjustment
+      );
     } catch (error) {
       throw error;
     }
@@ -100,7 +113,7 @@ const equipmentService = {
       throw error;
     }
   },
-  
+
   // Get equipment types (for dropdowns)
   getTypes: async () => {
     try {
@@ -109,7 +122,7 @@ const equipmentService = {
       throw error;
     }
   },
-  
+
   // Get manufacturers (for dropdowns)
   getManufacturers: async () => {
     try {
@@ -117,7 +130,7 @@ const equipmentService = {
     } catch (error) {
       throw error;
     }
-  }
+  },
 };
 
 export default equipmentService;

@@ -8,12 +8,12 @@ import {
   Container,
   CircularProgress,
   Alert,
-  Snackbar
+  Snackbar,
 } from '@mui/material';
-import { 
-  Person as UserIcon, 
-  Business as CompanyIcon, 
-  Settings as SystemIcon 
+import {
+  Person as UserIcon,
+  Business as CompanyIcon,
+  Settings as SystemIcon,
 } from '@mui/icons-material';
 import { AuthContext } from '../../features/auth/context/AuthContext';
 import UserSettingsForm from './UserSettingsForm';
@@ -28,7 +28,7 @@ import {
   getSystemSettings,
   updateUserSettings,
   updateCompanySettings,
-  updateSystemSettings
+  updateSystemSettings,
 } from '../../api/settingsService';
 
 interface TabPanelProps {
@@ -48,11 +48,7 @@ const TabPanel = (props: TabPanelProps) => {
       aria-labelledby={`settings-tab-${index}`}
       {...other}
     >
-      {value === index && (
-        <Box sx={{ p: 3 }}>
-          {children}
-        </Box>
-      )}
+      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
     </div>
   );
 };
@@ -60,8 +56,11 @@ const TabPanel = (props: TabPanelProps) => {
 const Settings = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [userSettings, setUserSettings] = useState<UserSettings | null>(null);
-  const [companySettings, setCompanySettings] = useState<CompanySettings | null>(null);
-  const [systemSettings, setSystemSettings] = useState<SystemSettings | null>(null);
+  const [companySettings, setCompanySettings] =
+    useState<CompanySettings | null>(null);
+  const [systemSettings, setSystemSettings] = useState<SystemSettings | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -70,14 +69,14 @@ const Settings = () => {
     const fetchSettings = async () => {
       try {
         setLoading(true);
-        
+
         // Fetch all settings in parallel
         const [user, company, system] = await Promise.all([
           getUserSettings(),
           getCompanySettings(),
-          getSystemSettings()
+          getSystemSettings(),
         ]);
-        
+
         setUserSettings(user);
         setCompanySettings(company);
         setSystemSettings(system);
@@ -146,7 +145,12 @@ const Settings = () => {
 
   if (loading && !userSettings && !companySettings && !systemSettings) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh">
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="80vh"
+      >
         <CircularProgress />
       </Box>
     );
@@ -159,24 +163,36 @@ const Settings = () => {
           <Typography variant="h4" gutterBottom>
             Settings
           </Typography>
-          
+
           <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
-            <Tabs 
-              value={activeTab} 
+            <Tabs
+              value={activeTab}
               onChange={handleTabChange}
               aria-label="settings tabs"
               variant="fullWidth"
             >
-              <Tab icon={<UserIcon />} label="User Settings" id="settings-tab-0" />
-              <Tab icon={<CompanyIcon />} label="Company Settings" id="settings-tab-1" />
-              <Tab icon={<SystemIcon />} label="System Settings" id="settings-tab-2" />
+              <Tab
+                icon={<UserIcon />}
+                label="User Settings"
+                id="settings-tab-0"
+              />
+              <Tab
+                icon={<CompanyIcon />}
+                label="Company Settings"
+                id="settings-tab-1"
+              />
+              <Tab
+                icon={<SystemIcon />}
+                label="System Settings"
+                id="settings-tab-2"
+              />
             </Tabs>
           </Box>
 
           {userSettings && (
             <TabPanel value={activeTab} index={0}>
-              <UserSettingsForm 
-                settings={userSettings} 
+              <UserSettingsForm
+                settings={userSettings}
                 onSave={handleSaveUserSettings}
                 loading={loading}
               />
@@ -185,8 +201,8 @@ const Settings = () => {
 
           {companySettings && (
             <TabPanel value={activeTab} index={1}>
-              <CompanySettingsForm 
-                settings={companySettings} 
+              <CompanySettingsForm
+                settings={companySettings}
                 onSave={handleSaveCompanySettings}
                 loading={loading}
               />
@@ -195,8 +211,8 @@ const Settings = () => {
 
           {systemSettings && (
             <TabPanel value={activeTab} index={2}>
-              <SystemSettingsForm 
-                settings={systemSettings} 
+              <SystemSettingsForm
+                settings={systemSettings}
                 onSave={handleSaveSystemSettings}
                 loading={loading}
               />
@@ -205,9 +221,9 @@ const Settings = () => {
         </Box>
       </Paper>
 
-      <Snackbar 
-        open={saveSuccess} 
-        autoHideDuration={5000} 
+      <Snackbar
+        open={saveSuccess}
+        autoHideDuration={5000}
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
@@ -216,9 +232,9 @@ const Settings = () => {
         </Alert>
       </Snackbar>
 
-      <Snackbar 
-        open={!!error} 
-        autoHideDuration={5000} 
+      <Snackbar
+        open={!!error}
+        autoHideDuration={5000}
         onClose={handleCloseSnackbar}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >

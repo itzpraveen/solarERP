@@ -94,9 +94,14 @@ exports.createEquipment = catchAsync(async (req, res, next) => {
 
 // Update equipment
 exports.updateEquipment = catchAsync(async (req, res, next) => {
-  const equipment = await Equipment.findByIdAndUpdate(req.params.id, req.body, {
+  // Exclude fields that shouldn't be updated via this generic route
+  const excludedFields = ['createdBy', 'inventory', 'suppliers', 'compatibleProducts', 'discontinued', 'active'];
+  const filteredBody = { ...req.body };
+  excludedFields.forEach(el => delete filteredBody[el]);
+
+  const equipment = await Equipment.findByIdAndUpdate(req.params.id, filteredBody, {
     new: true,
-    runValidators: true
+    runValidators: true,
   });
   
   if (!equipment) {

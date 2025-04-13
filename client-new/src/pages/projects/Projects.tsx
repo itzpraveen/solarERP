@@ -25,7 +25,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Chip
+  Chip,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -34,21 +34,24 @@ import {
   Delete as DeleteIcon,
   Refresh as RefreshIcon,
   ImportContacts as ImportIcon,
-  Download as ExportIcon
+  Download as ExportIcon,
 } from '@mui/icons-material';
-import projectService, { Project, ProjectFilter } from '../../api/projectService';
+import projectService, {
+  Project,
+  ProjectFilter,
+} from '../../api/projectService';
 import customerService from '../../api/customerService';
 
 // Project form component for creating new projects
-const ProjectForm = ({ 
-  open, 
-  onClose, 
-  onSubmit, 
-  loading 
-}: { 
-  open: boolean; 
-  onClose: () => void; 
-  onSubmit: (projectData: any) => void; 
+const ProjectForm = ({
+  open,
+  onClose,
+  onSubmit,
+  loading,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onSubmit: (projectData: any) => void;
   loading: boolean;
 }) => {
   const [formData, setFormData] = useState({
@@ -66,14 +69,16 @@ const ProjectForm = ({
       city: '',
       state: '',
       zipCode: '',
-      country: 'USA'
+      country: 'USA',
     },
     financials: {
-      totalContractValue: 0
-    }
+      totalContractValue: 0,
+    },
   });
 
-  const [customers, setCustomers] = useState<Array<{_id: string, firstName: string, lastName: string}>>([]);
+  const [customers, setCustomers] = useState<
+    Array<{ _id: string; firstName: string; lastName: string }>
+  >([]);
   const [customersLoading, setCustomersLoading] = useState(false);
 
   // Fetch customers for dropdown
@@ -95,42 +100,44 @@ const ProjectForm = ({
     }
   }, [open]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
-    
+
     if (name.includes('.')) {
       const [parent, child] = name.split('.');
       setFormData({
         ...formData,
         [parent]: {
-          ...formData[parent as keyof typeof formData] as any,
-          [child]: value
-        }
+          ...(formData[parent as keyof typeof formData] as any),
+          [child]: value,
+        },
       });
     } else {
       setFormData({
         ...formData,
-        [name]: value
+        [name]: value,
       });
     }
   };
 
   const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    
+
     if (name.includes('.')) {
       const [parent, child] = name.split('.');
       setFormData({
         ...formData,
         [parent]: {
-          ...formData[parent as keyof typeof formData] as any,
-          [child]: parseFloat(value) || 0
-        }
+          ...(formData[parent as keyof typeof formData] as any),
+          [child]: parseFloat(value) || 0,
+        },
       });
     } else {
       setFormData({
         ...formData,
-        [name]: parseFloat(value) || 0
+        [name]: parseFloat(value) || 0,
       });
     }
   };
@@ -139,7 +146,7 @@ const ProjectForm = ({
     const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: value
+      [name]: value,
     });
   };
 
@@ -147,7 +154,7 @@ const ProjectForm = ({
     const { name, checked } = e.target;
     setFormData({
       ...formData,
-      [name]: checked
+      [name]: checked,
     });
   };
 
@@ -185,7 +192,7 @@ const ProjectForm = ({
                   {customersLoading ? (
                     <MenuItem value="">Loading customers...</MenuItem>
                   ) : (
-                    customers.map(customer => (
+                    customers.map((customer) => (
                       <MenuItem key={customer._id} value={customer._id}>
                         {customer.firstName} {customer.lastName}
                       </MenuItem>
@@ -194,9 +201,11 @@ const ProjectForm = ({
                 </Select>
               </FormControl>
             </Grid>
-            
+
             <Grid item xs={12}>
-              <Typography variant="subtitle1" sx={{ mb: 1 }}>Installation Address</Typography>
+              <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                Installation Address
+              </Typography>
             </Grid>
             <Grid item xs={12}>
               <TextField
@@ -240,7 +249,9 @@ const ProjectForm = ({
             </Grid>
 
             <Grid item xs={12}>
-              <Typography variant="subtitle1" sx={{ mb: 1 }}>System Specifications</Typography>
+              <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                System Specifications
+              </Typography>
             </Grid>
             <Grid item xs={12} md={4}>
               <TextField
@@ -293,17 +304,19 @@ const ProjectForm = ({
                   name="includesBattery"
                   value={formData.includesBattery ? 'true' : 'false'}
                   label="Includes Battery"
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    includesBattery: e.target.value === 'true'
-                  })}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      includesBattery: e.target.value === 'true',
+                    })
+                  }
                 >
                   <MenuItem value="true">Yes</MenuItem>
                   <MenuItem value="false">No</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
-            
+
             {formData.includesBattery && (
               <>
                 <Grid item xs={12} md={6}>
@@ -330,7 +343,9 @@ const ProjectForm = ({
             )}
 
             <Grid item xs={12}>
-              <Typography variant="subtitle1" sx={{ mb: 1 }}>Financial Details</Typography>
+              <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                Financial Details
+              </Typography>
             </Grid>
             <Grid item xs={12}>
               <TextField
@@ -348,9 +363,9 @@ const ProjectForm = ({
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose}>Cancel</Button>
-          <Button 
-            type="submit" 
-            variant="contained" 
+          <Button
+            type="submit"
+            variant="contained"
             disabled={loading}
             startIcon={loading ? <CircularProgress size={20} /> : null}
           >
@@ -364,25 +379,25 @@ const ProjectForm = ({
 
 const Projects = () => {
   const navigate = useNavigate();
-  
+
   // State for projects data
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // State for pagination
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalProjects, setTotalProjects] = useState(0);
-  
+
   // State for filters
   const [filters, setFilters] = useState<ProjectFilter>({
-    sort: '-createdAt'
+    sort: '-createdAt',
   });
 
   // State for search
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   // State for new project form
   const [formOpen, setFormOpen] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
@@ -391,22 +406,22 @@ const Projects = () => {
   const [deleteDialog, setDeleteDialog] = useState({
     open: false,
     projectId: '',
-    projectName: ''
+    projectName: '',
   });
-  
+
   // Fetch projects data
   const fetchProjects = async () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await projectService.getProjects({
         ...filters,
         page: page + 1,
         limit: rowsPerPage,
-        search: searchTerm
+        search: searchTerm,
       });
-      
+
       setProjects(response.data.projects);
       setTotalProjects(response.results);
       setLoading(false);
@@ -415,39 +430,41 @@ const Projects = () => {
       setLoading(false);
     }
   };
-  
+
   // Initial data fetch
   useEffect(() => {
     fetchProjects();
   }, [page, rowsPerPage, filters]);
-  
+
   // Handle page change
   const handleChangePage = (_: unknown, newPage: number) => {
     setPage(newPage);
   };
-  
+
   // Handle rows per page change
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
-  
+
   // Handle filter changes
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFilters({
       ...filters,
-      [name]: value
+      [name]: value,
     });
     setPage(0);
   };
-  
+
   // Handle search
   const handleSearch = () => {
     setPage(0);
     fetchProjects();
   };
-  
+
   // Handle project creation
   const handleCreateProject = async (projectData: any) => {
     try {
@@ -461,12 +478,12 @@ const Projects = () => {
       setFormLoading(false);
     }
   };
-  
+
   // Handle project edit
   const handleEditProject = (id: string) => {
     navigate(`/projects/${id}`);
   };
-  
+
   // Handle project delete
   const handleDeleteProject = async () => {
     try {
@@ -479,7 +496,9 @@ const Projects = () => {
   };
 
   // Get chip color for project status
-  const getStatusColor = (status: string): 'primary' | 'success' | 'warning' | 'error' => {
+  const getStatusColor = (
+    status: string
+  ): 'primary' | 'success' | 'warning' | 'error' => {
     switch (status) {
       case 'active':
         return 'primary';
@@ -498,30 +517,27 @@ const Projects = () => {
   const getStageLabel = (stage: string): string => {
     return stage.charAt(0).toUpperCase() + stage.slice(1).replace('_', ' ');
   };
-  
+
   return (
     <Box sx={{ flexGrow: 1 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4">
-          Projects
-        </Typography>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 3,
+        }}
+      >
+        <Typography variant="h4">Projects</Typography>
         <Box>
-          <Button 
-            variant="outlined" 
-            startIcon={<ImportIcon />}
-            sx={{ mr: 1 }}
-          >
+          <Button variant="outlined" startIcon={<ImportIcon />} sx={{ mr: 1 }}>
             Import
           </Button>
-          <Button 
-            variant="outlined" 
-            startIcon={<ExportIcon />}
-            sx={{ mr: 1 }}
-          >
+          <Button variant="outlined" startIcon={<ExportIcon />} sx={{ mr: 1 }}>
             Export
           </Button>
-          <Button 
-            variant="contained" 
+          <Button
+            variant="contained"
             startIcon={<AddIcon />}
             onClick={() => setFormOpen(true)}
           >
@@ -529,13 +545,13 @@ const Projects = () => {
           </Button>
         </Box>
       </Box>
-      
+
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
         </Alert>
       )}
-      
+
       {/* Filters */}
       <Paper sx={{ p: 2, mb: 3 }}>
         <Grid container spacing={2} alignItems="center">
@@ -550,7 +566,7 @@ const Projects = () => {
                   <IconButton onClick={handleSearch}>
                     <SearchIcon />
                   </IconButton>
-                )
+                ),
               }}
             />
           </Grid>
@@ -618,7 +634,7 @@ const Projects = () => {
           </Grid>
         </Grid>
       </Paper>
-      
+
       {/* Projects Table */}
       <TableContainer component={Paper}>
         <Table sx={{ minWidth: 650 }}>
@@ -656,43 +672,49 @@ const Projects = () => {
                     </Typography>
                   </TableCell>
                   <TableCell>
-                    {project.customer ? `${project.customer.firstName} ${project.customer.lastName}` : 'No Customer'}
+                    {project.customer
+                      ? `${project.customer.firstName} ${project.customer.lastName}`
+                      : 'No Customer'}
                   </TableCell>
                   <TableCell>
                     <Chip
-                      label={project.status.charAt(0).toUpperCase() + project.status.slice(1).replace('_', ' ')}
+                      label={
+                        project.status.charAt(0).toUpperCase() +
+                        project.status.slice(1).replace('_', ' ')
+                      }
                       color={getStatusColor(project.status)}
                       size="small"
                     />
                   </TableCell>
-                  <TableCell>
-                    {getStageLabel(project.stage)}
-                  </TableCell>
+                  <TableCell>{getStageLabel(project.stage)}</TableCell>
                   <TableCell>
                     {project.systemSize} kW ({project.panelCount} panels)
                   </TableCell>
                   <TableCell>
-                    {project.installAddress.city}, {project.installAddress.state}
+                    {project.installAddress.city},{' '}
+                    {project.installAddress.state}
                   </TableCell>
                   <TableCell>
                     {new Date(project.createdAt).toLocaleDateString()}
                   </TableCell>
                   <TableCell>
-                    <IconButton 
-                      size="small" 
-                      color="primary" 
+                    <IconButton
+                      size="small"
+                      color="primary"
                       onClick={() => handleEditProject(project._id)}
                     >
                       <EditIcon />
                     </IconButton>
-                    <IconButton 
-                      size="small" 
+                    <IconButton
+                      size="small"
                       color="error"
-                      onClick={() => setDeleteDialog({
-                        open: true,
-                        projectId: project._id,
-                        projectName: project.name
-                      })}
+                      onClick={() =>
+                        setDeleteDialog({
+                          open: true,
+                          projectId: project._id,
+                          projectName: project.name,
+                        })
+                      }
                     >
                       <DeleteIcon />
                     </IconButton>
@@ -712,7 +734,7 @@ const Projects = () => {
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
       </TableContainer>
-      
+
       {/* Add Project Form */}
       <ProjectForm
         open={formOpen}
@@ -720,16 +742,30 @@ const Projects = () => {
         onSubmit={handleCreateProject}
         loading={formLoading}
       />
-      
+
       {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteDialog.open} onClose={() => setDeleteDialog({ ...deleteDialog, open: false })}>
+      <Dialog
+        open={deleteDialog.open}
+        onClose={() => setDeleteDialog({ ...deleteDialog, open: false })}
+      >
         <DialogTitle>Confirm Delete</DialogTitle>
         <DialogContent>
-          Are you sure you want to delete the project "{deleteDialog.projectName}"? This action cannot be undone.
+          Are you sure you want to delete the project "
+          {deleteDialog.projectName}"? This action cannot be undone.
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteDialog({ ...deleteDialog, open: false })}>Cancel</Button>
-          <Button onClick={handleDeleteProject} color="error" variant="contained">Delete</Button>
+          <Button
+            onClick={() => setDeleteDialog({ ...deleteDialog, open: false })}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleDeleteProject}
+            color="error"
+            variant="contained"
+          >
+            Delete
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

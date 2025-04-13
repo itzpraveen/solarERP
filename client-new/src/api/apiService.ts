@@ -27,7 +27,7 @@ const apiService = {
       const cacheBuster = `_cb=${new Date().getTime()}`;
       const separator = endpoint.includes('?') ? '&' : '?';
       const url = `${endpoint}${separator}${cacheBuster}`;
-      
+
       console.log('Making GET request to:', url);
       const response = await axios.get(url, config);
       console.log('GET response status:', response.status);
@@ -38,7 +38,11 @@ const apiService = {
   },
 
   // Generic POST request
-  post: async (endpoint: string, data: any = {}, config?: AxiosRequestConfig) => {
+  post: async (
+    endpoint: string,
+    data: any = {},
+    config?: AxiosRequestConfig
+  ) => {
     try {
       const response = await axios.post(endpoint, data, config);
       return response.data;
@@ -53,19 +57,20 @@ const apiService = {
       console.log(`Making PUT request to ${endpoint}`);
       console.log('Request data:', JSON.stringify(data, null, 2));
       console.log('Request config:', JSON.stringify(config, null, 2));
-      
+
       const response = await axios.put(endpoint, data, config);
       console.log('Response status:', response.status);
       console.log('Response data:', JSON.stringify(response.data, null, 2));
-      
+
       return response.data;
     } catch (error: any) {
       console.error(`API PUT error for ${endpoint}:`, error);
       console.error('Error response:', error.response?.data);
       console.error('Error status:', error.response?.status);
       console.error('Error headers:', error.response?.headers);
-      
-      const errorMessage = error.response?.data?.message || error.message || 'Network error';
+
+      const errorMessage =
+        error.response?.data?.message || error.message || 'Network error';
       throw new Error(errorMessage);
     }
   },
@@ -92,22 +97,22 @@ const apiService = {
 
   // Upload file
   uploadFile: async (
-    endpoint: string, 
-    formData: FormData, 
+    endpoint: string,
+    formData: FormData,
     onUploadProgress?: (progressEvent: AxiosProgressEvent) => void
   ) => {
     try {
       const response = await axios.post(endpoint, formData, {
         headers: {
-          'Content-Type': 'multipart/form-data'
+          'Content-Type': 'multipart/form-data',
         },
-        onUploadProgress
+        onUploadProgress,
       });
       return response.data;
     } catch (error: any) {
       throw error.response ? error.response.data : new Error('Network error');
     }
-  }
+  },
 };
 
 export default apiService;

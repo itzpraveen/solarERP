@@ -49,22 +49,22 @@ const customerService = {
     try {
       // Build query string from filters
       const queryParams = new URLSearchParams();
-      
+
       Object.entries(filters).forEach(([key, value]) => {
         if (value) {
           queryParams.append(key, value.toString());
         }
       });
-      
+
       const queryString = queryParams.toString();
       const endpoint = `/api/customers${queryString ? `?${queryString}` : ''}`;
-      
+
       return await apiService.get(endpoint);
     } catch (error) {
       throw error;
     }
   },
-  
+
   // Get customer by ID
   getCustomer: async (id: string) => {
     try {
@@ -73,16 +73,18 @@ const customerService = {
       throw error;
     }
   },
-  
+
   // Create new customer
-  createCustomer: async (customerData: Omit<Customer, '_id' | 'createdAt' | 'updatedAt'>) => {
+  createCustomer: async (
+    customerData: Omit<Customer, '_id' | 'createdAt' | 'updatedAt'>
+  ) => {
     try {
       return await apiService.post('/api/customers', customerData);
     } catch (error) {
       throw error;
     }
   },
-  
+
   // Update customer
   updateCustomer: async (id: string, customerData: Partial<Customer>) => {
     try {
@@ -91,7 +93,7 @@ const customerService = {
       throw error;
     }
   },
-  
+
   // Delete customer
   deleteCustomer: async (id: string) => {
     try {
@@ -100,16 +102,18 @@ const customerService = {
       throw error;
     }
   },
-  
+
   // Add note to customer
   addNote: async (id: string, noteText: string) => {
     try {
-      return await apiService.post(`/api/customers/${id}/notes`, { text: noteText });
+      return await apiService.post(`/api/customers/${id}/notes`, {
+        text: noteText,
+      });
     } catch (error) {
       throw error;
     }
   },
-  
+
   // Get customer projects
   getCustomerProjects: async (id: string) => {
     try {
@@ -118,18 +122,18 @@ const customerService = {
       throw error;
     }
   },
-  
+
   // Convert lead to customer using the dedicated endpoint
   convertLeadToCustomer: async (leadId: string, proposalId?: string) => {
     try {
       return await apiService.post(`/api/customers/convert-lead/${leadId}`, {
-        proposalId: proposalId
+        proposalId: proposalId,
       });
     } catch (error) {
       throw error;
     }
   },
-  
+
   // Assign customer to user
   assignCustomer: async (id: string, userId: string) => {
     try {
@@ -137,7 +141,7 @@ const customerService = {
     } catch (error) {
       throw error;
     }
-  }
+  },
 };
 
 export default customerService;

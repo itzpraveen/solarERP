@@ -22,18 +22,19 @@ const validateCustomer = [
 
 // Customer routes
 router.route('/')
-  .get(customerController.getAllCustomers)
-  .post(validateCustomer, customerController.createCustomer);
+  .get(authController.restrictTo('admin', 'manager', 'sales'), customerController.getAllCustomers)
+  .post(authController.restrictTo('admin', 'manager', 'sales'), validateCustomer, customerController.createCustomer);
 
 router.route('/:id')
-  .get(customerController.getCustomer)
-  .patch(customerController.updateCustomer)
+  .get(authController.restrictTo('admin', 'manager', 'sales'), customerController.getCustomer)
+  .patch(authController.restrictTo('admin', 'manager'), customerController.updateCustomer)
   .delete(authController.restrictTo('admin', 'manager'), customerController.deleteCustomer);
 
 // Convert lead to customer
 router.route('/convert-lead/:leadId')
   .post(
     check('proposalId', 'If provided, proposal ID must be valid').optional().isMongoId(),
+    authController.restrictTo('admin', 'manager', 'sales'),
     customerController.convertLeadToCustomer
   );
 
@@ -41,6 +42,7 @@ router.route('/convert-lead/:leadId')
 router.route('/:id/notes')
   .post(
     check('text', 'Note text is required').not().isEmpty(),
+    authController.restrictTo('admin', 'manager', 'sales', 'installer'),
     customerController.addCustomerNote
   );
 

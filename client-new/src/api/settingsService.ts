@@ -1,4 +1,4 @@
-import API from './apiService';
+// import API from './apiService'; // Removed unused import
 
 export interface UserSettings {
   id?: string;
@@ -59,7 +59,7 @@ export interface SystemSettings {
 const STORAGE_KEYS = {
   USER_SETTINGS: 'user_settings',
   COMPANY_SETTINGS: 'company_settings',
-  SYSTEM_SETTINGS: 'system_settings'
+  SYSTEM_SETTINGS: 'system_settings',
 };
 
 // Default settings
@@ -69,10 +69,10 @@ export const DEFAULT_USER_SETTINGS: UserSettings = {
   emailNotifications: true,
   dashboardLayout: {
     widgets: ['calendar', 'tasks', 'leads', 'projects'],
-    layout: 'grid'
+    layout: 'grid',
   },
   defaultView: 'calendar',
-  language: 'en'
+  language: 'en',
 };
 
 export const DEFAULT_COMPANY_SETTINGS: CompanySettings = {
@@ -83,13 +83,13 @@ export const DEFAULT_COMPANY_SETTINGS: CompanySettings = {
     city: '',
     state: '',
     zip: '',
-    country: ''
+    country: '',
   },
   phone: '',
   email: '',
   website: '',
   taxId: '',
-  companyRegistrationNumber: ''
+  companyRegistrationNumber: '',
 };
 
 export const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
@@ -99,20 +99,20 @@ export const DEFAULT_SYSTEM_SETTINGS: SystemSettings = {
     margins: {
       equipment: 0.2,
       labor: 0.3,
-      permits: 0.1
-    }
+      permits: 0.1,
+    },
   },
   unitPreferences: {
     currency: 'INR',
     distance: 'ft',
     power: 'kW',
-    energy: 'kWh'
+    energy: 'kWh',
   },
   documentTemplates: {
     proposal: 'default',
     contract: 'default',
-    invoice: 'default'
-  }
+    invoice: 'default',
+  },
 };
 
 // User Settings Functions
@@ -121,17 +121,20 @@ export const getUserSettings = async (): Promise<UserSettings> => {
     // When API endpoint is available:
     // const response = await API.get('/api/settings/user');
     // return response.data;
-    
+
     // Using localStorage for now
     const settings = localStorage.getItem(STORAGE_KEYS.USER_SETTINGS);
     if (settings) {
       return JSON.parse(settings);
     }
-    
+
     // If no settings found, return defaults with current user ID
     const userId = JSON.parse(localStorage.getItem('user') || '{}').id || '';
     const defaultSettings = { ...DEFAULT_USER_SETTINGS, userId };
-    localStorage.setItem(STORAGE_KEYS.USER_SETTINGS, JSON.stringify(defaultSettings));
+    localStorage.setItem(
+      STORAGE_KEYS.USER_SETTINGS,
+      JSON.stringify(defaultSettings)
+    );
     return defaultSettings;
   } catch (error) {
     console.error('Error fetching user settings:', error);
@@ -139,12 +142,14 @@ export const getUserSettings = async (): Promise<UserSettings> => {
   }
 };
 
-export const updateUserSettings = async (settings: UserSettings): Promise<UserSettings> => {
+export const updateUserSettings = async (
+  settings: UserSettings
+): Promise<UserSettings> => {
   try {
     // When API endpoint is available:
     // const response = await API.put('/api/settings/user', settings);
     // return response.data;
-    
+
     // Using localStorage for now
     localStorage.setItem(STORAGE_KEYS.USER_SETTINGS, JSON.stringify(settings));
     return settings;
@@ -160,15 +165,18 @@ export const getCompanySettings = async (): Promise<CompanySettings> => {
     // When API endpoint is available:
     // const response = await API.get('/api/settings/company');
     // return response.data;
-    
+
     // Using localStorage for now
     const settings = localStorage.getItem(STORAGE_KEYS.COMPANY_SETTINGS);
     if (settings) {
       return JSON.parse(settings);
     }
-    
+
     // If no settings found, return defaults
-    localStorage.setItem(STORAGE_KEYS.COMPANY_SETTINGS, JSON.stringify(DEFAULT_COMPANY_SETTINGS));
+    localStorage.setItem(
+      STORAGE_KEYS.COMPANY_SETTINGS,
+      JSON.stringify(DEFAULT_COMPANY_SETTINGS)
+    );
     return DEFAULT_COMPANY_SETTINGS;
   } catch (error) {
     console.error('Error fetching company settings:', error);
@@ -176,14 +184,19 @@ export const getCompanySettings = async (): Promise<CompanySettings> => {
   }
 };
 
-export const updateCompanySettings = async (settings: CompanySettings): Promise<CompanySettings> => {
+export const updateCompanySettings = async (
+  settings: CompanySettings
+): Promise<CompanySettings> => {
   try {
     // When API endpoint is available:
     // const response = await API.put('/api/settings/company', settings);
     // return response.data;
-    
+
     // Using localStorage for now
-    localStorage.setItem(STORAGE_KEYS.COMPANY_SETTINGS, JSON.stringify(settings));
+    localStorage.setItem(
+      STORAGE_KEYS.COMPANY_SETTINGS,
+      JSON.stringify(settings)
+    );
     return settings;
   } catch (error) {
     console.error('Error updating company settings:', error);
@@ -197,15 +210,18 @@ export const getSystemSettings = async (): Promise<SystemSettings> => {
     // When API endpoint is available:
     // const response = await API.get('/api/settings/system');
     // return response.data;
-    
+
     // Using localStorage for now
     const settings = localStorage.getItem(STORAGE_KEYS.SYSTEM_SETTINGS);
     if (settings) {
       return JSON.parse(settings);
     }
-    
+
     // If no settings found, return defaults
-    localStorage.setItem(STORAGE_KEYS.SYSTEM_SETTINGS, JSON.stringify(DEFAULT_SYSTEM_SETTINGS));
+    localStorage.setItem(
+      STORAGE_KEYS.SYSTEM_SETTINGS,
+      JSON.stringify(DEFAULT_SYSTEM_SETTINGS)
+    );
     return DEFAULT_SYSTEM_SETTINGS;
   } catch (error) {
     console.error('Error fetching system settings:', error);
@@ -213,14 +229,19 @@ export const getSystemSettings = async (): Promise<SystemSettings> => {
   }
 };
 
-export const updateSystemSettings = async (settings: SystemSettings): Promise<SystemSettings> => {
+export const updateSystemSettings = async (
+  settings: SystemSettings
+): Promise<SystemSettings> => {
   try {
     // When API endpoint is available:
     // const response = await API.put('/api/settings/system', settings);
     // return response.data;
-    
+
     // Using localStorage for now
-    localStorage.setItem(STORAGE_KEYS.SYSTEM_SETTINGS, JSON.stringify(settings));
+    localStorage.setItem(
+      STORAGE_KEYS.SYSTEM_SETTINGS,
+      JSON.stringify(settings)
+    );
     return settings;
   } catch (error) {
     console.error('Error updating system settings:', error);
@@ -231,14 +252,14 @@ export const updateSystemSettings = async (settings: SystemSettings): Promise<Sy
 // Utility function to get currency symbol from currency code
 export const getCurrencySymbol = (currencyCode: string): string => {
   const currencySymbols: Record<string, string> = {
-    'USD': '$',
-    'INR': '₹',
-    'EUR': '€',
-    'GBP': '£',
-    'CAD': 'C$',
-    'AUD': 'A$',
+    USD: '$',
+    INR: '₹',
+    EUR: '€',
+    GBP: '£',
+    CAD: 'C$',
+    AUD: 'A$',
     // Add more currencies as needed
   };
-  
+
   return currencySymbols[currencyCode] || currencyCode;
 };

@@ -25,7 +25,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Chip
+  Chip,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -34,23 +34,26 @@ import {
   Delete as DeleteIcon,
   Refresh as RefreshIcon,
   ImportContacts as ImportIcon,
-  Download as ExportIcon
+  Download as ExportIcon,
 } from '@mui/icons-material';
-import customerService, { Customer, CustomerFilter } from '../../api/customerService';
+import customerService, {
+  Customer,
+  CustomerFilter,
+} from '../../api/customerService';
 
 import leadService from '../../api/leadService';
 
 // Customer form component for creating new customers
-const CustomerForm = ({ 
-  open, 
-  onClose, 
-  onSubmit, 
+const CustomerForm = ({
+  open,
+  onClose,
+  onSubmit,
   loading,
-  initialLeadId = '' 
-}: { 
-  open: boolean; 
-  onClose: () => void; 
-  onSubmit: (customerData: any) => void; 
+  initialLeadId = '',
+}: {
+  open: boolean;
+  onClose: () => void;
+  onSubmit: (customerData: any) => void;
   loading: boolean;
   initialLeadId?: string; // Optional ID for direct lead conversion
 }) => {
@@ -64,23 +67,23 @@ const CustomerForm = ({
       city: '',
       state: '',
       zipCode: '',
-      country: 'USA'
+      country: 'USA',
     },
     preferredContactMethod: 'email',
     leadSource: 'direct',
-    originalLead: initialLeadId || ''
+    originalLead: initialLeadId || '',
   });
-  
+
   const [leads, setLeads] = useState<any[]>([]);
   const [leadsLoading, setLeadsLoading] = useState(false);
   const [isDirectConversion, setIsDirectConversion] = useState(!!initialLeadId);
-  
+
   // Fetch leads for dropdown
   useEffect(() => {
     const fetchLeads = async () => {
       try {
         setLeadsLoading(true);
-        
+
         // If there's a direct conversion, first fetch that specific lead
         if (initialLeadId) {
           try {
@@ -88,47 +91,50 @@ const CustomerForm = ({
             const leadResponse = await leadService.getLead(initialLeadId);
             setLeads([leadResponse.data.lead]); // Put it in the leads array
             populateFormFromLead(leadResponse.data.lead);
-            console.log('Lead data fetched for direct conversion:', leadResponse.data.lead);
+            console.log(
+              'Lead data fetched for direct conversion:',
+              leadResponse.data.lead
+            );
           } catch (err) {
             console.error('Failed to fetch the specific lead:', err);
           }
-        } 
+        }
         // Otherwise fetch qualified leads that could be converted
         else {
           const response = await leadService.getLeads({
             limit: 100,
-            status: 'qualified,proposal,won' // Include qualified, proposal, and won leads
+            status: 'qualified,proposal,won', // Include qualified, proposal, and won leads
           });
           setLeads(response.data.leads);
-          
+
           // Only set a default if we have leads to choose from
           if (response.data.leads && response.data.leads.length > 0) {
-            setFormData(prev => ({
+            setFormData((prev) => ({
               ...prev,
-              originalLead: response.data.leads[0]._id
+              originalLead: response.data.leads[0]._id,
             }));
             populateFormFromLead(response.data.leads[0]);
           }
         }
-        
+
         setLeadsLoading(false);
       } catch (error) {
         console.error('Failed to fetch leads', error);
         setLeadsLoading(false);
       }
     };
-    
+
     if (open) {
       fetchLeads();
     }
   }, [open, initialLeadId]);
-  
+
   // Helper function to populate form data from a lead
   const populateFormFromLead = (lead: any) => {
     if (!lead) return;
-    
+
     // Use a callback form of setState to ensure we're working with the latest state
-    setFormData(prevData => ({
+    setFormData((prevData) => ({
       ...prevData, // Keep other fields like preferredContactMethod
       originalLead: lead._id,
       firstName: lead.firstName || '',
@@ -140,40 +146,42 @@ const CustomerForm = ({
         city: lead.address?.city || '',
         state: lead.address?.state || '',
         zipCode: lead.address?.zipCode || '',
-        country: lead.address?.country || 'USA'
+        country: lead.address?.country || 'USA',
       },
       leadSource: lead.source || 'direct',
       // Add any other fields needed for customer creation
       notes: lead.notes || [],
       monthlyElectricBill: lead.monthlyElectricBill,
       // If the lead was already contacted, set preferred contact method based on experience
-      preferredContactMethod: prevData.preferredContactMethod || 'email'
+      preferredContactMethod: prevData.preferredContactMethod || 'email',
     }));
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
-    
+
     if (name.includes('.')) {
       const [parent, child] = name.split('.');
       setFormData({
         ...formData,
         [parent]: {
-          ...formData[parent as keyof typeof formData] as any,
-          [child]: value
-        }
+          ...(formData[parent as keyof typeof formData] as any),
+          [child]: value,
+        },
       });
     } else {
       setFormData({
         ...formData,
-        [name]: value
+        [name]: value,
       });
     }
   };
 
   const handleSelectChange = (e: any) => {
     const { name, value } = e.target;
-    
+
     // If changing the lead, auto-fill customer information
     if (name === 'originalLead') {
       // If the user selected "Create new customer" (empty value)
@@ -189,27 +197,27 @@ const CustomerForm = ({
             city: '',
             state: '',
             zipCode: '',
-            country: 'USA'
+            country: 'USA',
           },
           preferredContactMethod: 'email',
           leadSource: 'direct',
-          originalLead: ''
+          originalLead: '',
         });
         return;
       }
-      
+
       // Otherwise find and populate from the selected lead
-      const selectedLead = leads.find(lead => lead._id === value);
+      const selectedLead = leads.find((lead) => lead._id === value);
       if (selectedLead) {
         populateFormFromLead(selectedLead);
         return;
       }
     }
-    
+
     // For other selects
     setFormData({
       ...formData,
-      [name]: value
+      [name]: value,
     });
   };
 
@@ -229,7 +237,9 @@ const CustomerForm = ({
             <Grid item xs={12}>
               {isDirectConversion ? (
                 <Alert severity="info" sx={{ mb: 2 }}>
-                  You are converting a lead to a customer. The information below has been pre-filled from the lead data. You can edit it if needed before creating the customer.
+                  You are converting a lead to a customer. The information below
+                  has been pre-filled from the lead data. You can edit it if
+                  needed before creating the customer.
                 </Alert>
               ) : (
                 <Box sx={{ mb: 2 }}>
@@ -237,7 +247,9 @@ const CustomerForm = ({
                     Convert Lead to Customer
                   </Typography>
                   <Typography variant="body2" color="text.secondary" paragraph>
-                    Select a lead from the dropdown to convert to a customer. The customer information will be pre-filled from the lead data.
+                    Select a lead from the dropdown to convert to a customer.
+                    The customer information will be pre-filled from the lead
+                    data.
                   </Typography>
                   <FormControl fullWidth required>
                     <InputLabel>Select Lead</InputLabel>
@@ -248,13 +260,20 @@ const CustomerForm = ({
                       onChange={handleSelectChange}
                       disabled={leadsLoading}
                     >
-                      <MenuItem value="">Create new customer (not from lead)</MenuItem>
+                      <MenuItem value="">
+                        Create new customer (not from lead)
+                      </MenuItem>
                       {leadsLoading ? (
-                        <MenuItem value="" disabled>Loading leads...</MenuItem>
+                        <MenuItem value="" disabled>
+                          Loading leads...
+                        </MenuItem>
                       ) : (
-                        leads.map(lead => (
+                        leads.map((lead) => (
                           <MenuItem key={lead._id} value={lead._id}>
-                            {lead.firstName} {lead.lastName} - {lead.email} {lead.status ? `(${lead.status.charAt(0).toUpperCase() + lead.status.slice(1)})` : ''}
+                            {lead.firstName} {lead.lastName} - {lead.email}{' '}
+                            {lead.status
+                              ? `(${lead.status.charAt(0).toUpperCase() + lead.status.slice(1)})`
+                              : ''}
                           </MenuItem>
                         ))
                       )}
@@ -381,13 +400,15 @@ const CustomerForm = ({
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose}>Cancel</Button>
-          <Button 
-            type="submit" 
-            variant="contained" 
+          <Button
+            type="submit"
+            variant="contained"
             disabled={loading}
             startIcon={loading ? <CircularProgress size={20} /> : null}
           >
-            {isDirectConversion || formData.originalLead ? 'Convert to Customer' : 'Create Customer'}
+            {isDirectConversion || formData.originalLead
+              ? 'Convert to Customer'
+              : 'Create Customer'}
           </Button>
         </DialogActions>
       </form>
@@ -398,26 +419,26 @@ const CustomerForm = ({
 const Customers = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   // State for customers data
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  
+
   // State for pagination
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [totalCustomers, setTotalCustomers] = useState(0);
-  
+
   // State for filters
   const [filters, setFilters] = useState<CustomerFilter>({
-    sort: '-createdAt'
+    sort: '-createdAt',
   });
 
   // State for search
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   // State for new customer form
   const [formOpen, setFormOpen] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
@@ -427,22 +448,22 @@ const Customers = () => {
   const [deleteDialog, setDeleteDialog] = useState({
     open: false,
     customerId: '',
-    customerName: ''
+    customerName: '',
   });
-  
+
   // Fetch customers data
   const fetchCustomers = async () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await customerService.getCustomers({
         ...filters,
         page: page + 1,
         limit: rowsPerPage,
-        search: searchTerm
+        search: searchTerm,
       });
-      
+
       setCustomers(response.data.customers);
       setTotalCustomers(response.results);
       setLoading(false);
@@ -451,30 +472,31 @@ const Customers = () => {
       setLoading(false);
     }
   };
-  
+
   // Check for direct lead conversion from URL
   const [searchParams] = useSearchParams();
-  
+
   // Initial data fetch and check for lead conversion
   useEffect(() => {
     fetchCustomers();
-    
+
     // Check if we're converting a lead directly from the URL
     const leadId = searchParams.get('convertLead');
     if (leadId) {
       setConvertLeadId(leadId);
       setFormOpen(true);
-      
+
       // Validate the lead ID exists
-      leadService.getLead(leadId)
+      leadService
+        .getLead(leadId)
         .then(() => {
-          console.log("Lead validated for conversion");
+          console.log('Lead validated for conversion');
         })
-        .catch(err => {
-          console.error("Invalid lead ID for conversion:", err);
-          setError("Could not find the lead to convert. Please try again.");
+        .catch((err) => {
+          console.error('Invalid lead ID for conversion:', err);
+          setError('Could not find the lead to convert. Please try again.');
           setFormOpen(false); // Close the form if lead doesn't exist
-          
+
           // Clear the URL parameter
           const newParams = new URLSearchParams(searchParams);
           newParams.delete('convertLead');
@@ -482,48 +504,55 @@ const Customers = () => {
         });
     }
   }, [page, rowsPerPage, filters, searchParams, navigate]);
-  
+
   // Handle page change
   const handleChangePage = (_: unknown, newPage: number) => {
     setPage(newPage);
   };
-  
+
   // Handle rows per page change
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
-  
+
   // Handle filter changes
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFilters({
       ...filters,
-      [name]: value
+      [name]: value,
     });
     setPage(0);
   };
-  
+
   // Handle search
   const handleSearch = () => {
     setPage(0);
     fetchCustomers();
   };
-  
+
   // Handle customer creation
   const handleCreateCustomer = async (customerData: any) => {
     try {
       setFormLoading(true);
       setSuccessMessage(null); // Clear any previous success messages
-      
+
       let response;
-      
+
       // If this is a lead conversion, use the dedicated endpoint
       if (customerData.originalLead) {
-        console.log('Converting lead to customer using dedicated endpoint:', customerData.originalLead);
-        response = await customerService.convertLeadToCustomer(customerData.originalLead);
+        console.log(
+          'Converting lead to customer using dedicated endpoint:',
+          customerData.originalLead
+        );
+        response = await customerService.convertLeadToCustomer(
+          customerData.originalLead
+        );
         console.log('Lead successfully converted to customer:', response);
-        
+
         // Set success message for lead conversion
         setError(null); // Clear any previous errors
         const successMsg = `Lead successfully converted to customer: ${customerData.firstName} ${customerData.lastName}`;
@@ -533,7 +562,7 @@ const Customers = () => {
         response = await customerService.createCustomer(customerData);
         console.log('Customer created successfully:', response);
       }
-      
+
       setFormOpen(false);
       setFormLoading(false);
       fetchCustomers();
@@ -543,12 +572,12 @@ const Customers = () => {
       setFormLoading(false);
     }
   };
-  
+
   // Handle customer edit
   const handleEditCustomer = (id: string) => {
     navigate(`/customers/${id}`);
   };
-  
+
   // Handle customer delete
   const handleDeleteCustomer = async () => {
     try {
@@ -559,30 +588,27 @@ const Customers = () => {
       setError(err?.message || 'Failed to delete customer');
     }
   };
-  
+
   return (
     <Box sx={{ flexGrow: 1 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4">
-          Customers
-        </Typography>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 3,
+        }}
+      >
+        <Typography variant="h4">Customers</Typography>
         <Box>
-          <Button 
-            variant="outlined" 
-            startIcon={<ImportIcon />}
-            sx={{ mr: 1 }}
-          >
+          <Button variant="outlined" startIcon={<ImportIcon />} sx={{ mr: 1 }}>
             Import
           </Button>
-          <Button 
-            variant="outlined" 
-            startIcon={<ExportIcon />}
-            sx={{ mr: 1 }}
-          >
+          <Button variant="outlined" startIcon={<ExportIcon />} sx={{ mr: 1 }}>
             Export
           </Button>
-          <Button 
-            variant="contained" 
+          <Button
+            variant="contained"
             startIcon={<AddIcon />}
             onClick={() => setFormOpen(true)}
           >
@@ -590,19 +616,19 @@ const Customers = () => {
           </Button>
         </Box>
       </Box>
-      
+
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
         </Alert>
       )}
-      
+
       {successMessage && (
         <Alert severity="success" sx={{ mb: 2 }}>
           {successMessage}
         </Alert>
       )}
-      
+
       {/* Filters */}
       <Paper sx={{ p: 2, mb: 3 }}>
         <Grid container spacing={2} alignItems="center">
@@ -617,7 +643,7 @@ const Customers = () => {
                   <IconButton onClick={handleSearch}>
                     <SearchIcon />
                   </IconButton>
-                )
+                ),
               }}
             />
           </Grid>
@@ -665,7 +691,7 @@ const Customers = () => {
           </Grid>
         </Grid>
       </Paper>
-      
+
       {/* Customers Table */}
       <TableContainer component={Paper}>
         <Table sx={{ minWidth: 650 }}>
@@ -701,7 +727,10 @@ const Customers = () => {
                     </Typography>
                     {customer.leadSource && (
                       <Chip
-                        label={customer.leadSource.charAt(0).toUpperCase() + customer.leadSource.slice(1).replace('_', ' ')}
+                        label={
+                          customer.leadSource.charAt(0).toUpperCase() +
+                          customer.leadSource.slice(1).replace('_', ' ')
+                        }
                         size="small"
                         variant="outlined"
                         sx={{ mt: 0.5 }}
@@ -710,35 +739,42 @@ const Customers = () => {
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2">{customer.email}</Typography>
-                    <Typography variant="body2" color="text.secondary">{customer.phone}</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {customer.phone}
+                    </Typography>
                   </TableCell>
                   <TableCell>
                     {customer.address.city}, {customer.address.state}
                   </TableCell>
                   <TableCell>
-                    {customer.preferredContactMethod ? 
-                      customer.preferredContactMethod.charAt(0).toUpperCase() + customer.preferredContactMethod.slice(1) : 
-                      'Email'}
+                    {customer.preferredContactMethod
+                      ? customer.preferredContactMethod
+                          .charAt(0)
+                          .toUpperCase() +
+                        customer.preferredContactMethod.slice(1)
+                      : 'Email'}
                   </TableCell>
                   <TableCell>
                     {new Date(customer.createdAt).toLocaleDateString()}
                   </TableCell>
                   <TableCell>
-                    <IconButton 
-                      size="small" 
-                      color="primary" 
+                    <IconButton
+                      size="small"
+                      color="primary"
                       onClick={() => handleEditCustomer(customer._id)}
                     >
                       <EditIcon />
                     </IconButton>
-                    <IconButton 
-                      size="small" 
+                    <IconButton
+                      size="small"
                       color="error"
-                      onClick={() => setDeleteDialog({
-                        open: true,
-                        customerId: customer._id,
-                        customerName: `${customer.firstName} ${customer.lastName}`
-                      })}
+                      onClick={() =>
+                        setDeleteDialog({
+                          open: true,
+                          customerId: customer._id,
+                          customerName: `${customer.firstName} ${customer.lastName}`,
+                        })
+                      }
                     >
                       <DeleteIcon />
                     </IconButton>
@@ -758,14 +794,14 @@ const Customers = () => {
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
       </TableContainer>
-      
+
       {/* Add Customer Form */}
       <CustomerForm
         open={formOpen}
         onClose={() => {
           setFormOpen(false);
           setConvertLeadId(''); // Clear the conversion ID when closing
-          
+
           // If we came from a lead conversion URL, go back to leads
           if (convertLeadId) {
             const newSearch = new URLSearchParams(searchParams);
@@ -777,16 +813,30 @@ const Customers = () => {
         loading={formLoading}
         initialLeadId={convertLeadId}
       />
-      
+
       {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteDialog.open} onClose={() => setDeleteDialog({ ...deleteDialog, open: false })}>
+      <Dialog
+        open={deleteDialog.open}
+        onClose={() => setDeleteDialog({ ...deleteDialog, open: false })}
+      >
         <DialogTitle>Confirm Delete</DialogTitle>
         <DialogContent>
-          Are you sure you want to delete the customer record for {deleteDialog.customerName}? This action cannot be undone.
+          Are you sure you want to delete the customer record for{' '}
+          {deleteDialog.customerName}? This action cannot be undone.
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteDialog({ ...deleteDialog, open: false })}>Cancel</Button>
-          <Button onClick={handleDeleteCustomer} color="error" variant="contained">Delete</Button>
+          <Button
+            onClick={() => setDeleteDialog({ ...deleteDialog, open: false })}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleDeleteCustomer}
+            color="error"
+            variant="contained"
+          >
+            Delete
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>

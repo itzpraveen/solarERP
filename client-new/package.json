@@ -41,13 +41,10 @@
     "start": "react-app-rewired start",
     "build": "react-app-rewired build",
     "test": "react-app-rewired test",
-    "eject": "react-scripts eject"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
+    "eject": "react-scripts eject",
+    "lint": "eslint src/**/*.{ts,tsx}",
+    "lint:fix": "eslint src/**/*.{ts,tsx} --fix && prettier --write src/**/*.{ts,tsx}",
+    "format": "prettier --write src/**/*.{ts,tsx,css,json}"
   },
   "browserslist": {
     "production": [
@@ -62,6 +59,10 @@
     ]
   },
   "devDependencies": {
+    "customize-cra": "^1.0.0",
+    "eslint-config-prettier": "^10.1.2",
+    "eslint-plugin-prettier": "^5.2.6",
+    "prettier": "^3.5.3",
     "react-app-rewired": "^2.2.1"
   }
 }

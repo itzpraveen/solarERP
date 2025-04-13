@@ -8,41 +8,41 @@ router.use(authController.protect);
 
 // Get all service requests & Create new service request
 router.route('/')
-  .get(serviceRequestController.getServiceRequests)
-  .post(serviceRequestController.createServiceRequest);
+  .get(authController.restrictTo('admin', 'manager', 'installer'), serviceRequestController.getServiceRequests)
+  .post(authController.restrictTo('admin', 'manager', 'installer'), serviceRequestController.createServiceRequest);
 
 // Get, update, delete specific service request by ID
 router.route('/:id')
-  .get(serviceRequestController.getServiceRequest)
-  .put(serviceRequestController.updateServiceRequest)
-  .delete(serviceRequestController.deleteServiceRequest);
+  .get(authController.restrictTo('admin', 'manager', 'installer'), serviceRequestController.getServiceRequest)
+  .put(authController.restrictTo('admin', 'manager', 'installer'), serviceRequestController.updateServiceRequest)
+  .delete(authController.restrictTo('admin', 'manager'), serviceRequestController.deleteServiceRequest);
 
 // Add note to service request
 router.route('/:id/notes')
-  .post(serviceRequestController.addNote);
+  .post(authController.restrictTo('admin', 'manager', 'installer'), serviceRequestController.addNote);
 
 // Assign technician to service request
 router.route('/:id/assign')
-  .put(serviceRequestController.assignTechnician);
+  .put(authController.restrictTo('admin', 'manager'), serviceRequestController.assignTechnician);
 
 // Update status of service request
 router.route('/:id/status')
-  .put(serviceRequestController.updateStatus);
+  .put(authController.restrictTo('admin', 'manager', 'installer'), serviceRequestController.updateStatus);
 
 // Schedule service request
 router.route('/:id/schedule')
-  .put(serviceRequestController.scheduleService);
+  .put(authController.restrictTo('admin', 'manager'), serviceRequestController.scheduleService);
 
 // Complete service request
 router.route('/:id/complete')
-  .put(serviceRequestController.completeService);
+  .put(authController.restrictTo('admin', 'manager', 'installer'), serviceRequestController.completeService);
 
 // Get service requests for a specific customer
 router.route('/customer/:customerId')
-  .get(serviceRequestController.getCustomerServiceRequests);
+  .get(authController.restrictTo('admin', 'manager', 'installer'), serviceRequestController.getCustomerServiceRequests);
 
 // Get service requests for a specific project
 router.route('/project/:projectId')
-  .get(serviceRequestController.getProjectServiceRequests);
+  .get(authController.restrictTo('admin', 'manager', 'installer'), serviceRequestController.getProjectServiceRequests);
 
 module.exports = router;

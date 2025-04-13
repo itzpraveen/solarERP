@@ -6,17 +6,31 @@ const sendEmail = require('../../utils/email');
 
 // Get all proposals with filtering, sorting, and pagination
 exports.getAllProposals = catchAsync(async (req, res, next) => {
-  // BUILD QUERY
-  // 1) Filtering
-  const queryObj = { ...req.query };
-  const excludedFields = ['page', 'sort', 'limit', 'fields'];
-  excludedFields.forEach(el => delete queryObj[el]);
-  
-  // 2) Advanced filtering
-  let queryStr = JSON.stringify(queryObj);
-  queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, match => `$${match}`);
-  
-  let query = Proposal.find(JSON.parse(queryStr));
+  // BUILD FILTER CONDITIONS
+  const filterConditions = {};
+
+  // 1) Add standard filters from req.query (e.g., status, lead)
+  const standardFilters = { ...req.query };
+  // Exclude fields handled separately (pagination, sorting, etc.)
+  const excludedFields = ['page', 'sort', 'limit', 'fields', '_cb'];
+  excludedFields.forEach(el => delete standardFilters[el]);
+
+  Object.keys(standardFilters).forEach(key => {
+    if (standardFilters[key] !== '' && standardFilters[key] !== undefined && standardFilters[key] !== null) {
+      // Basic equality check for fields like status, lead
+      filterConditions[key] = standardFilters[key];
+      // Add logic here if range filters (gte, lte) or search are needed
+    }
+  });
+  console.log('getAllProposals - Standard filters applied:', JSON.stringify(filterConditions));
+
+  // Note: The 'active' filter is handled by the pre-find middleware in the model.
+
+  console.log('getAllProposals - Final filter conditions before find:', JSON.stringify(filterConditions));
+
+  // BUILD QUERY (Find + Sort + Paginate)
+  // Apply all calculated filters at once. The 'active' filter is added by pre-find middleware.
+  let query = Proposal.find(filterConditions);
   
   // 3) Sorting
   if (req.query.sort) {
@@ -98,9 +112,14 @@ exports.createProposal = catchAsync(async (req, res, next) => {
 
 // Update proposal
 exports.updateProposal = catchAsync(async (req, res, next) => {
-  const proposal = await Proposal.findByIdAndUpdate(req.params.id, req.body, {
+  // Exclude fields that shouldn't be updated via this generic route
+  const excludedFields = ['lead', 'createdBy', 'status', 'sentDate', 'viewedDate', 'acceptedDate', 'rejectedDate', 'active'];
+  const filteredBody = { ...req.body };
+  excludedFields.forEach(el => delete filteredBody[el]);
+
+  const proposal = await Proposal.findByIdAndUpdate(req.params.id, filteredBody, {
     new: true,
-    runValidators: true
+    runValidators: true,
   });
   
   if (!proposal) {

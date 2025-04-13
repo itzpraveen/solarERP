@@ -7,7 +7,7 @@ import { getSystemSettings, getCurrencySymbol } from '../api/settingsService';
  * @returns Formatted currency string
  */
 export const formatCurrency = async (
-  amount: number, 
+  amount: number,
   overrideCurrency?: string
 ): Promise<string> => {
   try {
@@ -15,13 +15,13 @@ export const formatCurrency = async (
     const settings = await getSystemSettings();
     const currencyCode = overrideCurrency || settings.unitPreferences.currency;
     const symbol = getCurrencySymbol(currencyCode);
-    
+
     // Format the amount with the appropriate currency symbol
     // For INR, the convention is to use ₹ before the amount without a space
     if (currencyCode === 'INR') {
       return `₹${amount.toLocaleString('en-IN')}`;
     }
-    
+
     // For other currencies, use the standard format
     return `${symbol}${amount.toLocaleString()}`;
   } catch (error) {
@@ -43,13 +43,13 @@ export const formatCurrencySync = (
   currencyCode = 'INR'
 ): string => {
   const symbol = getCurrencySymbol(currencyCode);
-  
+
   // Format the amount with the appropriate currency symbol
   // For INR, the convention is to use ₹ before the amount without a space
   if (currencyCode === 'INR') {
     return `₹${amount.toLocaleString('en-IN')}`;
   }
-  
+
   // For other currencies, use the standard format
   return `${symbol}${amount.toLocaleString()}`;
 };

@@ -221,31 +221,18 @@ leadSchema.index({ 'address.zipCode': 1 });
 leadSchema.index({ createdAt: -1 });
 
 // Query middleware to only find active leads
+// Query middleware to only find active leads
 leadSchema.pre(/^find/, function(next) {
-  // Always filter out inactive leads
-  const query = { active: { $ne: false } };
-  
-  console.log('Lead find middleware - Original conditions:', JSON.stringify(this._conditions));
-  
-  // Check if we're explicitly including converted leads
-  // The controller sets includeConverted=true and removes the converted property
-  // when we want to include converted leads
-  
-  if (this._conditions.includeConverted === 'true') {
-    // If includeConverted is true, don't add the converted filter
-    console.log('Lead find middleware - Including converted leads (not adding filter)');
-  } else if ('converted' in this._conditions) {
-    // If converted is already in the conditions, use that filter
-    query.converted = this._conditions.converted;
-    console.log('Lead find middleware - Using existing converted filter:', JSON.stringify(this._conditions.converted));
+  // Ensure the active filter is added without overwriting other conditions
+  // Check if 'active' is already part of the query explicitly
+  const currentQuery = this.getQuery();
+  if (currentQuery.active === undefined) {
+    // Add the active filter using $ne: false to include true and undefined
+    this.where({ active: { $ne: false } });
+    console.log('Lead find middleware - Adding active filter: { active: { $ne: false } }');
   } else {
-    // Otherwise, add the default filter to exclude converted leads
-    query.converted = { $ne: true };
-    console.log('Lead find middleware - Adding default converted filter');
+    console.log('Lead find middleware - Active filter already present in query:', currentQuery.active);
   }
-  
-  console.log('Lead find middleware - Final query:', JSON.stringify(query));
-  this.find(query);
   next();
 });
 

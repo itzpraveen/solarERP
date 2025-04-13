@@ -68,15 +68,23 @@ const handleValidationErrorDB = err => {
  * Handle JWT error
  * @returns {AppError} - Formatted error
  */
-const handleJWTError = () =>
-  new AppError('Invalid token. Please log in again!', 401);
+const handleJWTError = () => new AppError('Invalid token. Please log in again!', 401);
 
 /**
  * Handle JWT expired error
  * @returns {AppError} - Formatted error
  */
-const handleJWTExpiredError = () =>
-  new AppError('Your token has expired! Please log in again.', 401);
+const handleJWTExpiredError = () => new AppError('Your token has expired! Please log in again.', 401);
+
+/**
+ * Handle Mongoose CastError
+ * @param {Error} err - Error object
+ * @returns {AppError} - Formatted error
+ */
+const handleCastErrorDB = err => {
+  const message = `Invalid ${err.path}: ${err.value}.`;
+  return new AppError(message, 400);
+};
 
 /**
  * Global error handler middleware
@@ -92,11 +100,12 @@ module.exports = (err, req, res, next) => {
   if (config.server.env === 'development') {
     sendErrorDev(err, res);
   } else if (config.server.env === 'production') {
-    let error = { ...err };
-    error.message = err.message;
-
+    // Use original error object for checks to preserve type information
+    let error = err;
+    
     if (error.code === 11000) error = handleDuplicateFieldsDB(error);
     if (error.name === 'ValidationError') error = handleValidationErrorDB(error);
+    if (error.name === 'CastError') error = handleCastErrorDB(error); // Added CastError handler
     if (error.name === 'JsonWebTokenError') error = handleJWTError();
     if (error.name === 'TokenExpiredError') error = handleJWTExpiredError();
 

@@ -88,22 +88,22 @@ const proposalService = {
     try {
       // Build query string from filters
       const queryParams = new URLSearchParams();
-      
+
       Object.entries(filters).forEach(([key, value]) => {
         if (value) {
           queryParams.append(key, value.toString());
         }
       });
-      
+
       const queryString = queryParams.toString();
       const endpoint = `/api/proposals${queryString ? `?${queryString}` : ''}`;
-      
+
       return await apiService.get(endpoint);
     } catch (error) {
       throw error;
     }
   },
-  
+
   // Get proposal by ID
   getProposal: async (id: string) => {
     try {
@@ -112,16 +112,21 @@ const proposalService = {
       throw error;
     }
   },
-  
+
   // Create new proposal
-  createProposal: async (proposalData: Omit<Proposal, '_id' | 'createdAt' | 'updatedAt' | 'createdBy'>) => {
+  createProposal: async (
+    proposalData: Omit<
+      Proposal,
+      '_id' | 'createdAt' | 'updatedAt' | 'createdBy'
+    >
+  ) => {
     try {
       return await apiService.post('/api/proposals', proposalData);
     } catch (error) {
       throw error;
     }
   },
-  
+
   // Update proposal
   updateProposal: async (id: string, proposalData: Partial<Proposal>) => {
     try {
@@ -130,7 +135,7 @@ const proposalService = {
       throw error;
     }
   },
-  
+
   // Delete proposal
   deleteProposal: async (id: string) => {
     try {
@@ -139,16 +144,19 @@ const proposalService = {
       throw error;
     }
   },
-  
+
   // Update proposal status
-  updateStatus: async (id: string, status: 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired') => {
+  updateStatus: async (
+    id: string,
+    status: 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired'
+  ) => {
     try {
       return await apiService.put(`/api/proposals/${id}/status`, { status });
     } catch (error) {
       throw error;
     }
   },
-  
+
   // Send proposal to lead
   sendProposal: async (id: string) => {
     try {
@@ -156,7 +164,7 @@ const proposalService = {
     } catch (error) {
       throw error;
     }
-  }
+  },
 };
 
 export default proposalService;

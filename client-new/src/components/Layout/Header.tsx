@@ -13,7 +13,7 @@ import {
   InputBase,
   Button,
   Chip,
-  useTheme
+  useTheme,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -23,7 +23,7 @@ import {
   Help as HelpIcon,
   ExitToApp as LogoutIcon,
   Person as PersonIcon,
-  WbSunny as SunIcon
+  WbSunny as SunIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../features/auth/context/AuthContext';
@@ -78,17 +78,19 @@ const Header = ({ handleDrawerToggle }: HeaderProps) => {
           >
             <MenuIcon />
           </IconButton>
-          
+
           {/* Search Bar */}
-          <Box sx={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            backgroundColor: theme.palette.grey[100], 
-            borderRadius: '50px',
-            padding: '4px 16px',
-            width: { xs: '120px', sm: '220px', md: '300px' },
-            marginRight: { xs: 1, sm: 2 }
-          }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              backgroundColor: theme.palette.grey[100],
+              borderRadius: '50px',
+              padding: '4px 16px',
+              width: { xs: '120px', sm: '220px', md: '300px' },
+              marginRight: { xs: 1, sm: 2 },
+            }}
+          >
             <SearchIcon sx={{ color: theme.palette.grey[500], mr: 1 }} />
             <InputBase
               placeholder="Search..."
@@ -100,61 +102,75 @@ const Header = ({ handleDrawerToggle }: HeaderProps) => {
 
         {/* Right side icons */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Chip 
+          <Chip
             icon={<SunIcon sx={{ color: theme.palette.warning.main }} />}
-            label="12.4 kWh" 
+            label="12.4 kWh"
             size="small"
-            sx={{ 
+            sx={{
               backgroundColor: theme.palette.warning.light,
               color: theme.palette.warning.dark,
               fontWeight: 500,
-              display: { xs: 'none', md: 'flex' }
+              display: { xs: 'none', md: 'flex' },
             }}
           />
-          
-          <IconButton color="inherit" size="small" sx={{ display: { xs: 'none', sm: 'flex' } }}>
+
+          <IconButton
+            color="inherit"
+            size="small"
+            sx={{ display: { xs: 'none', sm: 'flex' } }}
+          >
             <HelpIcon />
           </IconButton>
-          
+
           <IconButton color="inherit" size="small">
-            <Badge badgeContent={4} color="error" sx={{ '& .MuiBadge-badge': { top: 3, right: 3 } }}>
+            <Badge
+              badgeContent={4}
+              color="error"
+              sx={{ '& .MuiBadge-badge': { top: 3, right: 3 } }}
+            >
               <NotificationsIcon />
             </Badge>
           </IconButton>
-          
-          <IconButton 
-            color="inherit" 
-            size="small" 
+
+          <IconButton
+            color="inherit"
+            size="small"
             onClick={() => navigate('/settings')}
             sx={{ display: { xs: 'none', sm: 'flex' } }}
           >
             <SettingsIcon />
           </IconButton>
-          
-          <Box sx={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            ml: { xs: 1, sm: 2 }, 
-            backgroundColor: theme.palette.grey[100],
-            padding: '4px 12px',
-            borderRadius: '50px'
-          }}>
+
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              ml: { xs: 1, sm: 2 },
+              backgroundColor: theme.palette.grey[100],
+              padding: '4px 12px',
+              borderRadius: '50px',
+            }}
+          >
             <Box sx={{ display: { xs: 'none', md: 'block' }, mr: 1 }}>
               <Typography variant="body2" fontWeight={500} color="text.primary">
                 {user?.name || 'User'}
               </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: 'block' }}
+              >
                 Administrator
               </Typography>
             </Box>
 
             <Tooltip title="Account settings">
-              <IconButton 
-                onClick={handleOpenUserMenu} 
+              <IconButton
+                onClick={handleOpenUserMenu}
                 sx={{ p: 0, background: theme.palette.primary.main }}
               >
-                <Avatar 
-                  alt={user?.name || 'User'} 
+                <Avatar
+                  alt={user?.name || 'User'}
                   src={user?.avatar}
                   sx={{ width: 36, height: 36 }}
                 >
@@ -202,11 +218,17 @@ const Header = ({ handleDrawerToggle }: HeaderProps) => {
             }}
           >
             <MenuItem onClick={handleProfile} sx={{ py: 1.5 }}>
-              <PersonIcon fontSize="small" sx={{ mr: 1, color: theme.palette.text.secondary }} />
+              <PersonIcon
+                fontSize="small"
+                sx={{ mr: 1, color: theme.palette.text.secondary }}
+              />
               <Typography>Profile</Typography>
             </MenuItem>
             <MenuItem onClick={handleLogout} sx={{ py: 1.5 }}>
-              <LogoutIcon fontSize="small" sx={{ mr: 1, color: theme.palette.text.secondary }} />
+              <LogoutIcon
+                fontSize="small"
+                sx={{ mr: 1, color: theme.palette.text.secondary }}
+              />
               <Typography>Logout</Typography>
             </MenuItem>
           </Menu>

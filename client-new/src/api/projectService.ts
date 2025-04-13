@@ -52,7 +52,14 @@ export interface ProjectTeam {
 
 export interface ProjectEquipment {
   _id?: string;
-  type: 'panel' | 'inverter' | 'battery' | 'optimizers' | 'racking' | 'monitoring' | 'other';
+  type:
+    | 'panel'
+    | 'inverter'
+    | 'battery'
+    | 'optimizers'
+    | 'racking'
+    | 'monitoring'
+    | 'other';
   manufacturer: string;
   model: string;
   serialNumber?: string;
@@ -62,7 +69,14 @@ export interface ProjectEquipment {
 
 export interface ProjectDocument {
   _id?: string;
-  type: 'permit' | 'contract' | 'design' | 'inspection' | 'utility' | 'warranty' | 'other';
+  type:
+    | 'permit'
+    | 'contract'
+    | 'design'
+    | 'inspection'
+    | 'utility'
+    | 'warranty'
+    | 'other';
   name: string;
   fileUrl: string;
   uploadedBy: {
@@ -161,7 +175,13 @@ export interface Project {
     name: string;
   };
   status: 'active' | 'on_hold' | 'completed' | 'cancelled';
-  stage: 'planning' | 'permitting' | 'scheduled' | 'in_progress' | 'inspection' | 'completed';
+  stage:
+    | 'planning'
+    | 'permitting'
+    | 'scheduled'
+    | 'in_progress'
+    | 'inspection'
+    | 'completed';
   installAddress: ProjectAddress;
   systemSize: number;
   panelCount: number;
@@ -206,22 +226,22 @@ const projectService = {
     try {
       // Build query string from filters
       const queryParams = new URLSearchParams();
-      
+
       Object.entries(filters).forEach(([key, value]) => {
         if (value) {
           queryParams.append(key, value.toString());
         }
       });
-      
+
       const queryString = queryParams.toString();
       const endpoint = `/api/projects${queryString ? `?${queryString}` : ''}`;
-      
+
       return await apiService.get(endpoint);
     } catch (error) {
       throw error;
     }
   },
-  
+
   // Get project by ID
   getProject: async (id: string) => {
     try {
@@ -230,16 +250,18 @@ const projectService = {
       throw error;
     }
   },
-  
+
   // Create new project
-  createProject: async (projectData: Omit<Project, '_id' | 'createdAt' | 'updatedAt'>) => {
+  createProject: async (
+    projectData: Omit<Project, '_id' | 'createdAt' | 'updatedAt'>
+  ) => {
     try {
       return await apiService.post('/api/projects', projectData);
     } catch (error) {
       throw error;
     }
   },
-  
+
   // Update project
   updateProject: async (id: string, projectData: Partial<Project>) => {
     try {
@@ -248,7 +270,7 @@ const projectService = {
       throw error;
     }
   },
-  
+
   // Delete project
   deleteProject: async (id: string) => {
     try {
@@ -257,70 +279,107 @@ const projectService = {
       throw error;
     }
   },
-  
+
   // Update project status
-  updateStatus: async (id: string, status: 'active' | 'on_hold' | 'completed' | 'cancelled') => {
+  updateStatus: async (
+    id: string,
+    status: 'active' | 'on_hold' | 'completed' | 'cancelled'
+  ) => {
     try {
       return await apiService.put(`/api/projects/${id}/status`, { status });
     } catch (error) {
       throw error;
     }
   },
-  
+
   // Update project stage
-  updateStage: async (id: string, stage: 'planning' | 'permitting' | 'scheduled' | 'in_progress' | 'inspection' | 'completed') => {
+  updateStage: async (
+    id: string,
+    stage:
+      | 'planning'
+      | 'permitting'
+      | 'scheduled'
+      | 'in_progress'
+      | 'inspection'
+      | 'completed'
+  ) => {
     try {
       return await apiService.put(`/api/projects/${id}/stage`, { stage });
     } catch (error) {
       throw error;
     }
   },
-  
+
   // Add note to project
   addNote: async (id: string, noteText: string) => {
     try {
-      return await apiService.post(`/api/projects/${id}/notes`, { text: noteText });
+      return await apiService.post(`/api/projects/${id}/notes`, {
+        text: noteText,
+      });
     } catch (error) {
       throw error;
     }
   },
-  
+
   // Add issue to project
-  addIssue: async (id: string, issue: { title: string; description: string; priority: string }) => {
+  addIssue: async (
+    id: string,
+    issue: { title: string; description: string; priority: string }
+  ) => {
     try {
       return await apiService.post(`/api/projects/${id}/issues`, issue);
     } catch (error) {
       throw error;
     }
   },
-  
+
   // Update issue
-  updateIssue: async (projectId: string, issueId: string, issueData: Partial<ProjectIssue>) => {
+  updateIssue: async (
+    projectId: string,
+    issueId: string,
+    issueData: Partial<ProjectIssue>
+  ) => {
     try {
-      return await apiService.patch(`/api/projects/${projectId}/issues/${issueId}`, issueData);
+      return await apiService.patch(
+        `/api/projects/${projectId}/issues/${issueId}`,
+        issueData
+      );
     } catch (error) {
       throw error;
     }
   },
-  
+
   // Add document to project
-  addDocument: async (id: string, document: { type: string; name: string; fileUrl: string; notes?: string }) => {
+  addDocument: async (
+    id: string,
+    document: { type: string; name: string; fileUrl: string; notes?: string }
+  ) => {
     try {
       return await apiService.post(`/api/projects/${id}/documents`, document);
     } catch (error) {
       throw error;
     }
   },
-  
+
   // Add equipment to project
-  addEquipment: async (id: string, equipment: { type: string; manufacturer: string; model: string; quantity: number; serialNumber?: string; notes?: string }) => {
+  addEquipment: async (
+    id: string,
+    equipment: {
+      type: string;
+      manufacturer: string;
+      model: string;
+      quantity: number;
+      serialNumber?: string;
+      notes?: string;
+    }
+  ) => {
     try {
       return await apiService.post(`/api/projects/${id}/equipment`, equipment);
     } catch (error) {
       throw error;
     }
   },
-  
+
   // Update project team
   updateTeam: async (id: string, teamData: Partial<ProjectTeam>) => {
     try {
@@ -329,25 +388,44 @@ const projectService = {
       throw error;
     }
   },
-  
+
   // Add expense to project
-  addExpense: async (id: string, expense: { category: string; description: string; amount: number; vendor?: string; notes?: string }) => {
+  addExpense: async (
+    id: string,
+    expense: {
+      category: string;
+      description: string;
+      amount: number;
+      vendor?: string;
+      notes?: string;
+    }
+  ) => {
     try {
       return await apiService.post(`/api/projects/${id}/expenses`, expense);
     } catch (error) {
       throw error;
     }
   },
-  
+
   // Add payment to project
-  addPayment: async (id: string, payment: { name: string; amount: number; percentage?: number; dueDate?: string; status?: string; notes?: string }) => {
+  addPayment: async (
+    id: string,
+    payment: {
+      name: string;
+      amount: number;
+      percentage?: number;
+      dueDate?: string;
+      status?: string;
+      notes?: string;
+    }
+  ) => {
     try {
       return await apiService.post(`/api/projects/${id}/payments`, payment);
     } catch (error) {
       throw error;
     }
   },
-  
+
   // Get project timeline
   getTimeline: async (id: string) => {
     try {
@@ -355,7 +433,7 @@ const projectService = {
     } catch (error) {
       throw error;
     }
-  }
+  },
 };
 
 export default projectService;

@@ -7,7 +7,7 @@ import {
   Typography,
   Divider,
   Avatar,
-  FormHelperText
+  FormHelperText,
 } from '@mui/material';
 import { PhotoCamera } from '@mui/icons-material';
 import { CompanySettings } from '../../api/settingsService';
@@ -18,9 +18,15 @@ interface CompanySettingsFormProps {
   loading: boolean;
 }
 
-const CompanySettingsForm = ({ settings, onSave, loading }: CompanySettingsFormProps) => {
+const CompanySettingsForm = ({
+  settings,
+  onSave,
+  loading,
+}: CompanySettingsFormProps) => {
   const [formData, setFormData] = useState<CompanySettings>(settings);
-  const [logoPreview, setLogoPreview] = useState<string | null>(settings.logo || null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(
+    settings.logo || null
+  );
 
   useEffect(() => {
     setFormData(settings);
@@ -29,11 +35,11 @@ const CompanySettingsForm = ({ settings, onSave, loading }: CompanySettingsFormP
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = event.target;
-    
+
     // Handle nested address fields
     if (name.startsWith('address.')) {
       const addressField = name.split('.')[1];
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         address: {
           ...prev.address,
@@ -41,7 +47,7 @@ const CompanySettingsForm = ({ settings, onSave, loading }: CompanySettingsFormP
         },
       }));
     } else {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         [name]: value,
       }));
@@ -55,7 +61,7 @@ const CompanySettingsForm = ({ settings, onSave, loading }: CompanySettingsFormP
       reader.onloadend = () => {
         const base64String = reader.result as string;
         setLogoPreview(base64String);
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
           logo: base64String,
         }));
@@ -74,15 +80,23 @@ const CompanySettingsForm = ({ settings, onSave, loading }: CompanySettingsFormP
       <Typography variant="h6" gutterBottom>
         Company Information
       </Typography>
-      
+
       <Grid container spacing={3} mb={4}>
-        <Grid item xs={12} display="flex" justifyContent="center" flexDirection="column" alignItems="center" mb={2}>
+        <Grid
+          item
+          xs={12}
+          display="flex"
+          justifyContent="center"
+          flexDirection="column"
+          alignItems="center"
+          mb={2}
+        >
           <Avatar
             src={logoPreview || undefined}
             alt="Company Logo"
             sx={{ width: 100, height: 100, mb: 2 }}
           />
-          
+
           <Button
             variant="outlined"
             component="label"
@@ -96,7 +110,9 @@ const CompanySettingsForm = ({ settings, onSave, loading }: CompanySettingsFormP
               onChange={handleLogoChange}
             />
           </Button>
-          <FormHelperText>Upload your company logo (recommended size: 200x200px)</FormHelperText>
+          <FormHelperText>
+            Upload your company logo (recommended size: 200x200px)
+          </FormHelperText>
         </Grid>
 
         <Grid item xs={12} md={6}>
@@ -109,7 +125,7 @@ const CompanySettingsForm = ({ settings, onSave, loading }: CompanySettingsFormP
             onChange={handleChange}
           />
         </Grid>
-        
+
         <Grid item xs={12} md={6}>
           <TextField
             fullWidth
@@ -119,7 +135,7 @@ const CompanySettingsForm = ({ settings, onSave, loading }: CompanySettingsFormP
             onChange={handleChange}
           />
         </Grid>
-        
+
         <Grid item xs={12} md={6}>
           <TextField
             required
@@ -130,7 +146,7 @@ const CompanySettingsForm = ({ settings, onSave, loading }: CompanySettingsFormP
             onChange={handleChange}
           />
         </Grid>
-        
+
         <Grid item xs={12} md={6}>
           <TextField
             required
@@ -143,13 +159,13 @@ const CompanySettingsForm = ({ settings, onSave, loading }: CompanySettingsFormP
           />
         </Grid>
       </Grid>
-      
+
       <Divider sx={{ my: 3 }} />
-      
+
       <Typography variant="h6" gutterBottom>
         Address Information
       </Typography>
-      
+
       <Grid container spacing={3} mb={4}>
         <Grid item xs={12}>
           <TextField
@@ -160,7 +176,7 @@ const CompanySettingsForm = ({ settings, onSave, loading }: CompanySettingsFormP
             onChange={handleChange}
           />
         </Grid>
-        
+
         <Grid item xs={12} md={6}>
           <TextField
             fullWidth
@@ -170,7 +186,7 @@ const CompanySettingsForm = ({ settings, onSave, loading }: CompanySettingsFormP
             onChange={handleChange}
           />
         </Grid>
-        
+
         <Grid item xs={12} md={6}>
           <TextField
             fullWidth
@@ -180,7 +196,7 @@ const CompanySettingsForm = ({ settings, onSave, loading }: CompanySettingsFormP
             onChange={handleChange}
           />
         </Grid>
-        
+
         <Grid item xs={12} md={6}>
           <TextField
             fullWidth
@@ -190,7 +206,7 @@ const CompanySettingsForm = ({ settings, onSave, loading }: CompanySettingsFormP
             onChange={handleChange}
           />
         </Grid>
-        
+
         <Grid item xs={12} md={6}>
           <TextField
             fullWidth
@@ -201,13 +217,13 @@ const CompanySettingsForm = ({ settings, onSave, loading }: CompanySettingsFormP
           />
         </Grid>
       </Grid>
-      
+
       <Divider sx={{ my: 3 }} />
-      
+
       <Typography variant="h6" gutterBottom>
         Business Registration Information
       </Typography>
-      
+
       <Grid container spacing={3} mb={4}>
         <Grid item xs={12} md={6}>
           <TextField
@@ -218,7 +234,7 @@ const CompanySettingsForm = ({ settings, onSave, loading }: CompanySettingsFormP
             onChange={handleChange}
           />
         </Grid>
-        
+
         <Grid item xs={12} md={6}>
           <TextField
             fullWidth
@@ -229,7 +245,7 @@ const CompanySettingsForm = ({ settings, onSave, loading }: CompanySettingsFormP
           />
         </Grid>
       </Grid>
-      
+
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
         <Button
           type="submit"

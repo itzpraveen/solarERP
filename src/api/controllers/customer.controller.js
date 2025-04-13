@@ -6,17 +6,32 @@ const catchAsync = require('../../utils/catchAsync');
 
 // Get all customers with filtering, sorting, and pagination
 exports.getAllCustomers = catchAsync(async (req, res, next) => {
-  // BUILD QUERY
-  // 1) Filtering
-  const queryObj = { ...req.query };
-  const excludedFields = ['page', 'sort', 'limit', 'fields'];
-  excludedFields.forEach(el => delete queryObj[el]);
-  
-  // 2) Advanced filtering
-  let queryStr = JSON.stringify(queryObj);
-  queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, match => `$${match}`);
-  
-  let query = Customer.find(JSON.parse(queryStr));
+  // BUILD FILTER CONDITIONS
+  const filterConditions = {};
+
+  // 1) Add standard filters from req.query
+  const standardFilters = { ...req.query };
+  // Exclude fields handled separately (pagination, sorting, etc.)
+  const excludedFields = ['page', 'sort', 'limit', 'fields', '_cb']; // Added _cb just in case
+  excludedFields.forEach(el => delete standardFilters[el]);
+
+  Object.keys(standardFilters).forEach(key => {
+    if (standardFilters[key] !== '' && standardFilters[key] !== undefined && standardFilters[key] !== null) {
+      // Basic equality check for most fields
+      filterConditions[key] = standardFilters[key];
+      // Add logic here if range filters (gte, lte) or search are needed
+    }
+  });
+  console.log('getAllCustomers - Standard filters applied:', JSON.stringify(filterConditions));
+
+  // Note: Unlike leads, there's no 'includeConverted' concept here.
+  // The 'active' filter is handled by the pre-find middleware in the model.
+
+  console.log('getAllCustomers - Final filter conditions before find:', JSON.stringify(filterConditions));
+
+  // BUILD QUERY (Find + Sort + Paginate)
+  // Apply all calculated filters at once. The 'active' filter is added by pre-find middleware.
+  let query = Customer.find(filterConditions);
   
   // 3) Sorting
   if (req.query.sort) {

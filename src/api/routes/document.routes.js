@@ -41,27 +41,28 @@ const validateDocument = [
 ];
 
 // Search documents
-router.get('/search', documentController.searchDocuments);
+router.get('/search', authController.restrictTo('admin', 'manager', 'sales'), documentController.searchDocuments);
 
 // Main document routes
 router.route('/')
-  .get(documentController.getAllDocuments)
-  .post(upload.single('file'), validateDocument, documentController.createDocument);
+  .get(authController.restrictTo('admin', 'manager', 'sales'), documentController.getAllDocuments)
+  .post(authController.restrictTo('admin', 'manager', 'sales'), upload.single('file'), validateDocument, documentController.createDocument);
 
 router.route('/:id')
-  .get(documentController.getDocument)
-  .patch(upload.single('file'), documentController.updateDocument)
-  .delete(documentController.deleteDocument);
+  .get(authController.restrictTo('admin', 'manager', 'sales'), documentController.getDocument)
+  .patch(authController.restrictTo('admin', 'manager'), upload.single('file'), documentController.updateDocument)
+  .delete(authController.restrictTo('admin', 'manager'), documentController.deleteDocument);
 
 // Download document
-router.get('/:id/download', documentController.downloadDocument);
+router.get('/:id/download', authController.restrictTo('admin', 'manager', 'sales'), documentController.downloadDocument);
 
 // Share document
-router.post('/:id/share', documentController.shareDocument);
+router.post('/:id/share', authController.restrictTo('admin', 'manager', 'sales'), documentController.shareDocument);
 
 // Sign document
 router.post('/:id/sign', 
   check('signatureData', 'Signature data is required').not().isEmpty(),
+  authController.restrictTo('admin', 'manager', 'sales'), // Restricting internal signing for now
   documentController.signDocument
 );
 

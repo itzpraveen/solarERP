@@ -12,15 +12,15 @@ if (!fs.existsSync(uploadsDir)) {
 
 // Configure storage
 const storage = multer.diskStorage({
-  destination: function(req, file, cb) {
+  destination(req, file, cb) {
     cb(null, uploadsDir);
   },
-  filename: function(req, file, cb) {
+  filename(req, file, cb) {
     // Generate unique filename using crypto to avoid naming conflicts
     const hash = crypto.randomBytes(16).toString('hex');
     const extension = path.extname(file.originalname);
     cb(null, `${hash}${extension}`);
-  }
+  },
 });
 
 // Filter function to validate file types
@@ -46,23 +46,29 @@ const fileFilter = (req, file, cb) => {
     // Other
     'application/zip',
     'application/x-zip-compressed',
-    'application/x-7z-compressed'
+    'application/x-7z-compressed',
   ];
-  
+
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new AppError(`File type not allowed. Allowed types: ${allowedTypes.join(', ')}`, 400), false);
+    cb(
+      new AppError(
+        `File type not allowed. Allowed types: ${allowedTypes.join(', ')}`,
+        400
+      ),
+      false
+    );
   }
 };
 
 // Configure multer
 const upload = multer({
-  storage: storage,
-  fileFilter: fileFilter,
+  storage,
+  fileFilter,
   limits: {
-    fileSize: 10 * 1024 * 1024 // 10 MB
-  }
+    fileSize: 10 * 1024 * 1024, // 10 MB
+  },
 });
 
 // Export multer middleware
