@@ -228,18 +228,20 @@ leadSchema.pre(/^find/, function(next) {
   console.log('Lead find middleware - Original conditions:', JSON.stringify(this._conditions));
   
   // Check if we're explicitly including converted leads
-  // The controller sets converted: { $ne: true } when we want to exclude converted leads
-  // But the middleware was checking if the property exists, not its value
+  // The controller sets includeConverted=true and removes the converted property
+  // when we want to include converted leads
   
-  // FIX: Only add the converted filter if it's not already in the conditions
-  // Using 'in' operator to check if the property exists in the object
-  if (!('converted' in this._conditions)) {
-    query.converted = { $ne: true };
-    console.log('Lead find middleware - Adding converted filter');
-  } else {
-    // Use the converted filter from the conditions
+  if (this._conditions.includeConverted === 'true') {
+    // If includeConverted is true, don't add the converted filter
+    console.log('Lead find middleware - Including converted leads (not adding filter)');
+  } else if ('converted' in this._conditions) {
+    // If converted is already in the conditions, use that filter
     query.converted = this._conditions.converted;
     console.log('Lead find middleware - Using existing converted filter:', JSON.stringify(this._conditions.converted));
+  } else {
+    // Otherwise, add the default filter to exclude converted leads
+    query.converted = { $ne: true };
+    console.log('Lead find middleware - Adding default converted filter');
   }
   
   console.log('Lead find middleware - Final query:', JSON.stringify(query));
