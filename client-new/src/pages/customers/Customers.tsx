@@ -723,7 +723,7 @@ const Customers = () => {
                 <TableRow key={customer._id} hover>
                   <TableCell>
                     <Typography variant="body1" fontWeight="medium">
-                      {customer.firstName} {customer.lastName}
+                      {`${customer.firstName || ''} ${customer.lastName || ''}`.trim()}
                     </Typography>
                     {customer.leadSource && (
                       <Chip
@@ -738,13 +738,17 @@ const Customers = () => {
                     )}
                   </TableCell>
                   <TableCell>
-                    <Typography variant="body2">{customer.email}</Typography>
+                    <Typography variant="body2">
+                      {customer.email || 'N/A'}
+                    </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      {customer.phone}
+                      {customer.phone || 'N/A'}
                     </Typography>
                   </TableCell>
                   <TableCell>
-                    {customer.address.city}, {customer.address.state}
+                    {customer.address
+                      ? `${customer.address.city || 'N/A'}, ${customer.address.state || 'N/A'}`
+                      : 'N/A'}
                   </TableCell>
                   <TableCell>
                     {customer.preferredContactMethod
@@ -755,7 +759,9 @@ const Customers = () => {
                       : 'Email'}
                   </TableCell>
                   <TableCell>
-                    {new Date(customer.createdAt).toLocaleDateString()}
+                    {customer.createdAt
+                      ? new Date(customer.createdAt).toLocaleDateString()
+                      : 'N/A'}
                   </TableCell>
                   <TableCell>
                     <IconButton
