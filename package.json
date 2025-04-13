@@ -1,0 +1,46 @@
+{
+  "name": "solarerp",
+  "version": "1.0.0",
+  "description": "Solar ERP System for managing solar installation projects",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/scripts/verify-build.js && node src/index.js",
+    "dev": "nodemon src/server.js",
+    "test": "jest --watchAll",
+    "test:ci": "jest --ci",
+    "build": "cd client-new && CI=false npm install && CI=false npm run build",
+    "heroku-postbuild": "cd client-new && CI=false npm install && CI=false npm run build",
+    "create-admin": "node src/scripts/createAdminUser.js",
+    "postinstall": "node -e \"try { require('./src/scripts/createAdminUser.js') } catch(e) { console.log('Admin creation skipped: ' + e.message) }\""
+  },
+  "keywords": [
+    "solar",
+    "erp",
+    "project management",
+    "renewable energy"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "axios": "^0.27.2",
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "express-validator": "^7.2.1",
+    "helmet": "^8.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.12.1",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.10.0",
+    "redis": "^4.7.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.9",
+    "supertest": "^7.0.0"
+  }
+}
