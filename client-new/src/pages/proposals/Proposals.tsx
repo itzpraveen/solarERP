@@ -788,7 +788,7 @@ const Proposals = () => {
                     </Typography>
                   </TableCell>
                   <TableCell>
-                    {proposal.lead.firstName} {proposal.lead.lastName}
+                    {proposal.lead ? `${proposal.lead.firstName || ''} ${proposal.lead.lastName || ''}`.trim() : 'N/A'}
                   </TableCell>
                   <TableCell>
                     <Chip
