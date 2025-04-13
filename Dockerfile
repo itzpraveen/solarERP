@@ -12,7 +12,7 @@ COPY . .
 ENV NODE_ENV=production
 
 # Install dependencies
-RUN npm install --production
+RUN npm install
 
 # Build the client application
 RUN npm run build
