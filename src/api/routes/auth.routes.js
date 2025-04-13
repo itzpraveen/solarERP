@@ -32,7 +32,7 @@ router.post('/forgotPassword', authController.forgotPassword);
 router.patch('/resetPassword/:token', validatePasswordReset, authController.resetPassword);
 
 // Demo user creation (for development)
-router.post('/demo', authController.createDemoUser);
+// router.post('/demo', authController.createDemoUser); // Disabled for production - was causing undefined error
 
 // Protected routes
 router.use(authController.protect);
