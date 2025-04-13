@@ -60,15 +60,16 @@ exports.getAllProjects = catchAsync(async (req, res, next) => {
   
   query = query.skip(skip).limit(limit);
   
-  // EXECUTE QUERY
-  const projects = await query;
-  
+  // EXECUTE QUERY & COUNT
+  const projects = await query; // Query for the current page
+  const totalProjects = await Project.countDocuments(filterConditions); // Count total matching documents (middleware adds active:true)
+
   // SEND RESPONSE
   res.status(200).json({
     status: 'success',
-    results: projects.length,
+    results: totalProjects, // Return total count for pagination
     data: {
-      projects
+      projects // Return projects for the current page
     }
   });
 });
