@@ -57,7 +57,12 @@ exports.getUser = catchAsync(async (req, res, next) => {
 exports.createUser = catchAsync(async (req, res, next) => {
   // Basic validation (can be expanded with express-validator)
   if (!req.body.firstName || !req.body.lastName || !req.body.email || !req.body.password || !req.body.role) {
-    return next(new AppError('Please provide firstName, lastName, email, password, and role', 400));
+    return next(new AppError('Please provide firstName, lastName, email, password, and role.', 400));
+  }
+
+  // Add explicit password length check
+  if (req.body.password.length < 8) {
+    return next(new AppError('Password must be at least 8 characters long.', 400));
   }
 
   const userRole = req.body.role;

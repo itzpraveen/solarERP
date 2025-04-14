@@ -43,12 +43,13 @@ import {
   Email as EmailIcon,
   Phone as PhoneIcon,
   Home as HomeIcon,
-  MonetizationOn as MoneyIcon,
   EventNote as NoteIcon,
   Forum as InteractionIcon,
+  Description as DescriptionIcon, // Added for Proposal button
 } from '@mui/icons-material';
 import leadService, { Lead } from '../../api/leadService';
-
+import proposalService from '../../api/proposalService'; // Import proposal service
+import ProposalForm from '../../features/proposals/components/ProposalForm'; // Import the new form component
 // Tab panel component
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -170,6 +171,9 @@ const LeadDetails = () => {
   const [deleteDialog, setDeleteDialog] = useState(false);
   const [noteDialog, setNoteDialog] = useState(false);
   const [interactionDialog, setInteractionDialog] = useState(false);
+  const [proposalDialogOpen, setProposalDialogOpen] = useState(false); // State for proposal dialog
+  const [proposalLoading, setProposalLoading] = useState(false); // State for proposal creation loading
+  const [proposalError, setProposalError] = useState<string | null>(null); // State for proposal creation error
 
   // State for new note and interaction
   const [newNote, setNewNote] = useState('');
@@ -454,6 +458,18 @@ const LeadDetails = () => {
                 title="Convert this lead to a customer"
               >
                 Convert to Customer
+              </Button>
+              {/* Add Create Proposal Button */}
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<DescriptionIcon />}
+                onClick={() => setProposalDialogOpen(true)} // Open dialog instead of navigating
+                sx={{ mr: 1 }}
+                title="Create a new proposal for this lead"
+                disabled={!lead} // Disable if lead data isn't loaded
+              >
+                Create Proposal
               </Button>
               <Button
                 variant="outlined"
@@ -1487,6 +1503,70 @@ const LeadDetails = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Proposal Creation Dialog */}
+      {lead && (
+        <ProposalForm
+          open={proposalDialogOpen}
+          onClose={() => {
+            setProposalDialogOpen(false);
+            setProposalError(null); // Clear error on close
+          }}
+          onSubmit={async (proposalData) => {
+            console.log('Submitting proposal data:', proposalData);
+            setProposalLoading(true);
+            setProposalError(null);
+            try {
+              // Ensure lead ID is correctly passed and add default values for required fields
+              const validUntilDate = new Date();
+              validUntilDate.setDate(validUntilDate.getDate() + 30); // Set valid for 30 days
+
+              // Ensure the full lead object is passed, along with defaults
+
+              const dataToSubmit = {
+                ...proposalData,
+                lead: lead, // Pass the full lead object from state
+                status: 'draft' as
+                  | 'draft'
+                  | 'sent'
+                  | 'viewed'
+                  | 'accepted'
+                  | 'rejected'
+                  | 'expired',
+                validUntil: validUntilDate.toISOString(),
+                active: true,
+              };
+              const createdProposal =
+                await proposalService.createProposal(dataToSubmit);
+              console.log('Proposal created successfully:', createdProposal);
+              setProposalDialogOpen(false);
+              // Optionally navigate to the new proposal or show a success message/snackbar
+              // navigate(`/proposals/${createdProposal.data.proposal._id}`);
+              // TODO: Add success notification (e.g., Snackbar)
+            } catch (err: any) {
+              console.error('Failed to create proposal:', err);
+              const errorMsg =
+                err?.response?.data?.message ||
+                err?.message ||
+                'Failed to create proposal';
+              setProposalError(errorMsg);
+              // Keep the dialog open on error so user can see the message/retry
+            } finally {
+              setProposalLoading(false);
+            }
+          }}
+          loading={proposalLoading}
+          initialLeadId={lead._id} // Pass the current lead's ID
+        />
+      )}
+      {/* Display proposal creation error within the dialog or below */}
+      {/* Note: ProposalForm might need internal error display, or handle it here */}
+      {proposalError &&
+        !proposalDialogOpen && ( // Show persistent error below if dialog closed
+          <Alert severity="error" sx={{ mt: 2, mb: 2 }}>
+            Proposal Creation Error: {proposalError}
+          </Alert>
+        )}
     </Box>
   );
 };

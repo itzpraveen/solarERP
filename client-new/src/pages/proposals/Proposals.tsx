@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom'; // Remove useLocation
 import {
   Box,
   Typography,
@@ -49,11 +49,13 @@ const ProposalForm = ({
   onClose,
   onSubmit,
   loading,
+  initialLeadId, // Add initialLeadId prop
 }: {
   open: boolean;
   onClose: () => void;
   onSubmit: (proposalData: any) => void;
   loading: boolean;
+  initialLeadId?: string | null; // Make it optional
 }) => {
   const [formData, setFormData] = useState({
     lead: '',
@@ -84,34 +86,63 @@ const ProposalForm = ({
   const [leads, setLeads] = useState<any[]>([]);
   const [leadsLoading, setLeadsLoading] = useState(false);
 
-  // Fetch leads for dropdown
+  // Fetch leads for dropdown or pre-select based on initialLeadId
   useEffect(() => {
-    const fetchLeads = async () => {
+    const fetchData = async () => {
+      setLeadsLoading(true);
       try {
-        setLeadsLoading(true);
-        const response = await leadService.getLeads({ limit: 100 });
-        setLeads(response.data.leads);
-
-        // If leads are available, set the first one as default
-        if (response.data.leads && response.data.leads.length > 0) {
-          setFormData((prev) => ({
-            ...prev,
-            lead: response.data.leads[0]._id,
-            name: `Solar Proposal for ${response.data.leads[0].firstName} ${response.data.leads[0].lastName}`,
-          }));
+        if (initialLeadId) {
+          // Fetch only the specific lead if initialLeadId is provided
+          console.log('Fetching specific lead for form:', initialLeadId);
+          const response = await leadService.getLead(initialLeadId);
+          const lead = response.data.lead;
+          if (lead) {
+            setLeads([lead]); // Set only this lead in the options
+            setFormData((prev) => ({
+              ...prev,
+              lead: lead._id,
+              name: `Solar Proposal for ${lead.firstName} ${lead.lastName}`,
+            }));
+            console.log('Pre-selected lead:', lead._id);
+          } else {
+            console.error('Initial lead not found:', initialLeadId);
+            // Fallback to fetching all leads if specific one not found? Or show error?
+            // For now, just log error and fetch all
+            const response = await leadService.getLeads({ limit: 100 });
+            setLeads(response.data.leads || []);
+          }
+        } else {
+          // Fetch all leads if no initialLeadId
+          console.log('Fetching all leads for form');
+          const response = await leadService.getLeads({ limit: 100 });
+          const fetchedLeads = response.data.leads || [];
+          setLeads(fetchedLeads);
+          // Set the first lead as default if available
+          if (fetchedLeads.length > 0) {
+            setFormData((prev) => ({
+              ...prev,
+              lead: fetchedLeads[0]._id,
+              name: `Solar Proposal for ${fetchedLeads[0].firstName} ${fetchedLeads[0].lastName}`,
+            }));
+          }
         }
-
-        setLeadsLoading(false);
       } catch (error) {
-        console.error('Failed to fetch leads', error);
+        console.error('Failed to fetch lead data for form', error);
+        setLeads([]); // Clear leads on error
+      } finally {
         setLeadsLoading(false);
       }
     };
 
     if (open) {
-      fetchLeads();
+      fetchData();
+    } else {
+      // Reset form when dialog closes? Optional.
+      // setFormData({ ...initial empty state ... });
+      // setLeads([]);
     }
-  }, [open]);
+    // Add initialLeadId to dependency array
+  }, [open, initialLeadId]);
 
   // Calculate netCost whenever pricing values change
   useEffect(() => {

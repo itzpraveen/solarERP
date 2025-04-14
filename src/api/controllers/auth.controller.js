@@ -246,13 +246,17 @@ exports.createDemoUser = catchAsync(async (req, res, next) => {
     });
   }
   
-  // Create a new demo user
+  // Get default permissions for admin role
+  const adminPermissions = getDefaultPermissions('admin');
+
+  // Create a new demo user with permissions
   const demoUser = await User.create({
     firstName: 'Demo',
     lastName: 'User',
     email: 'demo@example.com',
     password: 'password123',
-    role: 'admin'
+    role: 'admin',
+    permissions: adminPermissions // Assign default admin permissions
   });
   
   res.status(201).json({

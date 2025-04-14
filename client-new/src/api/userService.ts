@@ -53,7 +53,7 @@ const userService = {
     options: UserListOptions = {}
   ): Promise<GetUsersResponse> => {
     const response = await apiService.get('/api/users', { params: options });
-    return response.data;
+    return response; // apiService.get already returns the data payload
   },
 
   // Get a single user by ID

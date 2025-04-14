@@ -1,6 +1,7 @@
 require('dotenv').config();
 const mongoose = require('mongoose');
 const User = require('../api/models/user.model');
+const { getDefaultPermissions } = require('../common/config/permissions'); // Import permission helper
 
 const createDemoUser = async () => {
   try {
@@ -16,13 +17,17 @@ const createDemoUser = async () => {
       return;
     }
 
-    // Create demo user
+    // Get default admin permissions
+    const adminPermissions = getDefaultPermissions('admin');
+
+    // Create demo user with permissions
     await User.create({
       firstName: 'Demo',
       lastName: 'User',
       email: 'demo@example.com',
-      password: 'password123', // Note: Consider hashing this password
+      password: 'password123', // Note: Password will be hashed by the pre-save hook in the model
       role: 'admin',
+      permissions: adminPermissions, // Assign default admin permissions
     });
 
     console.log('Demo user created successfully');

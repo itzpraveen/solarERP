@@ -9,6 +9,7 @@ const ROLES = {
   SALES: 'sales',
   INSTALLER: 'installer',
   FINANCE: 'finance',
+  TECHNICIAN: 'technician', // Add Technician role
   USER: 'user',
 };
 
@@ -61,6 +62,10 @@ const PERMISSIONS = {
 
   // Settings
   MANAGE_SETTINGS: 'manage:settings',
+
+  // Service Requests (Example - Add more as needed)
+  VIEW_SERVICE_REQUESTS: 'view:service_requests',
+  UPDATE_SERVICE_REQUEST_STATUS: 'update:service_request_status',
 };
 
 // Map default permissions to roles
@@ -122,6 +127,16 @@ const defaultPermissionsByRole = {
 
   [ROLES.USER]: [
     // Basic view permissions, e.g., view own profile
+  ],
+
+  [ROLES.TECHNICIAN]: [
+    PERMISSIONS.VIEW_PROJECTS, // Assigned projects
+    PERMISSIONS.EDIT_PROJECT_STATUS, // Limited status updates
+    PERMISSIONS.VIEW_EQUIPMENT, // View equipment needed for jobs
+    PERMISSIONS.VIEW_DOCUMENTS, // View relevant documents/manuals
+    PERMISSIONS.VIEW_SERVICE_REQUESTS, // View assigned service requests
+    PERMISSIONS.UPDATE_SERVICE_REQUEST_STATUS, // Update status of assigned requests
+    // Add permissions for adding notes, viewing assigned customers etc.
   ],
 };
 

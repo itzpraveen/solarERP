@@ -30,36 +30,60 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  Checkbox, // Import Checkbox
 } from '@mui/material';
 import { formatCurrencySync } from '../../utils/formatters';
-import CurrencyDisplay from '../../components/common/CurrencyDisplay';
+// import CurrencyDisplay from '../../components/common/CurrencyDisplay'; // Unused
 import {
   BarChart as BarChartIcon,
   ShowChart as LineChartIcon,
   PieChart as PieChartIcon,
-  TableChart as TableIcon,
-  Schedule as ScheduleIcon,
-  FileDownload as ExportIcon,
-  Dashboard as DashboardIcon,
+  // TableChart as TableIcon, // Unused
+  // Schedule as ScheduleIcon, // Unused
+  // FileDownload as ExportIcon, // Unused
+  // Dashboard as DashboardIcon, // Unused
   AttachMoney as FinancialIcon,
   Add as AddIcon,
   Refresh as RefreshIcon,
   Download as DownloadIcon,
-  FilterList as FilterIcon,
-  Search as SearchIcon,
-  DateRange as DateRangeIcon,
+  // FilterList as FilterIcon, // Unused
+  // Search as SearchIcon, // Unused
+  // DateRange as DateRangeIcon, // Unused
   Edit as EditIcon,
+  Visibility as ViewIcon, // Import ViewIcon
 } from '@mui/icons-material';
+import {
+  ResponsiveContainer,
+  LineChart,
+  BarChart,
+  PieChart,
+  Line,
+  Bar,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+} from 'recharts';
 
+// Import necessary services and types
 import reportService, { Report } from '../../api/reportService';
+import leadService, { Lead } from '../../api/leadService'; // Import Lead type
+import projectService, { Project } from '../../api/projectService'; // Import Project type
+import proposalService from '../../api/proposalService';
+// import userService from '../../api/userService'; // Assuming exists for sales reps
 
-// Dummy chart image
-const BarChartImg =
-  'https://mui.com/static/images/cards/contemplative-reptile.jpg';
-const LineChartImg =
-  'https://mui.com/static/images/cards/contemplative-reptile.jpg';
-const PieChartImg =
-  'https://mui.com/static/images/cards/contemplative-reptile.jpg';
+// Define colors for charts
+const COLORS = [
+  '#0088FE',
+  '#00C49F',
+  '#FFBB28',
+  '#FF8042',
+  '#8884d8',
+  '#82ca9d',
+];
 
 // Mock data for demo
 const mockReports = [
@@ -96,37 +120,13 @@ const mockReports = [
   },
 ];
 
-// Mock dashboard data
-const mockDashboardData = {
-  leadsBySource: [
-    { source: 'Website', count: 45 },
-    { source: 'Referral', count: 32 },
-    { source: 'Sales Call', count: 28 },
-    { source: 'Social Media', count: 19 },
-    { source: 'Trade Show', count: 12 },
-  ],
-  projectsByStatus: [
-    { status: 'active', count: 24 },
-    { status: 'on_hold', count: 5 },
-    { status: 'completed', count: 18 },
-    { status: 'cancelled', count: 3 },
-  ],
-  revenueByMonth: [
-    { month: 'Jan', value: 78500 },
-    { month: 'Feb', value: 82300 },
-    { month: 'Mar', value: 91000 },
-    { month: 'Apr', value: 86500 },
-    { month: 'May', value: 94800 },
-    { month: 'Jun', value: 105200 },
-  ],
-  topSalesReps: [
-    { name: 'Jane Smith', revenue: 425000 },
-    { name: 'John Davis', revenue: 387500 },
-    { name: 'Sarah Johnson', revenue: 362000 },
-    { name: 'Michael Chen', revenue: 310500 },
-    { name: 'Emma Wilson', revenue: 298000 },
-  ],
-};
+// Define structure for dashboard data state
+interface DashboardData {
+  leadsBySource: { source: string; count: number }[];
+  projectsByStatus: { status: string; count: number }[];
+  revenueByMonth: { month: string; value: number }[];
+  topSalesReps: { name: string; revenue: number }[];
+}
 
 // Tab panel component
 interface TabPanelProps {
@@ -156,7 +156,13 @@ const Reports: React.FC = () => {
   const [reports, setReports] = useState<any[]>(mockReports);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [dashboardData, setDashboardData] = useState(mockDashboardData);
+  // Initialize dashboard data state with empty arrays
+  const [dashboardData, setDashboardData] = useState<DashboardData>({
+    leadsBySource: [],
+    projectsByStatus: [],
+    revenueByMonth: [],
+    topSalesReps: [],
+  });
   const [reportType, setReportType] = useState('all');
   const [dateRange, setDateRange] = useState({
     startDate: '',
@@ -184,23 +190,78 @@ const Reports: React.FC = () => {
     }
   };
 
-  // Fetch dashboard reports
+  // Fetch and process dashboard reports data
   const fetchDashboardReports = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
-      setError(null);
+      // Fetch Leads for "Leads by Source"
+      const leadsResponse = await leadService.getLeads({ limit: 1000 });
+      const leads: Lead[] = leadsResponse.data.leads || []; // Add Lead type
+      const leadsBySource = leads.reduce(
+        (acc: Record<string, number>, lead: Lead) => {
+          const source = lead.source || 'Unknown';
+          acc[source] = (acc[source] || 0) + 1;
+          return acc;
+        },
+        {} as Record<string, number>
+      );
+      const leadsBySourceData = Object.entries(leadsBySource)
+        .map(([source, count]) => ({ source, count: count as number })) // Assert count is number
+        .sort((a, b) => b.count - a.count);
 
-      // This would normally call the API, but we're using mock data for now
-      // const response = await reportService.getDashboardReports();
-      // setDashboardData(response.data);
+      // Fetch Projects for "Projects by Status"
+      const projectsResponse = await projectService.getProjects({
+        limit: 1000,
+      });
+      const projects: Project[] = projectsResponse.data.projects || []; // Add Project type
+      const projectsByStatus = projects.reduce(
+        (acc: Record<string, number>, project: Project) => {
+          const status = project.status || 'Unknown';
+          acc[status] = (acc[status] || 0) + 1;
+          return acc;
+        },
+        {} as Record<string, number>
+      );
+      const projectsByStatusData = Object.entries(projectsByStatus).map(
+        ([status, count]) => ({ status, count: count as number })
+      );
+      // Keep original order or define a specific sort order if needed
 
-      // Simulate API delay
-      setTimeout(() => {
-        setDashboardData(mockDashboardData);
-        setLoading(false);
-      }, 800);
+      // --- Placeholder Data for Complex Reports ---
+      // TODO: Implement actual data fetching/aggregation for Revenue Trend & Top Sales Reps
+      // This likely requires dedicated backend endpoints or more complex frontend logic.
+      const revenueByMonthData = [
+        { month: 'Jan', value: 0 },
+        { month: 'Feb', value: 0 },
+        { month: 'Mar', value: 0 },
+        { month: 'Apr', value: 0 },
+        { month: 'May', value: 0 },
+        { month: 'Jun', value: 0 },
+      ];
+      const topSalesRepsData = [
+        { name: 'Rep 1', revenue: 0 },
+        { name: 'Rep 2', revenue: 0 },
+      ];
+      // --- End Placeholder Data ---
+
+      setDashboardData({
+        leadsBySource: leadsBySourceData,
+        projectsByStatus: projectsByStatusData,
+        revenueByMonth: revenueByMonthData, // Use placeholder for now
+        topSalesReps: topSalesRepsData, // Use placeholder for now
+      });
     } catch (err: any) {
+      console.error('Failed to fetch dashboard data:', err);
       setError(err?.message || 'Failed to fetch dashboard reports');
+      // Clear data on error?
+      setDashboardData({
+        leadsBySource: [],
+        projectsByStatus: [],
+        revenueByMonth: [],
+        topSalesReps: [],
+      });
+    } finally {
       setLoading(false);
     }
   };
@@ -237,7 +298,7 @@ const Reports: React.FC = () => {
   // Format number as currency
   const formatCurrency = (value: number) => {
     return formatCurrencySync(value);
-    return formatCurrencySync(value);
+    // return formatCurrencySync(value); // Duplicate line removed
   };
 
   return (
@@ -281,31 +342,25 @@ const Reports: React.FC = () => {
                     </IconButton>
                   </Box>
 
-                  {/* This would be a real chart component in production */}
-                  <Box
-                    component="img"
-                    src={LineChartImg}
-                    alt="Revenue Trend Chart"
-                    sx={{
-                      width: '100%',
-                      height: 300,
-                      objectFit: 'cover',
-                      borderRadius: 1,
-                      bgcolor: '#f5f5f5',
-                      display: 'flex',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                    }}
-                  />
-
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{ mt: 2, textAlign: 'center' }}
-                  >
-                    Chart visualization shows monthly revenue trend for the past
-                    6 months
-                  </Typography>
+                  {/* Revenue Trend Chart */}
+                  <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={dashboardData.revenueByMonth}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="month" />
+                      <YAxis />
+                      <Tooltip
+                        formatter={(value: number) => formatCurrency(value)}
+                      />
+                      <Legend />
+                      <Line
+                        type="monotone"
+                        dataKey="value"
+                        stroke="#8884d8"
+                        activeDot={{ r: 8 }}
+                        name="Revenue"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
                 </CardContent>
               </Card>
 
@@ -329,19 +384,34 @@ const Reports: React.FC = () => {
                         </IconButton>
                       </Box>
 
-                      {/* This would be a real chart component in production */}
-                      <Box
-                        component="img"
-                        src={PieChartImg}
-                        alt="Project Status Chart"
-                        sx={{
-                          width: '100%',
-                          height: 200,
-                          objectFit: 'cover',
-                          borderRadius: 1,
-                          bgcolor: '#f5f5f5',
-                        }}
-                      />
+                      {/* Project Status Chart */}
+                      <ResponsiveContainer width="100%" height={200}>
+                        <PieChart>
+                          <Pie
+                            data={dashboardData.projectsByStatus}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            outerRadius={80}
+                            fill="#8884d8"
+                            dataKey="count"
+                            nameKey="status"
+                            label={({ name, percent }) =>
+                              `${name}: ${(percent * 100).toFixed(0)}%`
+                            }
+                          >
+                            {dashboardData.projectsByStatus.map(
+                              (entry, index) => (
+                                <Cell
+                                  key={`cell-${index}`}
+                                  fill={COLORS[index % COLORS.length]}
+                                />
+                              )
+                            )}
+                          </Pie>
+                          <Tooltip />
+                        </PieChart>
+                      </ResponsiveContainer>
 
                       <Box
                         sx={{
@@ -390,19 +460,20 @@ const Reports: React.FC = () => {
                         </IconButton>
                       </Box>
 
-                      {/* This would be a real chart component in production */}
-                      <Box
-                        component="img"
-                        src={BarChartImg}
-                        alt="Leads by Source Chart"
-                        sx={{
-                          width: '100%',
-                          height: 200,
-                          objectFit: 'cover',
-                          borderRadius: 1,
-                          bgcolor: '#f5f5f5',
-                        }}
-                      />
+                      {/* Leads by Source Chart */}
+                      <ResponsiveContainer width="100%" height={200}>
+                        <BarChart
+                          data={dashboardData.leadsBySource}
+                          layout="vertical"
+                          margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                        >
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis type="number" />
+                          <YAxis dataKey="source" type="category" width={80} />
+                          <Tooltip />
+                          <Bar dataKey="count" fill="#82ca9d" name="Count" />
+                        </BarChart>
+                      </ResponsiveContainer>
 
                       <Box sx={{ mt: 1 }}>
                         {dashboardData.leadsBySource.map((item) => (
@@ -520,11 +591,10 @@ const Reports: React.FC = () => {
                   </List>
 
                   <Button
-                    variant="outlined"
-                    fullWidth
+                    variant="contained"
                     startIcon={<AddIcon />}
-                    sx={{ mt: 2 }}
-                    onClick={() => setTabValue(2)}
+                    fullWidth
+                    sx={{ mt: 3 }}
                   >
                     Create Custom Report
                   </Button>
@@ -536,58 +606,25 @@ const Reports: React.FC = () => {
 
         {/* My Reports Tab */}
         <TabPanel value={tabValue} index={1}>
-          <Box
-            sx={{
-              mb: 3,
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: 2,
-              alignItems: 'center',
-            }}
-          >
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
             <FormControl sx={{ minWidth: 200 }}>
-              <InputLabel>Report Type</InputLabel>
+              <InputLabel>Filter by Type</InputLabel>
               <Select
                 value={reportType}
-                label="Report Type"
+                label="Filter by Type"
                 onChange={handleTypeChange}
+                size="small"
               >
                 <MenuItem value="all">All Types</MenuItem>
                 <MenuItem value="financial">Financial</MenuItem>
-                <MenuItem value="performance">Performance</MenuItem>
                 <MenuItem value="project">Project</MenuItem>
+                <MenuItem value="lead">Lead</MenuItem>
                 <MenuItem value="sales">Sales</MenuItem>
-                <MenuItem value="inventory">Inventory</MenuItem>
-                <MenuItem value="custom">Custom</MenuItem>
               </Select>
             </FormControl>
-
-            <TextField
-              label="Start Date"
-              type="date"
-              name="startDate"
-              value={dateRange.startDate}
-              onChange={handleDateChange}
-              InputLabelProps={{ shrink: true }}
-            />
-
-            <TextField
-              label="End Date"
-              type="date"
-              name="endDate"
-              value={dateRange.endDate}
-              onChange={handleDateChange}
-              InputLabelProps={{ shrink: true }}
-            />
-
-            <Box sx={{ flexGrow: 1 }} />
-
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => setTabValue(2)}
-            >
-              Create Report
+            <TextField label="Search Reports" variant="outlined" size="small" />
+            <Button variant="outlined" startIcon={<RefreshIcon />}>
+              Refresh
             </Button>
           </Box>
 
@@ -596,18 +633,18 @@ const Reports: React.FC = () => {
               <CircularProgress />
             </Box>
           ) : error ? (
-            <Alert severity="error" sx={{ mb: 3 }}>
-              {error}
-            </Alert>
+            <Alert severity="error">{error}</Alert>
           ) : reports.length === 0 ? (
             <Paper sx={{ p: 4, textAlign: 'center' }}>
-              <Typography variant="body1" color="text.secondary" gutterBottom>
-                No reports found matching your criteria.
+              <Typography variant="h6" gutterBottom>
+                No Reports Found
+              </Typography>
+              <Typography color="text.secondary" sx={{ mb: 2 }}>
+                You haven't created or saved any reports yet.
               </Typography>
               <Button
-                variant="outlined"
+                variant="contained"
                 startIcon={<AddIcon />}
-                sx={{ mt: 2 }}
                 onClick={() => setTabValue(2)}
               >
                 Create Your First Report
@@ -618,9 +655,10 @@ const Reports: React.FC = () => {
               <Table>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Report Name</TableCell>
+                    <TableCell>Title</TableCell>
                     <TableCell>Type</TableCell>
-                    <TableCell>Created</TableCell>
+                    <TableCell>Created By</TableCell>
+                    <TableCell>Created At</TableCell>
                     <TableCell>Last Run</TableCell>
                     <TableCell>Status</TableCell>
                     <TableCell>Actions</TableCell>
@@ -630,44 +668,41 @@ const Reports: React.FC = () => {
                   {reports.map((report) => (
                     <TableRow key={report._id} hover>
                       <TableCell>
-                        <Typography variant="body1">{report.title}</Typography>
-                        <Typography variant="caption" color="text.secondary">
+                        <Typography variant="subtitle2">
+                          {report.title}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
                           {report.description}
                         </Typography>
                       </TableCell>
-                      <TableCell>
-                        {report.type.charAt(0).toUpperCase() +
-                          report.type.slice(1)}
-                      </TableCell>
+                      <TableCell>{report.type}</TableCell>
+                      <TableCell>{report.createdBy}</TableCell>
                       <TableCell>{formatDate(report.createdAt)}</TableCell>
                       <TableCell>
-                        {report.lastRun ? formatDate(report.lastRun) : 'Never'}
+                        {report.lastRun ? formatDate(report.lastRun) : 'N/A'}
                       </TableCell>
                       <TableCell>
                         <Chip
-                          label={report.status.toUpperCase()}
+                          label={report.status}
                           color={
-                            report.status === 'active' ? 'success' : 'default'
+                            report.status === 'active'
+                              ? 'success'
+                              : report.status === 'scheduled'
+                                ? 'info'
+                                : 'default'
                           }
                           size="small"
                         />
                       </TableCell>
                       <TableCell>
                         <Box sx={{ display: 'flex', gap: 1 }}>
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            startIcon={<RefreshIcon />}
-                          >
-                            Run
+                          <Button size="small" startIcon={<ViewIcon />}>
+                            View
                           </Button>
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            startIcon={<DownloadIcon />}
-                          >
-                            Export
+                          <Button size="small" startIcon={<DownloadIcon />}>
+                            Download
                           </Button>
+                          {/* Add Edit/Delete later */}
                         </Box>
                       </TableCell>
                     </TableRow>
@@ -681,46 +716,38 @@ const Reports: React.FC = () => {
         {/* Create Report Tab */}
         <TabPanel value={tabValue} index={2}>
           <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
+            <Typography variant="h5" gutterBottom>
               Create New Report
             </Typography>
             <Divider sx={{ mb: 3 }} />
-
             <Grid container spacing={3}>
               <Grid item xs={12} md={7}>
+                <Typography variant="h6" gutterBottom>
+                  Report Configuration
+                </Typography>
                 <Grid container spacing={2}>
                   <Grid item xs={12}>
-                    <TextField
-                      fullWidth
-                      label="Report Title"
-                      variant="outlined"
-                    />
+                    <TextField fullWidth label="Report Title" required />
                   </Grid>
-
                   <Grid item xs={12}>
                     <TextField
                       fullWidth
-                      label="Description"
-                      variant="outlined"
+                      label="Description (Optional)"
                       multiline
                       rows={3}
                     />
                   </Grid>
-
                   <Grid item xs={12} md={6}>
                     <FormControl fullWidth>
                       <InputLabel>Report Type</InputLabel>
                       <Select label="Report Type" defaultValue="financial">
                         <MenuItem value="financial">Financial</MenuItem>
-                        <MenuItem value="performance">Performance</MenuItem>
                         <MenuItem value="project">Project</MenuItem>
+                        <MenuItem value="lead">Lead</MenuItem>
                         <MenuItem value="sales">Sales</MenuItem>
-                        <MenuItem value="inventory">Inventory</MenuItem>
-                        <MenuItem value="custom">Custom</MenuItem>
                       </Select>
                     </FormControl>
                   </Grid>
-
                   <Grid item xs={12} md={6}>
                     <FormControl fullWidth>
                       <InputLabel>Visualization Type</InputLabel>
@@ -729,267 +756,174 @@ const Reports: React.FC = () => {
                         <MenuItem value="line">Line Chart</MenuItem>
                         <MenuItem value="pie">Pie Chart</MenuItem>
                         <MenuItem value="table">Table</MenuItem>
-                        <MenuItem value="card">KPI Cards</MenuItem>
                       </Select>
                     </FormControl>
                   </Grid>
-
                   <Grid item xs={12}>
-                    <Typography variant="subtitle2" gutterBottom>
-                      Data Filtering
+                    <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                      Filters (Optional)
                     </Typography>
                     <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
                       <TextField
                         label="Start Date"
                         type="date"
                         InputLabelProps={{ shrink: true }}
-                        fullWidth
+                        size="small"
                       />
                       <TextField
                         label="End Date"
                         type="date"
                         InputLabelProps={{ shrink: true }}
-                        fullWidth
+                        size="small"
                       />
                     </Box>
-
                     <Box sx={{ display: 'flex', gap: 2 }}>
-                      <FormControl fullWidth>
+                      <FormControl fullWidth size="small">
                         <InputLabel>Data Source</InputLabel>
                         <Select label="Data Source" defaultValue="projects">
                           <MenuItem value="projects">Projects</MenuItem>
-                          <MenuItem value="customers">Customers</MenuItem>
                           <MenuItem value="leads">Leads</MenuItem>
                           <MenuItem value="proposals">Proposals</MenuItem>
-                          <MenuItem value="invoices">Invoices</MenuItem>
+                          <MenuItem value="customers">Customers</MenuItem>
                         </Select>
                       </FormControl>
-
-                      <FormControl fullWidth>
+                      <FormControl fullWidth size="small">
                         <InputLabel>Group By</InputLabel>
                         <Select label="Group By" defaultValue="month">
-                          <MenuItem value="day">Day</MenuItem>
-                          <MenuItem value="week">Week</MenuItem>
                           <MenuItem value="month">Month</MenuItem>
                           <MenuItem value="quarter">Quarter</MenuItem>
                           <MenuItem value="year">Year</MenuItem>
+                          <MenuItem value="status">Status</MenuItem>
+                          <MenuItem value="source">Source</MenuItem>
                         </Select>
                       </FormControl>
                     </Box>
                   </Grid>
                 </Grid>
-
-                <Box
-                  sx={{
-                    mt: 3,
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                  }}
-                >
-                  <Button variant="outlined">Cancel</Button>
-                  <Box>
-                    <Button variant="outlined" sx={{ mr: 1 }}>
-                      Preview Report
-                    </Button>
-                    <Button variant="contained">Create Report</Button>
-                  </Box>
-                </Box>
               </Grid>
-
               <Grid item xs={12} md={5}>
+                <Typography variant="h6" gutterBottom>
+                  Report Options
+                </Typography>
                 <Card>
                   <CardContent>
                     <Typography variant="subtitle1" gutterBottom>
-                      Report Templates
+                      Fields to Include
                     </Typography>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      paragraph
-                    >
-                      Start with a pre-configured template to save time
-                    </Typography>
-
-                    <List>
+                    <Divider sx={{ mb: 1 }} />
+                    <List dense>
                       <ListItem disablePadding sx={{ mb: 1 }}>
-                        <ListItemButton
-                          sx={{
-                            borderRadius: 1,
-                            border: '1px solid rgba(0,0,0,0.12)',
-                          }}
-                        >
-                          <ListItemIcon>
-                            <FinancialIcon color="primary" />
-                          </ListItemIcon>
-                          <ListItemText
-                            primary="Sales Dashboard"
-                            secondary="Key sales metrics overview"
-                          />
+                        <ListItemButton dense>
+                          <Checkbox edge="start" checked tabIndex={-1} />
+                          <ListItemText primary="Project Name" />
                         </ListItemButton>
                       </ListItem>
-
                       <ListItem disablePadding sx={{ mb: 1 }}>
-                        <ListItemButton
-                          sx={{
-                            borderRadius: 1,
-                            border: '1px solid rgba(0,0,0,0.12)',
-                          }}
-                        >
-                          <ListItemIcon>
-                            <BarChartIcon color="primary" />
-                          </ListItemIcon>
-                          <ListItemText
-                            primary="Monthly Financial Report"
-                            secondary="Revenue, expenses and profit analysis"
-                          />
+                        <ListItemButton dense>
+                          <Checkbox edge="start" checked tabIndex={-1} />
+                          <ListItemText primary="Status" />
                         </ListItemButton>
                       </ListItem>
-
                       <ListItem disablePadding sx={{ mb: 1 }}>
-                        <ListItemButton
-                          sx={{
-                            borderRadius: 1,
-                            border: '1px solid rgba(0,0,0,0.12)',
-                          }}
-                        >
-                          <ListItemIcon>
-                            <PieChartIcon color="primary" />
-                          </ListItemIcon>
-                          <ListItemText
-                            primary="Project Distribution"
-                            secondary="Analysis of projects by status and type"
-                          />
+                        <ListItemButton dense>
+                          <Checkbox edge="start" checked tabIndex={-1} />
+                          <ListItemText primary="Start Date" />
                         </ListItemButton>
                       </ListItem>
-
                       <ListItem disablePadding>
-                        <ListItemButton
-                          sx={{
-                            borderRadius: 1,
-                            border: '1px solid rgba(0,0,0,0.12)',
-                          }}
-                        >
-                          <ListItemIcon>
-                            <LineChartIcon color="primary" />
-                          </ListItemIcon>
-                          <ListItemText
-                            primary="Lead Conversion Funnel"
-                            secondary="Lead to customer conversion analysis"
-                          />
+                        <ListItemButton dense>
+                          <Checkbox edge="start" checked tabIndex={-1} />
+                          <ListItemText primary="Total Cost" />
                         </ListItemButton>
                       </ListItem>
                     </List>
                   </CardContent>
                 </Card>
-
                 <Card sx={{ mt: 3 }}>
                   <CardContent>
                     <Typography variant="subtitle1" gutterBottom>
-                      Schedule Options
+                      Scheduling & Export
                     </Typography>
                     <Divider sx={{ mb: 2 }} />
-
                     <FormControl fullWidth sx={{ mb: 2 }}>
                       <InputLabel>Scheduled Frequency</InputLabel>
                       <Select label="Scheduled Frequency" defaultValue="none">
-                        <MenuItem value="none">No Schedule</MenuItem>
+                        <MenuItem value="none">None (Manual Run)</MenuItem>
                         <MenuItem value="daily">Daily</MenuItem>
                         <MenuItem value="weekly">Weekly</MenuItem>
                         <MenuItem value="monthly">Monthly</MenuItem>
-                        <MenuItem value="quarterly">Quarterly</MenuItem>
                       </Select>
                     </FormControl>
-
                     <TextField
                       fullWidth
-                      label="Recipients (Email)"
-                      placeholder="Enter email addresses separated by commas"
-                      variant="outlined"
+                      label="Email Recipients (comma-separated)"
                       sx={{ mb: 2 }}
                     />
-
                     <FormControl fullWidth>
                       <InputLabel>Export Format</InputLabel>
                       <Select label="Export Format" defaultValue="pdf">
                         <MenuItem value="pdf">PDF</MenuItem>
-                        <MenuItem value="excel">Excel</MenuItem>
                         <MenuItem value="csv">CSV</MenuItem>
+                        <MenuItem value="xlsx">Excel (XLSX)</MenuItem>
                       </Select>
                     </FormControl>
                   </CardContent>
                 </Card>
               </Grid>
             </Grid>
+            <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
+              <Button variant="outlined" sx={{ mr: 1 }}>
+                Cancel
+              </Button>
+              <Button variant="contained" startIcon={<AddIcon />}>
+                Create Report
+              </Button>
+            </Box>
           </Paper>
         </TabPanel>
 
         {/* Scheduled Reports Tab */}
         <TabPanel value={tabValue} index={3}>
-          <Box
-            sx={{
-              mb: 3,
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <Typography variant="h6">Scheduled Reports</Typography>
-            <Button
-              variant="contained"
-              startIcon={<AddIcon />}
-              onClick={() => setTabValue(2)}
-            >
-              Schedule New Report
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+            <Button variant="outlined" startIcon={<RefreshIcon />}>
+              Refresh Schedules
             </Button>
           </Box>
-
           <TableContainer component={Paper}>
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>Report Name</TableCell>
+                  <TableCell>Report Title</TableCell>
                   <TableCell>Frequency</TableCell>
-                  <TableCell>Next Run</TableCell>
+                  <TableCell>Next Run Time</TableCell>
                   <TableCell>Recipients</TableCell>
+                  <TableCell>Status</TableCell>
                   <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {reports
-                  .filter((r) => r.scheduledFrequency)
+                  .filter((report) => report.status === 'scheduled') // Filter only scheduled reports
                   .map((report) => (
                     <TableRow key={report._id} hover>
+                      <TableCell>{report.title}</TableCell>
+                      <TableCell>{report.scheduledFrequency}</TableCell>
                       <TableCell>
-                        <Typography variant="body1">{report.title}</Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {report.description}
-                        </Typography>
+                        {/* Calculate next run time - Placeholder */}
+                        {'2025-04-01 08:00'}
                       </TableCell>
                       <TableCell>
-                        {report.scheduledFrequency?.charAt(0).toUpperCase() +
-                          report.scheduledFrequency?.slice(1)}
+                        {/* Placeholder */ 'finance@example.com'}
                       </TableCell>
                       <TableCell>
-                        {/* This would be calculated based on last run and frequency in real app */}
-                        {new Date(
-                          new Date().getTime() + 7 * 24 * 60 * 60 * 1000
-                        ).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        {report.recipients?.join(', ') || 'No recipients'}
+                        <Chip label="Active" color="success" size="small" />
                       </TableCell>
                       <TableCell>
                         <Box sx={{ display: 'flex', gap: 1 }}>
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            startIcon={<EditIcon />}
-                          >
+                          <Button size="small" startIcon={<EditIcon />}>
                             Edit
                           </Button>
-                          <Button variant="outlined" size="small" color="error">
-                            Delete
-                          </Button>
+                          {/* Add Pause/Delete later */}
                         </Box>
                       </TableCell>
                     </TableRow>
