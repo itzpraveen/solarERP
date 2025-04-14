@@ -23,6 +23,7 @@ const equipmentRoutes = require('./api/routes/equipment.routes');
 const documentRoutes = require('./api/routes/document.routes');
 const reportRoutes = require('./api/routes/report.routes');
 const serviceRequestRoutes = require('./api/routes/service-request.routes');
+const userRoutes = require('./api/routes/user.routes'); // Import user routes
 
 // Create Express app
 const app = express();
@@ -80,6 +81,7 @@ app.use('/api/equipment', equipmentRoutes);
 app.use('/api/documents', documentRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/service-requests', serviceRequestRoutes);
+app.use('/api/users', userRoutes); // Mount user routes
 
 // Serve static assets in production
 if (process.env.NODE_ENV === 'production') {
