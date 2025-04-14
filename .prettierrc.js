@@ -5,5 +5,5 @@ module.exports = {
   singleQuote: true, // Use single quotes instead of double quotes
   printWidth: 80, // Wrap lines that exceed 80 characters
   tabWidth: 2, // Use 2 spaces for indentation
-  endOfLine: 'auto', // Maintain existing line endings (mixed vs lf vs crlf)
+  endOfLine: 'lf', // Enforce LF line endings
 };

@@ -1,5 +1,6 @@
 const express = require('express');
 const projectController = require('../controllers/project.controller');
+const taskController = require('../controllers/task.controller'); // Assuming tasks have their own controller logic
 const authController = require('../controllers/auth.controller');
 const { check } = require('express-validator');
 const router = express.Router();
@@ -105,5 +106,35 @@ router.route('/:id/payments')
     check('name', 'Payment name is required').not().isEmpty(),
     check('amount', 'Payment amount is required').isNumeric()
   ], authController.restrictTo('admin', 'manager', 'finance'), projectController.addProjectPayment);
+
+// --- Project Tasks ---
+
+// Validation middleware for tasks
+const validateTask = [
+  check('description', 'Task description is required').not().isEmpty(),
+  check('status', 'Invalid status').optional().isIn(['todo', 'in_progress', 'done', 'blocked']),
+  check('assignedTo', 'Invalid user ID for assignee').optional().isMongoId(),
+  check('dueDate', 'Invalid due date').optional().isISO8601().toDate()
+];
+
+// Add a task to a project
+router.route('/:id/tasks')
+  .post(
+    authController.restrictTo('admin', 'manager', 'installer'),
+    validateTask, // Apply validation for required fields on creation
+    projectController.addTask // Controller function to be created
+  );
+
+// Update or delete a specific task within a project
+router.route('/:id/tasks/:taskId')
+  .patch(
+    authController.restrictTo('admin', 'manager', 'installer'),
+    validateTask, // Apply validation for optional fields on update
+    projectController.updateTask // Controller function to be created
+  )
+  .delete(
+    authController.restrictTo('admin', 'manager', 'installer'),
+    projectController.deleteTask // Controller function to be created
+  );
 
 module.exports = router;

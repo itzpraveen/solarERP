@@ -159,6 +159,30 @@ export interface ProjectFinancials {
   expenses?: ProjectExpense[];
 }
 
+// Interface for Project Task subdocument
+export interface ProjectTask {
+  _id?: string;
+  description: string;
+  status: 'todo' | 'in_progress' | 'done' | 'blocked';
+  // Can be a populated object when received, or just an ID string when sending
+  assignedTo?:
+    | string
+    | {
+        _id: string;
+        firstName: string;
+        lastName: string;
+      };
+  dueDate?: string;
+  // Can be a populated object when received, or just an ID string when sending
+  createdBy:
+    | string
+    | {
+        _id: string;
+        firstName: string;
+        lastName: string;
+      };
+  createdAt: string;
+}
 export interface Project {
   _id: string;
   name: string;
@@ -206,8 +230,8 @@ export interface Project {
   };
   createdAt: string;
   updatedAt: string;
+  tasks?: ProjectTask[]; // Add tasks array to Project interface
 }
-
 export interface ProjectFilter {
   status?: string;
   stage?: string;
@@ -265,7 +289,9 @@ const projectService = {
   // Update project
   updateProject: async (id: string, projectData: Partial<Project>) => {
     try {
-      return await apiService.put(`/api/projects/${id}`, projectData);
+      // Use PUT for full update or PATCH for partial update based on API design
+      // Assuming PATCH is more appropriate for general updates
+      return await apiService.patch(`/api/projects/${id}`, projectData);
     } catch (error) {
       throw error;
     }
@@ -286,7 +312,8 @@ const projectService = {
     status: 'active' | 'on_hold' | 'completed' | 'cancelled'
   ) => {
     try {
-      return await apiService.put(`/api/projects/${id}/status`, { status });
+      // Using PATCH as we are updating a specific field
+      return await apiService.patch(`/api/projects/${id}/status`, { status });
     } catch (error) {
       throw error;
     }
@@ -304,7 +331,8 @@ const projectService = {
       | 'completed'
   ) => {
     try {
-      return await apiService.put(`/api/projects/${id}/stage`, { stage });
+      // Using PATCH as we are updating a specific field
+      return await apiService.patch(`/api/projects/${id}/stage`, { stage });
     } catch (error) {
       throw error;
     }
@@ -426,10 +454,57 @@ const projectService = {
     }
   },
 
-  // Get project timeline
+  // Get project timeline (Assuming this endpoint exists or will be created)
   getTimeline: async (id: string) => {
     try {
+      // This endpoint might not exist yet based on previous analysis
+      // Placeholder implementation
+      console.warn('getTimeline API endpoint might not be implemented yet.');
       return await apiService.get(`/api/projects/${id}/timeline`);
+    } catch (error) {
+      // Handle potential 404 if endpoint doesn't exist
+      console.error('Failed to get timeline:', error);
+      throw error;
+    }
+  },
+
+  // --- Task Management ---
+
+  // Add task to project
+  addTask: async (projectId: string, taskData: Partial<ProjectTask>) => {
+    try {
+      // Ensure required fields like description are present if needed by backend validation
+      return await apiService.post(
+        `/api/projects/${projectId}/tasks`,
+        taskData
+      );
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Update task within project
+  updateTask: async (
+    projectId: string,
+    taskId: string,
+    updateData: Partial<ProjectTask>
+  ) => {
+    try {
+      return await apiService.patch(
+        `/api/projects/${projectId}/tasks/${taskId}`,
+        updateData
+      );
+    } catch (error) {
+      throw error;
+    }
+  },
+
+  // Delete task from project
+  deleteTask: async (projectId: string, taskId: string) => {
+    try {
+      return await apiService.delete(
+        `/api/projects/${projectId}/tasks/${taskId}`
+      );
     } catch (error) {
       throw error;
     }

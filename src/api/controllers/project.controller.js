@@ -451,3 +451,95 @@ exports.getProjectStats = catchAsync(async (req, res, next) => {
     }
   });
 });
+
+// --- Task Management ---
+
+// Add a task to a project
+exports.addTask = catchAsync(async (req, res, next) => {
+  const { id } = req.params;
+  const taskData = req.body;
+
+  // Set the creator of the task
+  taskData.createdBy = req.user.id;
+
+  const project = await Project.findById(id);
+  if (!project) {
+    return next(new AppError('No project found with that ID', 404));
+  }
+
+  // Add the task to the project's tasks array
+  project.tasks.push(taskData);
+  await project.save(); // Use save to trigger potential middleware if needed
+
+  // Find the newly added task (Mongoose adds _id upon push)
+  // Note: This assumes the last task added is the new one. Might need refinement if parallel adds occur.
+  const newTask = project.tasks[project.tasks.length - 1];
+
+  res.status(201).json({
+    status: 'success',
+    data: {
+      task: newTask // Return the newly created task object
+    }
+  });
+});
+
+// Update a specific task within a project
+exports.updateTask = catchAsync(async (req, res, next) => {
+  const { id, taskId } = req.params;
+  const updateData = req.body;
+
+  // Find the project and the specific task
+  const project = await Project.findOne({ _id: id, 'tasks._id': taskId });
+
+  if (!project) {
+    return next(new AppError('No project or task found with the given IDs', 404));
+  }
+
+  // Find the task subdocument
+  const task = project.tasks.id(taskId);
+  if (!task) {
+     // This check is somewhat redundant due to the findOne query, but good practice
+    return next(new AppError('No task found with that ID within the project', 404));
+  }
+
+  // Update the task fields
+  Object.assign(task, updateData);
+
+  // Save the parent project document
+  await project.save();
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      task // Return the updated task object
+    }
+  });
+});
+
+// Delete a specific task from a project
+exports.deleteTask = catchAsync(async (req, res, next) => {
+  const { id, taskId } = req.params;
+
+  const project = await Project.findByIdAndUpdate(
+    id,
+    { $pull: { tasks: { _id: taskId } } }, // Use $pull to remove the task subdocument
+    { new: true } // Option to return the updated project if needed, though not strictly necessary for delete
+  );
+
+  if (!project) {
+    // Note: This check might not reliably tell if the *task* existed, only if the project did.
+    // If findByIdAndUpdate doesn't find the project, it returns null.
+    // If it finds the project but the $pull condition doesn't match any task, it still returns the project (unchanged).
+    // A pre-check might be needed if differentiating "project not found" vs "task not found" is critical.
+    // For now, assume if the project exists, the operation was attempted.
+     return next(new AppError('No project found with that ID, or task deletion failed', 404));
+  }
+
+  // Check if the task was actually removed (optional, requires comparing before/after or checking update result)
+  // For simplicity, we assume success if the project was found and updated.
+
+  res.status(204).json({
+    status: 'success',
+    data: null
+  });
+});

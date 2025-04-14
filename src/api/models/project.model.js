@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-
+const { Schema } = mongoose; // Import Schema
 const projectSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -25,6 +25,21 @@ const projectSchema = new mongoose.Schema({
     ],
     default: 'active'
   },
+  // Define sub-schema for tasks
+  tasks: [
+    {
+      description: { type: String, required: true, trim: true },
+      status: {
+        type: String,
+        enum: ['todo', 'in_progress', 'done', 'blocked'],
+        default: 'todo',
+      },
+      assignedTo: { type: Schema.Types.ObjectId, ref: 'User' },
+      dueDate: { type: Date },
+      createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+      createdAt: { type: Date, default: Date.now },
+    },
+  ],
   stage: {
     type: String,
     enum: [
