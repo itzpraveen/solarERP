@@ -1,4 +1,5 @@
 import { useContext } from 'react';
+import logoSvg from '../../logo.svg'; // Import the correct logo from src
 import { Link, useLocation } from 'react-router-dom';
 import {
   Box,
@@ -29,7 +30,6 @@ import {
   Settings as SettingsIcon,
   ChevronLeft as ChevronLeftIcon,
   Construction as ConstructionIcon,
-  Spa as EcoIcon,
   Build as ServiceIcon,
 } from '@mui/icons-material';
 import { AuthContext } from '../../features/auth/context/AuthContext';
@@ -80,10 +80,12 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <EcoIcon sx={{ fontSize: 28, mr: 1 }} />
-            <Typography variant="h6" fontWeight="bold" noWrap>
-              Solar ERP
-            </Typography>
+            {/* Replace Icon and Text with Image */}
+            <img
+              src={logoSvg}
+              alt="Tenaga Solar ERP Logo"
+              style={{ height: '32px', marginRight: '8px' }}
+            />
           </Box>
           <IconButton
             onClick={handleDrawerToggle}
