@@ -1540,12 +1540,16 @@ const ProjectDetails = () => {
                       }}
                     >
                       <Typography variant="body2" color="text.secondary">
-                        Reported by: {issue.reportedBy.firstName}{' '}
-                        {issue.reportedBy.lastName}
+                        Reported by:{' '}
+                        {issue.reportedBy
+                          ? `${issue.reportedBy.firstName} ${issue.reportedBy.lastName}`
+                          : '[Deleted User]'}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
                         {issue.assignedTo
-                          ? `Assigned to: ${issue.assignedTo.firstName} ${issue.assignedTo.lastName}`
+                          ? `Assigned to: ${issue.assignedTo.firstName || ''} ${
+                              issue.assignedTo.lastName || ''
+                            }`.trim() || '[Invalid User Data]'
                           : 'Unassigned'}
                       </Typography>
                     </Box>
@@ -2018,8 +2022,10 @@ const ProjectDetails = () => {
                               display="block"
                               color="text.secondary"
                             >
-                              By: {note.createdBy.firstName}{' '}
-                              {note.createdBy.lastName}
+                              By:{' '}
+                              {note.createdBy
+                                ? `${note.createdBy.firstName} ${note.createdBy.lastName}`
+                                : '[Deleted User]'}
                             </Typography>
                             <Typography
                               variant="body2"

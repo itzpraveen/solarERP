@@ -1,4 +1,4 @@
-import { useContext } from 'react';
+import { useContext, Fragment } from 'react'; // Import Fragment
 import logoSvg from '../../logo.svg'; // Import the correct logo from src
 import { Link, useLocation } from 'react-router-dom';
 import {
@@ -33,6 +33,7 @@ import {
   Build as ServiceIcon,
 } from '@mui/icons-material';
 import { AuthContext } from '../../features/auth/context/AuthContext';
+import { useProjectContext } from '../../context/ProjectContext'; // Import project context hook
 
 const drawerWidth = 240;
 
@@ -56,6 +57,7 @@ const menuItems = [
 const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
   const { user } = useContext(AuthContext);
   const location = useLocation();
+  const { totalProjects, loadingCount } = useProjectContext(); // Get project count from context
   const theme = useTheme();
 
   const drawer = (
@@ -174,24 +176,28 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
                       fontWeight: isActive ? 600 : 400,
                     }}
                   />
-                  {item.text === 'Projects' && (
-                    <Box
-                      sx={{
-                        backgroundColor: theme.palette.success.main,
-                        color: 'white',
-                        width: 20,
-                        height: 20,
-                        borderRadius: 10,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: 12,
-                        fontWeight: 'bold',
-                      }}
-                    >
-                      3
-                    </Box>
-                  )}
+                  {item.text === 'Projects' &&
+                    !loadingCount &&
+                    totalProjects > 0 && (
+                      <Box
+                        sx={{
+                          backgroundColor: theme.palette.success.main,
+                          color: 'white',
+                          minWidth: 20, // Use minWidth for flexibility
+                          height: 20,
+                          borderRadius: 10,
+                          display: 'inline-flex', // Use inline-flex
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: 12,
+                          fontWeight: 'bold',
+                          padding: '0 6px', // Add padding for numbers > 9
+                          ml: 1, // Add some margin
+                        }}
+                      >
+                        {totalProjects} {/* Display dynamic count */}
+                      </Box>
+                    )}
                 </ListItemButton>
               </ListItem>
             );

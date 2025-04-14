@@ -6,6 +6,7 @@ import {
 } from 'react-router-dom';
 import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
 import { AuthProvider } from './features/auth/context/AuthContext';
+import { ProjectProvider } from './context/ProjectContext'; // Import ProjectProvider
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { clearDummyData } from './utils/clearDummyData';
 import PrivateRoute from './components/routing/PrivateRoute';
@@ -214,7 +215,10 @@ function App() {
               path="/"
               element={
                 <PrivateRoute>
-                  <MainLayout />
+                  <ProjectProvider>
+                    {/* Wrap MainLayout */}
+                    <MainLayout />
+                  </ProjectProvider>
                 </PrivateRoute>
               }
             >
