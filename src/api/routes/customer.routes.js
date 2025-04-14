@@ -2,6 +2,8 @@ const express = require('express');
 const customerController = require('../controllers/customer.controller');
 const authController = require('../controllers/auth.controller');
 const { check } = require('express-validator');
+const authorize = require('../../common/middleware/authorize'); // Import authorize middleware
+const { PERMISSIONS } = require('../../common/config/permissions'); // Import permissions
 const router = express.Router();
 
 // Protect all routes
@@ -28,7 +30,7 @@ router.route('/')
 router.route('/:id')
   .get(authController.restrictTo('admin', 'manager', 'sales'), customerController.getCustomer)
   .patch(authController.restrictTo('admin', 'manager'), customerController.updateCustomer)
-  .delete(authController.restrictTo('admin', 'manager'), customerController.deleteCustomer);
+  .delete(authorize(PERMISSIONS.DELETE_CUSTOMER), customerController.deleteCustomer); // Use permission check
 
 // Convert lead to customer
 router.route('/convert-lead/:leadId')

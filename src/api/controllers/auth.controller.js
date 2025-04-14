@@ -5,6 +5,7 @@ const AppError = require('../../utils/appError');
 const catchAsync = require('../../utils/catchAsync');
 const sendEmail = require('../../utils/email');
 const crypto = require('crypto');
+const { getDefaultPermissions } = require('../../common/config/permissions');
 
 // Create JWT token
 const signToken = id => {
@@ -39,12 +40,16 @@ const createSendToken = (user, statusCode, res) => {
 
 // Register new user
 exports.signup = catchAsync(async (req, res, next) => {
+  const userRole = req.body.role || 'user';
+  const defaultPermissions = getDefaultPermissions(userRole);
+
   const newUser = await User.create({
     firstName: req.body.firstName,
     lastName: req.body.lastName,
     email: req.body.email,
     password: req.body.password,
-    role: req.body.role || 'user'
+    role: userRole,
+    permissions: defaultPermissions, // Assign default permissions
   });
   
   createSendToken(newUser, 201, res);
