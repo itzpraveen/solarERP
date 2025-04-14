@@ -24,6 +24,7 @@ interface AuthContextType {
   logout: () => void;
   setError: (error: string | null) => void;
   updateUser: (userData: Partial<User>) => void;
+  hasPermission: (permission: string) => boolean; // Add permission check function
 }
 
 interface AuthProviderProps {
@@ -206,6 +207,18 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
+  // Function to check if user has a specific permission
+  const hasPermission = (permission: string): boolean => {
+    if (!user || !user.permissions) {
+      return false;
+    }
+    // Admins implicitly have all permissions (adjust if needed)
+    if (user.role === 'admin') {
+      return true;
+    }
+    return user.permissions.includes(permission);
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -218,6 +231,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         logout,
         setError,
         updateUser,
+        hasPermission, // Provide the function in the context
       }}
     >
       {children}

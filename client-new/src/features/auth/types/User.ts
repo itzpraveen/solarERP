@@ -7,4 +7,5 @@ export interface User {
   email: string;
   role: string;
   avatar?: string;
+  permissions?: string[]; // Add optional permissions array
 }

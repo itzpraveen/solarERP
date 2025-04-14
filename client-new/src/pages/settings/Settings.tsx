@@ -14,11 +14,14 @@ import {
   Person as UserIcon,
   Business as CompanyIcon,
   Settings as SystemIcon,
+  ManageAccounts as UserManagementIcon, // Add icon for user management
 } from '@mui/icons-material';
-import { AuthContext } from '../../features/auth/context/AuthContext';
+import { AuthContext } from '../../features/auth/context/AuthContext'; // Already imported
+import { PERMISSIONS } from '../../common/config/permissions'; // Corrected import path
 import UserSettingsForm from './UserSettingsForm';
 import CompanySettingsForm from './CompanySettingsForm';
 import SystemSettingsForm from './SystemSettingsForm';
+import UserManagementPanel from './UserManagementPanel'; // Import the new panel
 import {
   UserSettings,
   CompanySettings,
@@ -54,6 +57,7 @@ const TabPanel = (props: TabPanelProps) => {
 };
 
 const Settings = () => {
+  const { hasPermission } = useContext(AuthContext); // Get permission checker
   const [activeTab, setActiveTab] = useState(0);
   const [userSettings, setUserSettings] = useState<UserSettings | null>(null);
   const [companySettings, setCompanySettings] =
@@ -186,6 +190,14 @@ const Settings = () => {
                 label="System Settings"
                 id="settings-tab-2"
               />
+              {/* Conditionally render User Management Tab */}
+              {hasPermission(PERMISSIONS.MANAGE_USERS) && (
+                <Tab
+                  icon={<UserManagementIcon />}
+                  label="User Management"
+                  id="settings-tab-3"
+                />
+              )}
             </Tabs>
           </Box>
 
@@ -216,6 +228,12 @@ const Settings = () => {
                 onSave={handleSaveSystemSettings}
                 loading={loading}
               />
+            </TabPanel>
+          )}
+          {/* Conditionally render User Management Panel */}
+          {hasPermission(PERMISSIONS.MANAGE_USERS) && (
+            <TabPanel value={activeTab} index={3}>
+              <UserManagementPanel />
             </TabPanel>
           )}
         </Box>
