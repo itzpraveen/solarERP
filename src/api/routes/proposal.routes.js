@@ -33,7 +33,7 @@ router.route('/')
 
 router.route('/:id')
   .get(authController.restrictTo('admin', 'manager', 'sales'), proposalController.getProposal)
-  .patch(authController.restrictTo('admin', 'manager', 'sales'), proposalController.updateProposal)
+  .put(authController.restrictTo('admin', 'manager', 'sales'), proposalController.updateProposal) // Changed from PATCH to PUT
   .delete(authController.restrictTo('admin', 'manager', 'sales'), proposalController.deleteProposal);
 
 // Update proposal status

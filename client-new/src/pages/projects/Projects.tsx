@@ -529,7 +529,12 @@ const Projects = () => {
         }}
       >
         <Typography variant="h4">Projects</Typography>
-        <Box>
+        <Box sx={{
+          display: 'flex',
+          gap: 1,
+          flexDirection: { xs: 'column-reverse', sm: 'row' }, // Stack reversed on mobile
+          alignItems: { xs: 'stretch', sm: 'center' } // Stretch on mobile
+        }}>
           <Button variant="outlined" startIcon={<ImportIcon />} sx={{ mr: 1 }}>
             Import
           </Button>

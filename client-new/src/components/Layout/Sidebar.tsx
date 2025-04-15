@@ -1,6 +1,6 @@
-import { useContext, Fragment, useState } from 'react'; // Import Fragment and useState
-import logoSvg from '../../logo.svg'; // Import the correct logo from src
-import { Link, useLocation, useNavigate } from 'react-router-dom'; // Import useNavigate
+import { useContext, useState, useEffect } from 'react';
+import logoSvg from '../../logo.svg';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Box,
   Drawer,
@@ -14,11 +14,15 @@ import {
   IconButton,
   useTheme,
   Avatar,
-  // Tooltip, // Already imported below for menu trigger
   Paper,
-  Menu, // Add Menu import
-  MenuItem, // Add MenuItem import
-  Tooltip, // Add Tooltip import
+  Menu,
+  MenuItem,
+  Tooltip,
+  Collapse,
+  alpha,
+  Badge,
+  useMediaQuery,
+  Zoom,
 } from '@mui/material';
 import {
   Dashboard as DashboardIcon,
@@ -29,18 +33,18 @@ import {
   ElectricBolt as EquipmentIcon,
   Description as DocumentIcon,
   BarChart as ReportIcon,
-  // AccountCircle as ProfileIcon, // Use PersonIcon for consistency
   Settings as SettingsIcon,
   ChevronLeft as ChevronLeftIcon,
-  // Construction as ConstructionIcon, // Unused
   Build as ServiceIcon,
-  ExitToApp as LogoutIcon, // Add LogoutIcon import
-  Person as PersonIcon, // Add PersonIcon import (used for menu items)
+  ExitToApp as LogoutIcon,
+  Person as PersonIcon,
+  ExpandLess,
+  ExpandMore,
 } from '@mui/icons-material';
 import { AuthContext } from '../../features/auth/context/AuthContext';
-import { useProjectContext } from '../../context/ProjectContext'; // Import project context hook
+import { useProjectContext } from '../../context/ProjectContext';
 
-const drawerWidth = 240;
+const drawerWidth = 260;
 
 interface SidebarProps {
   mobileOpen: boolean;
@@ -60,12 +64,35 @@ const menuItems = [
 ];
 
 const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
-  const { user, logout } = useContext(AuthContext); // Add logout
+  const { user, logout } = useContext(AuthContext);
   const location = useLocation();
-  const navigate = useNavigate(); // Add navigate hook
-  const { totalProjects, loadingCount } = useProjectContext(); // Get project count from context
-  const [anchorElUser, setAnchorElUser] = useState<HTMLElement | null>(null); // State for menu anchor
+  const navigate = useNavigate();
+  const { totalProjects, loadingCount } = useProjectContext();
+  const [anchorElUser, setAnchorElUser] = useState<HTMLElement | null>(null);
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  
+  // Group menu items by category
+  const mainMenuItems = menuItems.slice(0, 5); // Dashboard, Leads, Customers, Proposals, Projects
+  const resourceMenuItems = menuItems.slice(5); // Equipment, Service Requests, Documents, Reports
+  
+  // State for collapsible sections
+  const [resourcesOpen, setResourcesOpen] = useState(true);
+  
+  // Check if any resource item is active to auto-expand the section
+  useEffect(() => {
+    const isAnyResourceActive = resourceMenuItems.some(item =>
+      location.pathname.startsWith(item.path)
+    );
+    
+    if (isAnyResourceActive && !resourcesOpen) {
+      setResourcesOpen(true);
+    }
+  }, [location.pathname, resourceMenuItems, resourcesOpen]);
+  
+  const toggleResources = () => {
+    setResourcesOpen(!resourcesOpen);
+  };
 
   // --- User Menu Handlers ---
   const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
@@ -95,9 +122,21 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          padding: 3,
-          backgroundColor: theme.palette.primary.main,
-          color: theme.palette.primary.contrastText,
+          padding: 2, // Reduced padding
+          background: theme.palette.background.paper, // Changed background to white
+          color: theme.palette.text.primary, // Changed default text color for contrast
+          position: 'relative',
+          // overflow: 'hidden', // Removed overflow to prevent clipping
+          '&::after': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'radial-gradient(circle at top right, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 70%)',
+            pointerEvents: 'none',
+          }
         }}
       >
         <Box
@@ -107,21 +146,41 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
             width: '100%',
             justifyContent: 'space-between',
             mb: 2,
+            position: 'relative',
+            zIndex: 1,
           }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            {/* Replace Icon and Text with Image */}
             <img
               src={logoSvg}
               alt="Tenaga Solar ERP Logo"
-              style={{ height: '32px', marginRight: '8px' }}
+              style={{
+                height: '36px',
+                marginRight: '10px',
+                filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.2))'
+              }}
             />
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: 700,
+                letterSpacing: '0.5px',
+                display: { xs: 'none', sm: 'block' },
+                // textShadow: '0px 2px 4px rgba(0,0,0,0.2)', // Remove text shadow if background is light
+                color: theme.palette.primary.main, // Use primary color for text
+              }}
+            >
+              Solar ERP
+            </Typography>
           </Box>
           <IconButton
             onClick={handleDrawerToggle}
             sx={{
               display: { sm: 'none' },
-              color: 'white',
+              color: theme.palette.primary.main, // Changed icon color for contrast
+              '&:hover': {
+                backgroundColor: 'rgba(255,255,255,0.1)',
+              }
             }}
           >
             <ChevronLeftIcon />
@@ -130,11 +189,12 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
       </Box>
 
       <Box sx={{ overflowY: 'auto', flex: 1, py: 2 }}>
+        {/* Main menu items */}
         <List sx={{ px: 2 }}>
-          {menuItems.map((item) => {
+          {mainMenuItems.map((item) => {
             const isActive = location.pathname.startsWith(item.path);
             return (
-              <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
+              <ListItem key={item.text} disablePadding sx={{ mb: 0.75 }}>
                 <ListItemButton
                   component={Link}
                   to={item.path}
@@ -142,15 +202,15 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
                   sx={{
                     borderRadius: 2,
                     backgroundColor: isActive
-                      ? theme.palette.primary.light
+                      ? alpha(theme.palette.primary.main, 0.1)
                       : 'transparent',
                     color: isActive
                       ? theme.palette.primary.main
                       : theme.palette.text.primary,
                     '&:hover': {
                       backgroundColor: isActive
-                        ? theme.palette.primary.light
-                        : theme.palette.grey[100],
+                        ? alpha(theme.palette.primary.main, 0.15)
+                        : alpha(theme.palette.primary.main, 0.05),
                     },
                     '& .MuiListItemIcon-root': {
                       color: isActive
@@ -158,49 +218,124 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
                         : theme.palette.text.secondary,
                       minWidth: 40,
                     },
-                    transition: 'all 0.2s',
-                    py: 1,
+                    transition: 'all 0.2s ease-in-out',
+                    py: 1.2,
+                    boxShadow: isActive ? `0 2px 8px ${alpha(theme.palette.primary.main, 0.15)}` : 'none',
                   }}
                 >
                   <ListItemIcon>{item.icon}</ListItemIcon>
                   <ListItemText
                     primary={item.text}
                     primaryTypographyProps={{
-                      fontWeight: isActive ? 600 : 400,
+                      fontWeight: isActive ? 600 : 500,
+                      fontSize: '0.95rem',
                     }}
                   />
                   {item.text === 'Projects' &&
                     !loadingCount &&
                     totalProjects > 0 && (
-                      <Box
+                      <Badge
+                        badgeContent={totalProjects}
+                        color="success"
                         sx={{
-                          backgroundColor: theme.palette.success.main,
-                          color: 'white',
-                          minWidth: 20, // Use minWidth for flexibility
-                          height: 20,
-                          borderRadius: 10,
-                          display: 'inline-flex', // Use inline-flex
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: 12,
-                          fontWeight: 'bold',
-                          padding: '0 6px', // Add padding for numbers > 9
-                          ml: 1, // Add some margin
+                          '& .MuiBadge-badge': {
+                            fontWeight: 'bold',
+                            fontSize: '0.75rem',
+                            minWidth: '20px',
+                            height: '20px',
+                          }
                         }}
-                      >
-                        {totalProjects} {/* Display dynamic count */}
-                      </Box>
+                      />
                     )}
                 </ListItemButton>
               </ListItem>
             );
           })}
         </List>
-
+        
         <Divider sx={{ my: 2, mx: 2 }} />
-
+        
+        {/* Resources section with collapsible header */}
         <List sx={{ px: 2 }}>
           <ListItem disablePadding sx={{ mb: 0.5 }}>
+            <ListItemButton
+              onClick={toggleResources}
+              sx={{
+                borderRadius: 2,
+                py: 1,
+                '&:hover': {
+                  backgroundColor: alpha(theme.palette.primary.main, 0.05),
+                },
+              }}
+            >
+              <ListItemText
+                primary="Resources"
+                primaryTypographyProps={{
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  color: theme.palette.text.secondary,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                }}
+              />
+              {resourcesOpen ? <ExpandLess /> : <ExpandMore />}
+            </ListItemButton>
+          </ListItem>
+          
+          <Collapse in={resourcesOpen} timeout="auto" unmountOnExit>
+            <List component="div" disablePadding>
+              {resourceMenuItems.map((item) => {
+                const isActive = location.pathname.startsWith(item.path);
+                return (
+                  <ListItem key={item.text} disablePadding sx={{ mb: 0.75, pl: 1 }}>
+                    <ListItemButton
+                      component={Link}
+                      to={item.path}
+                      selected={isActive}
+                      sx={{
+                        borderRadius: 2,
+                        backgroundColor: isActive
+                          ? alpha(theme.palette.primary.main, 0.1)
+                          : 'transparent',
+                        color: isActive
+                          ? theme.palette.primary.main
+                          : theme.palette.text.primary,
+                        '&:hover': {
+                          backgroundColor: isActive
+                            ? alpha(theme.palette.primary.main, 0.15)
+                            : alpha(theme.palette.primary.main, 0.05),
+                        },
+                        '& .MuiListItemIcon-root': {
+                          color: isActive
+                            ? theme.palette.primary.main
+                            : theme.palette.text.secondary,
+                          minWidth: 36,
+                        },
+                        transition: 'all 0.2s ease-in-out',
+                        py: 1,
+                      }}
+                    >
+                      <ListItemIcon>{item.icon}</ListItemIcon>
+                      <ListItemText
+                        primary={item.text}
+                        primaryTypographyProps={{
+                          fontWeight: isActive ? 600 : 500,
+                          fontSize: '0.95rem',
+                        }}
+                      />
+                    </ListItemButton>
+                  </ListItem>
+                );
+              })}
+            </List>
+          </Collapse>
+        </List>
+
+        <Divider sx={{ my: 2, mx: 2 }} />
+        
+        {/* Settings and Profile */}
+        <List sx={{ px: 2 }}>
+          <ListItem disablePadding sx={{ mb: 0.75 }}>
             <ListItemButton
               component={Link}
               to="/profile"
@@ -209,14 +344,31 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
                 borderRadius: 2,
                 '& .MuiListItemIcon-root': {
                   minWidth: 40,
+                  color: location.pathname === '/profile'
+                    ? theme.palette.primary.main
+                    : theme.palette.text.secondary,
                 },
-                py: 1,
+                py: 1.2,
+                backgroundColor: location.pathname === '/profile'
+                  ? alpha(theme.palette.primary.main, 0.1)
+                  : 'transparent',
+                '&:hover': {
+                  backgroundColor: location.pathname === '/profile'
+                    ? alpha(theme.palette.primary.main, 0.15)
+                    : alpha(theme.palette.primary.main, 0.05),
+                },
               }}
             >
               <ListItemIcon>
-                <PersonIcon /> {/* Changed to PersonIcon */}
+                <PersonIcon />
               </ListItemIcon>
-              <ListItemText primary="Profile" />
+              <ListItemText
+                primary="Profile"
+                primaryTypographyProps={{
+                  fontWeight: location.pathname === '/profile' ? 600 : 500,
+                  fontSize: '0.95rem',
+                }}
+              />
             </ListItemButton>
           </ListItem>
           <ListItem disablePadding>
@@ -228,36 +380,61 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
                 borderRadius: 2,
                 '& .MuiListItemIcon-root': {
                   minWidth: 40,
+                  color: location.pathname === '/settings'
+                    ? theme.palette.primary.main
+                    : theme.palette.text.secondary,
                 },
-                py: 1,
+                py: 1.2,
+                backgroundColor: location.pathname === '/settings'
+                  ? alpha(theme.palette.primary.main, 0.1)
+                  : 'transparent',
+                '&:hover': {
+                  backgroundColor: location.pathname === '/settings'
+                    ? alpha(theme.palette.primary.main, 0.15)
+                    : alpha(theme.palette.primary.main, 0.05),
+                },
               }}
             >
               <ListItemIcon>
                 <SettingsIcon />
               </ListItemIcon>
-              <ListItemText primary="Settings" />
+              <ListItemText
+                primary="Settings"
+                primaryTypographyProps={{
+                  fontWeight: location.pathname === '/settings' ? 600 : 500,
+                  fontSize: '0.95rem',
+                }}
+              />
             </ListItemButton>
           </ListItem>
         </List>
       </Box>
 
-      {/* --- User Info Block (Menu Trigger) --- */}
-      <Box sx={{ p: 2 }}>
-        <Tooltip title="Account settings" placement="top">
+      {/* User profile section */}
+      <Box sx={{ p: 2, mt: 'auto' }}>
+        <Tooltip
+          title="Account settings"
+          placement="top"
+          TransitionComponent={Zoom}
+          arrow
+        >
           <Paper
             elevation={0}
-            onClick={handleOpenUserMenu} // Add onClick handler
+            onClick={handleOpenUserMenu}
             sx={{
               p: 2,
-              borderRadius: 2,
-              bgcolor: theme.palette.grey[50],
-              border: `1px solid ${theme.palette.grey[200]}`,
+              borderRadius: theme.shape.borderRadius * 1.5,
+              bgcolor: alpha(theme.palette.primary.main, 0.04),
+              border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
               display: 'flex',
               alignItems: 'center',
               gap: 2,
-              cursor: 'pointer', // Add pointer cursor
+              cursor: 'pointer',
+              transition: 'all 0.2s ease-in-out',
               '&:hover': {
-                bgcolor: theme.palette.grey[100],
+                bgcolor: alpha(theme.palette.primary.main, 0.08),
+                transform: 'translateY(-2px)',
+                boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.1)}`,
               },
             }}
           >
@@ -266,36 +443,44 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
               src={user?.avatar}
               sx={{
                 bgcolor: theme.palette.primary.main,
-                width: 40,
-                height: 40,
+                width: 42,
+                height: 42,
+                boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.25)}`,
               }}
             >
               {!user?.avatar && (user?.name?.charAt(0) || 'U')}
             </Avatar>
             <Box sx={{ flex: 1 }}>
-              <Typography variant="body2" fontWeight={500}>
+              <Typography variant="body2" fontWeight={600}>
                 {user?.name || 'User'}
               </Typography>
-              <Typography variant="caption" color="text.secondary">
+              <Typography
+                variant="caption"
+                sx={{
+                  color: theme.palette.primary.main,
+                  fontWeight: 500,
+                  display: 'block',
+                  marginTop: '-2px'
+                }}
+              >
                 Administrator
               </Typography>
             </Box>
           </Paper>
         </Tooltip>
-        {/* --- End User Info Block --- */}
 
-        {/* --- User Menu --- */}
+        {/* User menu */}
         <Menu
-          sx={{ mb: '40px' }} // Adjust margin if needed based on sidebar position
+          sx={{ mt: '16px' }}
           id="menu-sidebar"
           anchorEl={anchorElUser}
           anchorOrigin={{
-            vertical: 'top', // Anchor to the top of the trigger element
+            vertical: 'bottom',
             horizontal: 'center',
           }}
           keepMounted
           transformOrigin={{
-            vertical: 'bottom', // Open upwards from the trigger
+            vertical: 'top',
             horizontal: 'center',
           }}
           open={Boolean(anchorElUser)}
@@ -303,42 +488,63 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
           PaperProps={{
             elevation: 3,
             sx: {
-              borderRadius: 2,
-              minWidth: 180,
+              borderRadius: theme.shape.borderRadius * 1.5,
+              minWidth: 200,
               overflow: 'visible',
-              mb: 1, // Margin below the menu
-              // Arrow pointing down (adjust if needed)
+              mt: 1.5,
+              boxShadow: '0 8px 16px rgba(0,0,0,0.1)',
               '&:before': {
                 content: '""',
                 display: 'block',
                 position: 'absolute',
-                bottom: 0,
+                top: 0,
                 left: '50%',
-                width: 10,
-                height: 10,
+                width: 12,
+                height: 12,
                 bgcolor: 'background.paper',
-                transform: 'translateX(-50%) translateY(50%) rotate(45deg)',
+                transform: 'translateX(-50%) translateY(-50%) rotate(45deg)',
                 zIndex: 0,
               },
             },
           }}
+          TransitionComponent={Zoom}
+          transitionDuration={200}
         >
-          <MenuItem onClick={handleProfile} sx={{ py: 1.5 }}>
+          <MenuItem
+            onClick={handleProfile}
+            sx={{
+              py: 1.5,
+              borderRadius: theme.shape.borderRadius,
+              mx: 0.5,
+              '&:hover': {
+                backgroundColor: alpha(theme.palette.primary.main, 0.08),
+              }
+            }}
+          >
             <PersonIcon
               fontSize="small"
-              sx={{ mr: 1, color: theme.palette.text.secondary }}
+              sx={{ mr: 1.5, color: theme.palette.primary.main }}
             />
-            <Typography>Profile</Typography>
+            <Typography fontWeight={500}>Profile</Typography>
           </MenuItem>
-          <MenuItem onClick={handleLogout} sx={{ py: 1.5 }}>
+          <MenuItem
+            onClick={handleLogout}
+            sx={{
+              py: 1.5,
+              borderRadius: theme.shape.borderRadius,
+              mx: 0.5,
+              '&:hover': {
+                backgroundColor: alpha(theme.palette.error.main, 0.08),
+              }
+            }}
+          >
             <LogoutIcon
               fontSize="small"
-              sx={{ mr: 1, color: theme.palette.text.secondary }}
+              sx={{ mr: 1.5, color: theme.palette.error.main }}
             />
-            <Typography>Logout</Typography>
+            <Typography fontWeight={500} color="error.main">Logout</Typography>
           </MenuItem>
         </Menu>
-        {/* --- End User Menu --- */}
       </Box>
     </>
   );
@@ -359,11 +565,16 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
           '& .MuiDrawer-paper': {
             boxSizing: 'border-box',
             width: drawerWidth,
-            backgroundColor: 'white',
-            boxShadow: '0px 0px 20px rgba(0, 0, 0, 0.05)',
+            backgroundColor: theme.palette.background.paper,
+            boxShadow: '0px 0px 30px rgba(0, 0, 0, 0.1)',
             border: 'none',
             display: 'flex',
             flexDirection: 'column',
+            height: '100%',
+            transition: theme.transitions.create(['width', 'margin'], {
+              easing: theme.transitions.easing.sharp,
+              duration: theme.transitions.duration.enteringScreen,
+            }),
           },
         }}
       >
@@ -378,11 +589,15 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
           '& .MuiDrawer-paper': {
             boxSizing: 'border-box',
             width: drawerWidth,
-            backgroundColor: 'white',
-            boxShadow: '0px 0px 20px rgba(0, 0, 0, 0.05)',
+            backgroundColor: theme.palette.background.paper,
+            boxShadow: '0px 0px 30px rgba(0, 0, 0, 0.1)',
             border: 'none',
             display: 'flex',
             flexDirection: 'column',
+            transition: theme.transitions.create(['width', 'margin'], {
+              easing: theme.transitions.easing.sharp,
+              duration: theme.transitions.duration.enteringScreen,
+            }),
           },
         }}
         open

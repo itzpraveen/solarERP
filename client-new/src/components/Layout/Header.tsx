@@ -1,19 +1,18 @@
-import { useState, useEffect } from 'react'; // Removed unused useContext
+import { useState, useEffect } from 'react';
 import {
   AppBar,
   Toolbar,
   IconButton,
-  // Typography, // Removed unused import
   Badge,
-  // Menu, // Moved to Sidebar
-  // MenuItem, // Moved to Sidebar
   Box,
-  // Avatar, // Removed unused import
-  // Tooltip, // Moved to Sidebar
   InputBase,
-  // Button, // Removed unused import
   Chip,
   useTheme,
+  Typography,
+  Tooltip,
+  Zoom,
+  useMediaQuery,
+  alpha,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
@@ -21,29 +20,28 @@ import {
   Search as SearchIcon,
   Settings as SettingsIcon,
   Help as HelpIcon,
-  // ExitToApp as LogoutIcon, // Moved to Sidebar
-  // Person as PersonIcon, // Moved to Sidebar
   WbSunny as SunIcon,
+  Dashboard as DashboardIcon,
 } from '@mui/icons-material';
-import { useNavigate } from 'react-router-dom';
-// import { AuthContext } from '../../features/auth/context/AuthContext'; // Removed unused import
-import reportService from '../../api/reportService'; // Import report service
-import userService from '../../api/userService'; // Import user service (will add function later)
+import { useNavigate, Link } from 'react-router-dom';
+import reportService from '../../api/reportService';
+import userService from '../../api/userService';
 
-const drawerWidth = 240;
+const drawerWidth = 260;
 
 interface HeaderProps {
   handleDrawerToggle: () => void;
 }
 
 const Header = ({ handleDrawerToggle }: HeaderProps) => {
-  // const [anchorElUser, setAnchorElUser] = useState<HTMLElement | null>(null); // Moved to Sidebar
-  const [notificationCount, setNotificationCount] = useState<number>(0); // State for notification count
-  const [currentKwh, setCurrentKwh] = useState<number | null>(null); // State for kWh
-  const [searchTerm, setSearchTerm] = useState<string>(''); // State for search input
-  // Removed useContext(AuthContext) as it's no longer used here
+  const [notificationCount, setNotificationCount] = useState<number>(0);
+  const [currentKwh, setCurrentKwh] = useState<number | null>(null);
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [searchFocused, setSearchFocused] = useState<boolean>(false);
   const navigate = useNavigate();
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
 
   // User menu handlers moved to Sidebar
   // const handleOpenUserMenu = ...
@@ -102,96 +100,197 @@ const Header = ({ handleDrawerToggle }: HeaderProps) => {
       sx={{
         width: { sm: `calc(100% - ${drawerWidth}px)` },
         ml: { sm: `${drawerWidth}px` },
+        backdropFilter: 'blur(8px)',
+        backgroundColor: alpha(theme.palette.background.paper, 0.9),
+        borderBottom: `1px solid ${theme.palette.divider}`,
+        transition: theme.transitions.create(['width', 'margin'], {
+          easing: theme.transitions.easing.sharp,
+          duration: theme.transitions.duration.leavingScreen,
+        }),
       }}
     >
-      <Toolbar sx={{ justifyContent: 'space-between' }}>
+      <Toolbar sx={{ justifyContent: 'space-between', minHeight: { xs: 64 } }}>
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          {/* Mobile menu toggle */}
           <IconButton
             color="inherit"
             edge="start"
             onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { sm: 'none' } }}
+            sx={{
+              mr: 2,
+              display: { sm: 'none' },
+              color: theme.palette.text.primary,
+            }}
           >
             <MenuIcon />
           </IconButton>
+
+          {/* Dashboard link for mobile */}
+          {isMobile && (
+            <IconButton
+              component={Link}
+              to="/dashboard"
+              color="primary"
+              sx={{ mr: 1 }}
+            >
+              <DashboardIcon />
+            </IconButton>
+          )}
 
           {/* Search Bar */}
           <Box
             sx={{
               display: 'flex',
               alignItems: 'center',
-              backgroundColor: theme.palette.grey[100],
+              backgroundColor: searchFocused
+                ? alpha(theme.palette.primary.main, 0.08)
+                : theme.palette.grey[100],
               borderRadius: '50px',
-              padding: '4px 16px',
+              padding: '6px 16px',
               width: { xs: '120px', sm: '220px', md: '300px' },
               marginRight: { xs: 1, sm: 2 },
+              transition: 'all 0.2s ease-in-out',
+              border: searchFocused
+                ? `1px solid ${alpha(theme.palette.primary.main, 0.5)}`
+                : '1px solid transparent',
+              boxShadow: searchFocused
+                ? `0 0 0 4px ${alpha(theme.palette.primary.main, 0.1)}`
+                : 'none',
             }}
           >
-            <SearchIcon sx={{ color: theme.palette.grey[500], mr: 1 }} />
+            <SearchIcon
+              sx={{
+                color: searchFocused
+                  ? theme.palette.primary.main
+                  : theme.palette.grey[500],
+                mr: 1,
+                transition: 'color 0.2s ease-in-out',
+              }}
+            />
             <InputBase
-              placeholder="Search..."
+              placeholder={isMobile ? "Search" : "Search..."}
               inputProps={{ 'aria-label': 'search' }}
-              sx={{ color: theme.palette.grey[700], flexGrow: 1 }}
+              sx={{
+                color: theme.palette.text.primary,
+                flexGrow: 1,
+                '& .MuiInputBase-input': {
+                  transition: 'all 0.2s ease-in-out',
+                },
+              }}
               value={searchTerm}
               onChange={handleSearchChange}
               onKeyDown={handleSearchSubmit}
+              onFocus={() => setSearchFocused(true)}
+              onBlur={() => setSearchFocused(false)}
             />
           </Box>
         </Box>
 
         {/* Right side icons */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Chip
-            icon={
-              <SunIcon
-                sx={{ color: theme.palette.warning.main, fontSize: '1.1rem' }}
-              />
-            }
-            label={
-              currentKwh !== null
-                ? `${currentKwh.toFixed(1)} kWh`
-                : 'Loading...'
-            }
-            size="small"
-            sx={{
-              backgroundColor: theme.palette.warning.light,
-              color: theme.palette.warning.dark,
-              fontWeight: 500,
-              display: { xs: 'none', md: 'flex' },
-            }}
-          />
-
-          <IconButton
-            color="inherit"
-            size="small"
-            sx={{ display: { xs: 'none', sm: 'flex' } }}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 1 } }}>
+          {/* Energy production chip */}
+          <Tooltip
+            title="Current energy production"
+            arrow
+            TransitionComponent={Zoom}
           >
-            <HelpIcon />
-          </IconButton>
+            <Chip
+              icon={
+                <SunIcon
+                  sx={{
+                    color: theme.palette.warning.main,
+                    fontSize: '1rem',
+                  }}
+                />
+              }
+              label={
+                currentKwh !== null
+                  ? `${currentKwh.toFixed(1)} kWh`
+                  : 'Loading...'
+              }
+              size="small"
+              sx={{
+                backgroundColor: alpha(theme.palette.warning.main, 0.1),
+                color: theme.palette.warning.dark,
+                fontWeight: 600,
+                display: { xs: 'none', md: 'flex' },
+                borderRadius: '16px',
+                transition: 'all 0.2s ease-in-out',
+                '&:hover': {
+                  backgroundColor: alpha(theme.palette.warning.main, 0.2),
+                },
+                height: '32px',
+              }}
+            />
+          </Tooltip>
 
-          <IconButton color="inherit" size="small">
-            <Badge
-              badgeContent={notificationCount}
-              color="error"
-              sx={{ '& .MuiBadge-badge': { top: 3, right: 3 } }}
+          {/* Help button */}
+          <Tooltip title="Help & Resources" arrow TransitionComponent={Zoom}>
+            <IconButton
+              color="inherit"
+              size="small"
+              sx={{
+                display: { xs: 'none', sm: 'flex' },
+                color: theme.palette.text.secondary,
+                '&:hover': {
+                  color: theme.palette.primary.main,
+                  backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                },
+              }}
             >
-              <NotificationsIcon />
-            </Badge>
-          </IconButton>
+              <HelpIcon />
+            </IconButton>
+          </Tooltip>
 
-          <IconButton
-            color="inherit"
-            size="small"
-            onClick={() => navigate('/settings')}
-            sx={{ display: { xs: 'none', sm: 'flex' } }}
-          >
-            <SettingsIcon />
-          </IconButton>
+          {/* Notifications button */}
+          <Tooltip title="Notifications" arrow TransitionComponent={Zoom}>
+            <IconButton
+              color="inherit"
+              size="small"
+              sx={{
+                color: theme.palette.text.secondary,
+                '&:hover': {
+                  color: theme.palette.primary.main,
+                  backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                },
+              }}
+            >
+              <Badge
+                badgeContent={notificationCount}
+                color="error"
+                sx={{
+                  '& .MuiBadge-badge': {
+                    top: 3,
+                    right: 3,
+                    fontWeight: 'bold',
+                    minWidth: '18px',
+                    height: '18px',
+                  }
+                }}
+              >
+                <NotificationsIcon />
+              </Badge>
+            </IconButton>
+          </Tooltip>
 
-          {/* User Info Box Removed - Kept in Sidebar */}
-          {/* User Menu Trigger Removed - Moved to Sidebar */}
-
-          {/* Menu component moved to Sidebar */}
+          {/* Settings button */}
+          <Tooltip title="Settings" arrow TransitionComponent={Zoom}>
+            <IconButton
+              color="inherit"
+              size="small"
+              onClick={() => navigate('/settings')}
+              sx={{
+                display: { xs: 'none', sm: 'flex' },
+                color: theme.palette.text.secondary,
+                '&:hover': {
+                  color: theme.palette.primary.main,
+                  backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                },
+              }}
+            >
+              <SettingsIcon />
+            </IconButton>
+          </Tooltip>
         </Box>
       </Toolbar>
     </AppBar>
