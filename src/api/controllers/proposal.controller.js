@@ -70,7 +70,7 @@ exports.getAllProposals = catchAsync(async (req, res, next) => {
 
 // Get proposal by ID
 exports.getProposal = catchAsync(async (req, res, next) => {
-  const proposal = await Proposal.findById(req.params.id);
+  const proposal = await Proposal.findById(req.params.id).populate('lead'); // Populate the lead field
   
   if (!proposal) {
     return next(new AppError('No proposal found with that ID', 404));

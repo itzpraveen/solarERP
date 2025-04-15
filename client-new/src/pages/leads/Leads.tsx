@@ -138,7 +138,6 @@ const LeadForm = ({
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
-                required
                 label="Last Name"
                 name="lastName"
                 value={formData.lastName}
@@ -148,7 +147,6 @@ const LeadForm = ({
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
-                required
                 label="Email"
                 name="email"
                 type="email"

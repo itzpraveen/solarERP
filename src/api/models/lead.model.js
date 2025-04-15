@@ -8,12 +8,10 @@ const leadSchema = new mongoose.Schema({
   },
   lastName: {
     type: String,
-    required: [true, 'Last name is required'],
     trim: true
   },
   email: {
     type: String,
-    required: [true, 'Email is required'],
     trim: true,
     lowercase: true,
     match: [/^\S+@\S+\.\S+$/, 'Please use a valid email address']

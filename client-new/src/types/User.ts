@@ -1,10 +1,10 @@
+import { FrontendUserContext } from '../../../common/types/user.types';
+
 /**
- * User interface representing a user in the system
+ * Re-exporting the FrontendUserContext from the shared types module
+ * for use within the frontend application.
+ * This maintains consistency and avoids duplication.
  */
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  avatar?: string;
-}
+export type User = FrontendUserContext;
+
+// You can add other frontend-specific user-related types here if needed.

@@ -282,6 +282,10 @@ const ProposalDetails = () => {
 
     try {
       setLoading(true);
+      console.log(
+        'Saving proposal with data:',
+        JSON.stringify(editData, null, 2)
+      ); // Log data being sent
       await proposalService.updateProposal(id, editData);
       await fetchProposal();
       setEditMode(false);

@@ -1,6 +1,6 @@
-import { useContext, Fragment } from 'react'; // Import Fragment
+import { useContext, Fragment, useState } from 'react'; // Import Fragment and useState
 import logoSvg from '../../logo.svg'; // Import the correct logo from src
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom'; // Import useNavigate
 import {
   Box,
   Drawer,
@@ -14,8 +14,11 @@ import {
   IconButton,
   useTheme,
   Avatar,
-  Tooltip,
+  // Tooltip, // Already imported below for menu trigger
   Paper,
+  Menu, // Add Menu import
+  MenuItem, // Add MenuItem import
+  Tooltip, // Add Tooltip import
 } from '@mui/material';
 import {
   Dashboard as DashboardIcon,
@@ -26,11 +29,13 @@ import {
   ElectricBolt as EquipmentIcon,
   Description as DocumentIcon,
   BarChart as ReportIcon,
-  AccountCircle as ProfileIcon,
+  // AccountCircle as ProfileIcon, // Use PersonIcon for consistency
   Settings as SettingsIcon,
   ChevronLeft as ChevronLeftIcon,
-  Construction as ConstructionIcon,
+  // Construction as ConstructionIcon, // Unused
   Build as ServiceIcon,
+  ExitToApp as LogoutIcon, // Add LogoutIcon import
+  Person as PersonIcon, // Add PersonIcon import (used for menu items)
 } from '@mui/icons-material';
 import { AuthContext } from '../../features/auth/context/AuthContext';
 import { useProjectContext } from '../../context/ProjectContext'; // Import project context hook
@@ -55,10 +60,33 @@ const menuItems = [
 ];
 
 const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
-  const { user } = useContext(AuthContext);
+  const { user, logout } = useContext(AuthContext); // Add logout
   const location = useLocation();
+  const navigate = useNavigate(); // Add navigate hook
   const { totalProjects, loadingCount } = useProjectContext(); // Get project count from context
+  const [anchorElUser, setAnchorElUser] = useState<HTMLElement | null>(null); // State for menu anchor
   const theme = useTheme();
+
+  // --- User Menu Handlers ---
+  const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorElUser(event.currentTarget);
+  };
+
+  const handleCloseUserMenu = () => {
+    setAnchorElUser(null);
+  };
+
+  const handleLogout = () => {
+    handleCloseUserMenu();
+    logout(); // Call logout from context
+    navigate('/login');
+  };
+
+  const handleProfile = () => {
+    handleCloseUserMenu();
+    navigate('/profile');
+  };
+  // --- End User Menu Handlers ---
 
   const drawer = (
     <>
@@ -186,7 +214,7 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
               }}
             >
               <ListItemIcon>
-                <ProfileIcon />
+                <PersonIcon /> {/* Changed to PersonIcon */}
               </ListItemIcon>
               <ListItemText primary="Profile" />
             </ListItemButton>
@@ -213,35 +241,104 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
         </List>
       </Box>
 
+      {/* --- User Info Block (Menu Trigger) --- */}
       <Box sx={{ p: 2 }}>
-        <Paper
-          elevation={0}
-          sx={{
-            p: 2,
-            borderRadius: 2,
-            bgcolor: theme.palette.grey[50],
-            border: `1px solid ${theme.palette.grey[200]}`,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 2,
+        <Tooltip title="Account settings" placement="top">
+          <Paper
+            elevation={0}
+            onClick={handleOpenUserMenu} // Add onClick handler
+            sx={{
+              p: 2,
+              borderRadius: 2,
+              bgcolor: theme.palette.grey[50],
+              border: `1px solid ${theme.palette.grey[200]}`,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
+              cursor: 'pointer', // Add pointer cursor
+              '&:hover': {
+                bgcolor: theme.palette.grey[100],
+              },
+            }}
+          >
+            <Avatar
+              alt={user?.name || 'User'}
+              src={user?.avatar}
+              sx={{
+                bgcolor: theme.palette.primary.main,
+                width: 40,
+                height: 40,
+              }}
+            >
+              {!user?.avatar && (user?.name?.charAt(0) || 'U')}
+            </Avatar>
+            <Box sx={{ flex: 1 }}>
+              <Typography variant="body2" fontWeight={500}>
+                {user?.name || 'User'}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Administrator
+              </Typography>
+            </Box>
+          </Paper>
+        </Tooltip>
+        {/* --- End User Info Block --- */}
+
+        {/* --- User Menu --- */}
+        <Menu
+          sx={{ mb: '40px' }} // Adjust margin if needed based on sidebar position
+          id="menu-sidebar"
+          anchorEl={anchorElUser}
+          anchorOrigin={{
+            vertical: 'top', // Anchor to the top of the trigger element
+            horizontal: 'center',
+          }}
+          keepMounted
+          transformOrigin={{
+            vertical: 'bottom', // Open upwards from the trigger
+            horizontal: 'center',
+          }}
+          open={Boolean(anchorElUser)}
+          onClose={handleCloseUserMenu}
+          PaperProps={{
+            elevation: 3,
+            sx: {
+              borderRadius: 2,
+              minWidth: 180,
+              overflow: 'visible',
+              mb: 1, // Margin below the menu
+              // Arrow pointing down (adjust if needed)
+              '&:before': {
+                content: '""',
+                display: 'block',
+                position: 'absolute',
+                bottom: 0,
+                left: '50%',
+                width: 10,
+                height: 10,
+                bgcolor: 'background.paper',
+                transform: 'translateX(-50%) translateY(50%) rotate(45deg)',
+                zIndex: 0,
+              },
+            },
           }}
         >
-          <Avatar
-            alt={user?.name || 'User'}
-            src={user?.avatar}
-            sx={{ bgcolor: theme.palette.primary.main, width: 40, height: 40 }}
-          >
-            {!user?.avatar && (user?.name?.charAt(0) || 'U')}
-          </Avatar>
-          <Box sx={{ flex: 1 }}>
-            <Typography variant="body2" fontWeight={500}>
-              {user?.name || 'User'}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              Administrator
-            </Typography>
-          </Box>
-        </Paper>
+          <MenuItem onClick={handleProfile} sx={{ py: 1.5 }}>
+            <PersonIcon
+              fontSize="small"
+              sx={{ mr: 1, color: theme.palette.text.secondary }}
+            />
+            <Typography>Profile</Typography>
+          </MenuItem>
+          <MenuItem onClick={handleLogout} sx={{ py: 1.5 }}>
+            <LogoutIcon
+              fontSize="small"
+              sx={{ mr: 1, color: theme.palette.text.secondary }}
+            />
+            <Typography>Logout</Typography>
+          </MenuItem>
+        </Menu>
+        {/* --- End User Menu --- */}
       </Box>
     </>
   );

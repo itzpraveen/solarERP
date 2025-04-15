@@ -1,17 +1,17 @@
-import { useContext, useState } from 'react';
+import { useState, useEffect } from 'react'; // Removed unused useContext
 import {
   AppBar,
   Toolbar,
   IconButton,
-  Typography,
+  // Typography, // Removed unused import
   Badge,
-  Menu,
-  MenuItem,
+  // Menu, // Moved to Sidebar
+  // MenuItem, // Moved to Sidebar
   Box,
-  Avatar,
-  Tooltip,
+  // Avatar, // Removed unused import
+  // Tooltip, // Moved to Sidebar
   InputBase,
-  Button,
+  // Button, // Removed unused import
   Chip,
   useTheme,
 } from '@mui/material';
@@ -21,12 +21,14 @@ import {
   Search as SearchIcon,
   Settings as SettingsIcon,
   Help as HelpIcon,
-  ExitToApp as LogoutIcon,
-  Person as PersonIcon,
+  // ExitToApp as LogoutIcon, // Moved to Sidebar
+  // Person as PersonIcon, // Moved to Sidebar
   WbSunny as SunIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { AuthContext } from '../../features/auth/context/AuthContext';
+// import { AuthContext } from '../../features/auth/context/AuthContext'; // Removed unused import
+import reportService from '../../api/reportService'; // Import report service
+import userService from '../../api/userService'; // Import user service (will add function later)
 
 const drawerWidth = 240;
 
@@ -35,29 +37,63 @@ interface HeaderProps {
 }
 
 const Header = ({ handleDrawerToggle }: HeaderProps) => {
-  const [anchorElUser, setAnchorElUser] = useState<HTMLElement | null>(null);
-  const { user, logout } = useContext(AuthContext);
+  // const [anchorElUser, setAnchorElUser] = useState<HTMLElement | null>(null); // Moved to Sidebar
+  const [notificationCount, setNotificationCount] = useState<number>(0); // State for notification count
+  const [currentKwh, setCurrentKwh] = useState<number | null>(null); // State for kWh
+  const [searchTerm, setSearchTerm] = useState<string>(''); // State for search input
+  // Removed useContext(AuthContext) as it's no longer used here
   const navigate = useNavigate();
   const theme = useTheme();
 
-  const handleOpenUserMenu = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorElUser(event.currentTarget);
+  // User menu handlers moved to Sidebar
+  // const handleOpenUserMenu = ...
+  // const handleCloseUserMenu = ...
+  // const handleLogout = ...
+  // const handleProfile = ...
+
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(event.target.value);
   };
 
-  const handleCloseUserMenu = () => {
-    setAnchorElUser(null);
+  const handleSearchSubmit = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter' && searchTerm.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchTerm.trim())}`);
+      setSearchTerm(''); // Optional: Clear search bar after submit
+    }
   };
 
-  const handleLogout = () => {
-    handleCloseUserMenu();
-    logout();
-    navigate('/login');
-  };
+  // Fetch notification count and kWh data on mount
+  useEffect(() => {
+    const fetchHeaderData = async () => {
+      try {
+        // Fetch notification count
+        const countResponse = await userService.getNotificationCount();
+        setNotificationCount(countResponse.count);
+        // setNotificationCount(4); // Placeholder - Removed
 
-  const handleProfile = () => {
-    handleCloseUserMenu();
-    navigate('/profile');
-  };
+        // Fetch dashboard reports to get kWh
+        const reportResponse = await reportService.getDashboardReports();
+        // Assuming the response has a field like 'currentKwh' or similar
+        // Adjust the field access based on the actual API response structure
+        if (reportResponse?.data?.summary?.currentKwh) {
+          setCurrentKwh(reportResponse.data.summary.currentKwh);
+        } else {
+          // Fallback or default if data not found
+          setCurrentKwh(12.4); // Placeholder/Fallback
+          console.warn(
+            'Could not find currentKwh in reportService.getDashboardReports response'
+          );
+        }
+      } catch (error) {
+        console.error('Error fetching header data:', error);
+        // Set default values on error
+        setNotificationCount(0);
+        setCurrentKwh(12.4); // Placeholder/Fallback on error
+      }
+    };
+
+    fetchHeaderData();
+  }, []);
 
   return (
     <AppBar
@@ -95,7 +131,10 @@ const Header = ({ handleDrawerToggle }: HeaderProps) => {
             <InputBase
               placeholder="Search..."
               inputProps={{ 'aria-label': 'search' }}
-              sx={{ color: theme.palette.grey[700] }}
+              sx={{ color: theme.palette.grey[700], flexGrow: 1 }}
+              value={searchTerm}
+              onChange={handleSearchChange}
+              onKeyDown={handleSearchSubmit}
             />
           </Box>
         </Box>
@@ -103,8 +142,16 @@ const Header = ({ handleDrawerToggle }: HeaderProps) => {
         {/* Right side icons */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Chip
-            icon={<SunIcon sx={{ color: theme.palette.warning.main }} />}
-            label="12.4 kWh"
+            icon={
+              <SunIcon
+                sx={{ color: theme.palette.warning.main, fontSize: '1.1rem' }}
+              />
+            }
+            label={
+              currentKwh !== null
+                ? `${currentKwh.toFixed(1)} kWh`
+                : 'Loading...'
+            }
             size="small"
             sx={{
               backgroundColor: theme.palette.warning.light,
@@ -124,7 +171,7 @@ const Header = ({ handleDrawerToggle }: HeaderProps) => {
 
           <IconButton color="inherit" size="small">
             <Badge
-              badgeContent={4}
+              badgeContent={notificationCount}
               color="error"
               sx={{ '& .MuiBadge-badge': { top: 3, right: 3 } }}
             >
@@ -141,97 +188,10 @@ const Header = ({ handleDrawerToggle }: HeaderProps) => {
             <SettingsIcon />
           </IconButton>
 
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              ml: { xs: 1, sm: 2 },
-              backgroundColor: theme.palette.grey[100],
-              padding: '4px 12px',
-              borderRadius: '50px',
-            }}
-          >
-            <Box sx={{ display: { xs: 'none', md: 'block' }, mr: 1 }}>
-              <Typography variant="body2" fontWeight={500} color="text.primary">
-                {user?.name || 'User'}
-              </Typography>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ display: 'block' }}
-              >
-                Administrator
-              </Typography>
-            </Box>
+          {/* User Info Box Removed - Kept in Sidebar */}
+          {/* User Menu Trigger Removed - Moved to Sidebar */}
 
-            <Tooltip title="Account settings">
-              <IconButton
-                onClick={handleOpenUserMenu}
-                sx={{ p: 0, background: theme.palette.primary.main }}
-              >
-                <Avatar
-                  alt={user?.name || 'User'}
-                  src={user?.avatar}
-                  sx={{ width: 36, height: 36 }}
-                >
-                  {!user?.avatar && (user?.name?.charAt(0) || 'U')}
-                </Avatar>
-              </IconButton>
-            </Tooltip>
-          </Box>
-
-          <Menu
-            sx={{ mt: '40px' }}
-            id="menu-appbar"
-            anchorEl={anchorElUser}
-            anchorOrigin={{
-              vertical: 'top',
-              horizontal: 'right',
-            }}
-            keepMounted
-            transformOrigin={{
-              vertical: 'top',
-              horizontal: 'right',
-            }}
-            open={Boolean(anchorElUser)}
-            onClose={handleCloseUserMenu}
-            PaperProps={{
-              elevation: 3,
-              sx: {
-                borderRadius: 2,
-                minWidth: 180,
-                overflow: 'visible',
-                mt: 1.5,
-                '&:before': {
-                  content: '""',
-                  display: 'block',
-                  position: 'absolute',
-                  top: 0,
-                  right: 14,
-                  width: 10,
-                  height: 10,
-                  bgcolor: 'background.paper',
-                  transform: 'translateY(-50%) rotate(45deg)',
-                  zIndex: 0,
-                },
-              },
-            }}
-          >
-            <MenuItem onClick={handleProfile} sx={{ py: 1.5 }}>
-              <PersonIcon
-                fontSize="small"
-                sx={{ mr: 1, color: theme.palette.text.secondary }}
-              />
-              <Typography>Profile</Typography>
-            </MenuItem>
-            <MenuItem onClick={handleLogout} sx={{ py: 1.5 }}>
-              <LogoutIcon
-                fontSize="small"
-                sx={{ mr: 1, color: theme.palette.text.secondary }}
-              />
-              <Typography>Logout</Typography>
-            </MenuItem>
-          </Menu>
+          {/* Menu component moved to Sidebar */}
         </Box>
       </Toolbar>
     </AppBar>

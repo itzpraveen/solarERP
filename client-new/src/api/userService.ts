@@ -47,6 +47,11 @@ interface UpdateUserData {
   active?: boolean;
 }
 
+// Interface for notification count response
+interface NotificationCountResponse {
+  count: number;
+}
+
 const userService = {
   // Get a list of users with pagination and filtering
   getUsers: async (
@@ -79,6 +84,15 @@ const userService = {
   // Delete (soft delete) a user by ID
   deleteUser: async (id: string): Promise<void> => {
     await apiService.delete(`/api/users/${id}`);
+  },
+
+  // Get the count of unread notifications for the current user
+  getNotificationCount: async (): Promise<NotificationCountResponse> => {
+    // Assuming an endpoint like /api/notifications/count exists
+    // Adjust the endpoint if it's different
+    const response = await apiService.get('/api/notifications/count');
+    // Assuming the API returns an object like { count: 5 }
+    return response.data || { count: 0 }; // Return data or default
   },
 };
 

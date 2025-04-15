@@ -1,20 +1,16 @@
 import React, { ReactNode } from 'react';
 import * as axiosModule from 'axios';
 import mockAuthService from '../api/mockAuthService';
+import { User } from '../types/User'; // Import the shared User type
+
 const axios = axiosModule.default || axiosModule;
 
 // Flag to use mock authentication (for development without backend)
 const USE_MOCK_AUTH = false;
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  avatar?: string;
-}
+// Removed local User interface definition
 
 interface AuthContextType {
-  user: User | null;
+  user: User | null; // Use imported User type
   isAuthenticated: boolean;
   loading: boolean;
   error: string | null;
@@ -44,7 +40,7 @@ export const AuthContext = React.createContext<AuthContextType>(
 );
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const [user, setUser] = React.useState<User | null>(null);
+  const [user, setUser] = React.useState<User | null>(null); // Use imported User type
   const [isAuthenticated, setIsAuthenticated] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -80,7 +76,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
             // Verify token & get user data
             const res = await axios.get('/api/auth/me');
 
-            setUser(res.data.data);
+            // Adapt backend response to FrontendUserContext structure
+            const backendUser = res.data.data;
+            const adaptedUser: User = {
+              id: backendUser._id, // Map _id to id
+              name: `${backendUser.firstName} ${backendUser.lastName}`, // Combine names
+              email: backendUser.email,
+              role: backendUser.role,
+              avatar: backendUser.avatar, // Optional field
+            };
+            setUser(adaptedUser);
             setIsAuthenticated(true);
             setLoading(false);
           }
@@ -125,7 +130,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       // Get user data
       const userRes = await axios.get('/api/auth/me');
 
-      setUser(userRes.data.data);
+      // Adapt backend response to FrontendUserContext structure
+      const backendUserReg = userRes.data.data;
+      const adaptedUserReg: User = {
+        id: backendUserReg._id,
+        name: `${backendUserReg.firstName} ${backendUserReg.lastName}`,
+        email: backendUserReg.email,
+        role: backendUserReg.role,
+        avatar: backendUserReg.avatar,
+      };
+      setUser(adaptedUserReg);
       setIsAuthenticated(true);
       setLoading(false);
       setError(null);
@@ -176,7 +190,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         // Get user data
         const userRes = await axios.get('/api/auth/me');
 
-        setUser(userRes.data.data);
+        // Adapt backend response to FrontendUserContext structure
+        const backendUserLogin = userRes.data.data;
+        const adaptedUserLogin: User = {
+          id: backendUserLogin._id,
+          name: `${backendUserLogin.firstName} ${backendUserLogin.lastName}`,
+          email: backendUserLogin.email,
+          role: backendUserLogin.role,
+          avatar: backendUserLogin.avatar,
+        };
+        setUser(adaptedUserLogin);
         setIsAuthenticated(true);
         setLoading(false);
         setError(null);
@@ -203,6 +226,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   // Update user data
   const updateUser = (userData: Partial<User>) => {
+    // Use imported User type
     if (user) {
       setUser({
         ...user,

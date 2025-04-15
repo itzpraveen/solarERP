@@ -12,9 +12,11 @@ import {
   Divider,
   Avatar,
   useTheme,
-  LinearProgress,
+  // LinearProgress, // Removed unused import
   CircularProgress,
   Alert,
+  Menu, // Add Menu import
+  MenuItem, // Add MenuItem import
 } from '@mui/material';
 import {
   TrendingUp,
@@ -108,6 +110,12 @@ const Dashboard = () => {
   const [projectStatuses, setProjectStatuses] = useState<ProjectStatus[]>([]);
   const [recentLeads, setRecentLeads] = useState<Lead[]>([]);
   const [leadConversionRate, setLeadConversionRate] = useState<number>(0);
+  const [cardMenuAnchorEl, setCardMenuAnchorEl] = useState<null | HTMLElement>(
+    null
+  );
+  const [selectedCardContext, setSelectedCardContext] = useState<string | null>(
+    null
+  ); // To know which card's menu is open
 
   // Define data fetching function using useCallback
   const fetchDashboardData = useCallback(async () => {
@@ -433,6 +441,38 @@ const Dashboard = () => {
     fetchDashboardData(); // Call the data fetching function directly
   };
 
+  // Card Menu Handlers
+  const handleCardMenuOpen = (
+    event: React.MouseEvent<HTMLElement>,
+    cardContext: string
+  ) => {
+    setCardMenuAnchorEl(event.currentTarget);
+    setSelectedCardContext(cardContext);
+  };
+
+  const handleCardMenuClose = () => {
+    setCardMenuAnchorEl(null);
+    setSelectedCardContext(null);
+  };
+
+  const handleViewDetails = () => {
+    console.log(`View Details clicked for: ${selectedCardContext}`);
+    handleCardMenuClose();
+    // TODO: Implement navigation or modal logic based on selectedCardContext
+  };
+
+  const handleRefreshCard = () => {
+    console.log(`Refresh Card clicked for: ${selectedCardContext}`);
+    // Potentially re-fetch data specific to this card if applicable
+    handleCardMenuClose();
+  };
+
+  const handleConfigureCard = () => {
+    console.log(`Configure Card clicked for: ${selectedCardContext}`);
+    handleCardMenuClose();
+    // TODO: Implement configuration logic
+  };
+
   return (
     <Box sx={{ flexGrow: 1 }}>
       <Box
@@ -462,6 +502,8 @@ const Dashboard = () => {
             Refresh
           </Button>
           <Button
+            component={Link} // Add component prop
+            to="/reports" // Add to prop
             variant="contained"
             size="large"
             startIcon={<TrendingUp />}
@@ -530,7 +572,10 @@ const Dashboard = () => {
                     >
                       <PeopleAlt />
                     </Avatar>
-                    <IconButton size="small">
+                    <IconButton
+                      size="small"
+                      onClick={(e) => handleCardMenuOpen(e, 'activeCustomers')}
+                    >
                       <MoreVert />
                     </IconButton>
                   </Box>
@@ -626,7 +671,10 @@ const Dashboard = () => {
                     >
                       <Description />
                     </Avatar>
-                    <IconButton size="small">
+                    <IconButton
+                      size="small"
+                      onClick={(e) => handleCardMenuOpen(e, 'activeProposals')}
+                    >
                       <MoreVert />
                     </IconButton>
                   </Box>
@@ -721,7 +769,11 @@ const Dashboard = () => {
                     >
                       <WbSunny />
                     </Avatar>
-                    <IconButton size="small" sx={{ color: 'white' }}>
+                    <IconButton
+                      size="small"
+                      sx={{ color: 'white' }}
+                      onClick={(e) => handleCardMenuOpen(e, 'totalCapacity')}
+                    >
                       <MoreVert />
                     </IconButton>
                   </Box>
@@ -788,7 +840,10 @@ const Dashboard = () => {
                     >
                       <PeopleAlt />
                     </Avatar>
-                    <IconButton size="small">
+                    <IconButton
+                      size="small"
+                      onClick={(e) => handleCardMenuOpen(e, 'totalCustomers')}
+                    >
                       <MoreVert />
                     </IconButton>
                   </Box>
@@ -825,7 +880,10 @@ const Dashboard = () => {
                     >
                       <Description />
                     </Avatar>
-                    <IconButton size="small">
+                    <IconButton
+                      size="small"
+                      onClick={(e) => handleCardMenuOpen(e, 'totalProposals')}
+                    >
                       <MoreVert />
                     </IconButton>
                   </Box>
@@ -862,7 +920,10 @@ const Dashboard = () => {
                     >
                       <AttachMoney />
                     </Avatar>
-                    <IconButton size="small">
+                    <IconButton
+                      size="small"
+                      onClick={(e) => handleCardMenuOpen(e, 'avgProjectValue')}
+                    >
                       <MoreVert />
                     </IconButton>
                   </Box>
@@ -899,7 +960,12 @@ const Dashboard = () => {
                     >
                       <PublishedWithChanges />
                     </Avatar>
-                    <IconButton size="small">
+                    <IconButton
+                      size="small"
+                      onClick={(e) =>
+                        handleCardMenuOpen(e, 'leadConversionRate')
+                      }
+                    >
                       <MoreVert />
                     </IconButton>
                   </Box>
@@ -937,7 +1003,10 @@ const Dashboard = () => {
                   <Typography variant="h6" fontWeight="bold">
                     Project Status
                   </Typography>
-                  <IconButton size="small">
+                  <IconButton
+                    size="small"
+                    onClick={(e) => handleCardMenuOpen(e, 'projectStatus')}
+                  >
                     <MoreVert />
                   </IconButton>
                 </Box>
@@ -1007,28 +1076,7 @@ const Dashboard = () => {
                     </Box>
                   </Box>
 
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      p: 1.5,
-                      borderRadius: 2,
-                      bgcolor: theme.palette.grey[50],
-                      border: `1px solid ${theme.palette.grey[200]}`,
-                    }}
-                  >
-                    <AttachMoney color="success" sx={{ mr: 1 }} />
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">
-                        AVG. PROJECT VALUE
-                      </Typography>
-                      <Typography variant="body2" fontWeight="medium">
-                        <CurrencyDisplay
-                          amount={stats.projects.avgValue || 0}
-                        />
-                      </Typography>
-                    </Box>
-                  </Box>
+                  {/* Removed AVG. PROJECT VALUE from here - kept in dedicated card */}
 
                   <Box
                     sx={{
@@ -1169,25 +1217,7 @@ const Dashboard = () => {
                     </Typography>
                   </Box>
                 )}
-
-                <Box sx={{ mt: 3 }}>
-                  <Typography variant="body2" fontWeight={500} sx={{ mb: 1 }}>
-                    Lead Conversion Rate
-                  </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <Typography variant="h5" fontWeight="bold" sx={{ mr: 1 }}>
-                      {leadConversionRate}%
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      (last 100 leads)
-                    </Typography>
-                  </Box>
-                  <LinearProgress
-                    variant="determinate"
-                    value={leadConversionRate}
-                    sx={{ height: 8, borderRadius: 4 }}
-                  />
-                </Box>
+                {/* Removed Lead Conversion Rate display from here - kept in dedicated card */}
               </CardContent>
             </Card>
           </Grid>
@@ -1243,6 +1273,18 @@ const Dashboard = () => {
           </Box>
         </Box>
       )}
+      {/* Card Action Menu */}
+      <Menu
+        anchorEl={cardMenuAnchorEl}
+        open={Boolean(cardMenuAnchorEl)}
+        onClose={handleCardMenuClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <MenuItem onClick={handleViewDetails}>View Details</MenuItem>
+        <MenuItem onClick={handleRefreshCard}>Refresh Card</MenuItem>
+        <MenuItem onClick={handleConfigureCard}>Configure</MenuItem>
+      </Menu>
     </Box>
   );
 };
