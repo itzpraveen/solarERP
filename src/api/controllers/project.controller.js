@@ -76,31 +76,20 @@ exports.getAllProjects = catchAsync(async (req, res, next) => {
 
 // Get project by ID
 exports.getProject = catchAsync(async (req, res, next) => {
+  // Fetch project, populating only fields essential for the initial overview
   const project = await Project.findById(req.params.id)
+    // Populate team members needed for overview
     .populate({
-      path: 'proposal',
-      select: 'name systemSize pricing'
+      path: 'team.projectManager team.salesRep team.designer team.installationTeam',
+      select: 'firstName lastName email' // Select necessary fields
     })
+    // Populate issue reporter needed for overview
     .populate({
-      path: 'notes.createdBy',
-      select: 'firstName lastName email'
-    })
-    .populate({
-      path: 'issues.reportedBy issues.assignedTo',
-      select: 'firstName lastName email'
-    })
-    .populate({
-      path: 'team.installationTeam',
-      select: 'firstName lastName email'
-    })
-    .populate({
-      path: 'documents.uploadedBy',
-      select: 'firstName lastName email'
-    })
-    .populate({
-      path: 'financials.expenses.recordedBy',
+      path: 'issues.reportedBy',
       select: 'firstName lastName email'
     });
+    // Note: Other populations (proposal, notes, documents, full issues, financials)
+    // should ideally be loaded on demand by separate requests from the frontend.
   
   if (!project) {
     return next(new AppError('No project found with that ID', 404));
