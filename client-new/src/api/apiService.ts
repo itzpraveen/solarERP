@@ -14,9 +14,15 @@ interface AxiosProgressEvent {
 }
 
 // Set base URL for API requests
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5002';
-console.log('API URL:', API_URL);
-axios.defaults.baseURL = API_URL;
+if (process.env.NODE_ENV === 'production') {
+  axios.defaults.baseURL = '/'; // Use relative path for production
+  console.log('API URL (Production): /');
+} else {
+  // Use environment variable or default for development
+  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5002';
+  console.log('API URL (Development):', API_URL);
+  axios.defaults.baseURL = API_URL;
+}
 
 // Create reusable API service with common methods
 const apiService = {
