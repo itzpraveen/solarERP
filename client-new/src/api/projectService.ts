@@ -181,7 +181,10 @@ export interface ProjectTask {
         firstName: string;
         lastName: string;
       };
-  createdAt: string;
+ createdAt: string;
+ startDate?: string; // Added
+ duration?: number; // Added
+ dependsOn?: string[]; // Added (array of task IDs)
 }
 export interface Project {
   _id: string;

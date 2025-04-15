@@ -535,55 +535,73 @@ exports.addTask = catchAsync(async (req, res, next) => {
   });
 });
 
-// Update a specific task within a project
+// Update a specific task within a project using findOneAndUpdate for atomicity
 exports.updateTask = catchAsync(async (req, res, next) => {
   const { id, taskId } = req.params;
   const updateData = req.body;
 
-  // Find the project and the specific task
-  const project = await Project.findOne({ _id: id, 'tasks._id': taskId });
-
-  if (!project) {
+  // --- Pre-computation/Validation (like dependency check) ---
+  // Fetch the project first to perform checks that require context
+  const projectForCheck = await Project.findOne({ _id: id, 'tasks._id': taskId }).select('tasks'); // Select only tasks for efficiency
+  if (!projectForCheck) {
     return next(new AppError('No project or task found with the given IDs', 404));
   }
-
-  // Find the task subdocument
-  const task = project.tasks.id(taskId);
-  if (!task) {
-    // This case should ideally not happen if the findOne worked, but good practice
+  const taskForCheck = projectForCheck.tasks.id(taskId);
+  if (!taskForCheck) {
+    // Should not happen if projectForCheck was found, but good safety check
     return next(new AppError('Task not found within the project', 404));
   }
 
-  // --- Dependency Check ---
-  // Check dependencies ONLY if the status is being changed to 'in_progress' or 'done'
-  if (updateData.status && (updateData.status === 'in_progress' || updateData.status === 'done') && task.dependsOn && task.dependsOn.length > 0) {
-    // Check if all dependencies are 'done'
-    const dependencies = project.tasks.filter(t => task.dependsOn.includes(t._id));
+  // Dependency Check (using projectForCheck and taskForCheck)
+  if (updateData.status && (updateData.status === 'in_progress' || updateData.status === 'done') && taskForCheck.dependsOn && taskForCheck.dependsOn.length > 0) {
+    const dependencies = projectForCheck.tasks.filter(t => taskForCheck.dependsOn.includes(t._id));
     const incompleteDependencies = dependencies.filter(dep => dep.status !== 'done');
-
     if (incompleteDependencies.length > 0) {
-        // Construct a meaningful error message
-        const incompleteTaskDescriptions = incompleteDependencies.map(t => t.description).join(', ');
-        return next(new AppError(`Cannot update task status. Prerequisite tasks not completed: ${incompleteTaskDescriptions}`, 400));
+      const incompleteTaskDescriptions = incompleteDependencies.map(t => t.description).join(', ');
+      return next(new AppError(`Cannot update task status. Prerequisite tasks not completed: ${incompleteTaskDescriptions}`, 400));
     }
   }
-  // --- End Dependency Check ---
 
   // Ensure dependsOn contains valid task IDs if provided in update
   if (updateData.dependsOn) {
-    updateData.dependsOn = updateData.dependsOn.filter(depId => project.tasks.some(t => t._id.equals(depId) && !t._id.equals(taskId))); // Ensure valid and not self-referential
+    updateData.dependsOn = updateData.dependsOn.filter(depId => projectForCheck.tasks.some(t => t._id.equals(depId) && !t._id.equals(taskId)));
+  }
+  // --- End Pre-computation/Validation ---
+
+
+  // Build the $set object for findOneAndUpdate using the positional operator $
+  const setUpdate = {};
+  for (const key in updateData) {
+    // Ensure we only update fields present in the request body
+    if (Object.prototype.hasOwnProperty.call(updateData, key)) {
+      // Handle potential nested fields if necessary in the future, for now assume flat task structure
+      setUpdate[`tasks.$.${key}`] = updateData[key];
+    }
   }
 
-  // Apply updates to the task subdocument
-  Object.assign(task, updateData);
+  // Perform the atomic update
+  const updatedProject = await Project.findOneAndUpdate(
+    { _id: id, 'tasks._id': taskId }, // Query to find the project and the specific task
+    { $set: setUpdate }, // Use $set with positional operator
+    { new: true, runValidators: true } // Options: return updated doc, run schema validators
+  );
 
-  // Save the parent project document
-  await project.save();
+  if (!updatedProject) {
+    // This could happen if the document was deleted between the check and the update, or if validation failed
+    return next(new AppError('Failed to update task. Project or task may no longer exist or validation failed.', 404));
+  }
+
+  // Find the updated task within the returned project document
+  const updatedTask = updatedProject.tasks.id(taskId);
+  if (!updatedTask) {
+      // Should not happen if findOneAndUpdate succeeded, but safety check
+      return next(new AppError('Failed to retrieve updated task data.', 500));
+  }
 
   res.status(200).json({
     status: 'success',
     data: {
-      task // Return the updated task object
+      task: updatedTask // Return the updated task object
     }
   });
 });

@@ -24,6 +24,33 @@ if (process.env.NODE_ENV === 'production') {
   axios.defaults.baseURL = API_URL;
 }
 
+// --- Axios Interceptor for Auth Token ---
+axios.interceptors.request.use(
+  (config) => {
+    // Retrieve the token from local storage (adjust key if different)
+    const token = localStorage.getItem('authToken'); // Or sessionStorage, or wherever it's stored
+    if (token) {
+      // Ensure headers object exists
+      if (!config.headers) {
+        config.headers = {};
+      }
+      // Add the Authorization header
+      config.headers['Authorization'] = `Bearer ${token}`;
+      console.log('Interceptor added Auth token to headers');
+    } else {
+      console.log('Interceptor: No auth token found');
+    }
+    return config;
+  },
+  (error) => {
+    // Handle request error
+    console.error('Axios request interceptor error:', error);
+    return Promise.reject(error);
+  }
+);
+// --- End Interceptor ---
+
+
 // Create reusable API service with common methods
 const apiService = {
   // Generic GET request

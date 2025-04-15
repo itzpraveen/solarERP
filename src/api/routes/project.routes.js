@@ -111,7 +111,7 @@ router.route('/:id/payments')
 
 // Validation middleware for tasks
 const validateTask = [
-  check('description', 'Task description is required').not().isEmpty(),
+  check('description', 'Task description must be a string if provided').optional().isString(), // Make optional for updates
   check('status', 'Invalid status').optional().isIn(['todo', 'in_progress', 'done', 'blocked']),
   check('assignedTo', 'Invalid user ID for assignee').optional().isMongoId(),
   check('dueDate', 'Invalid due date').optional().isISO8601().toDate()
