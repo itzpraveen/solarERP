@@ -99,41 +99,6 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
             <ChevronLeftIcon />
           </IconButton>
         </Box>
-
-        <Paper
-          elevation={0}
-          sx={{
-            p: 2,
-            width: '100%',
-            borderRadius: 2,
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-            backdropFilter: 'blur(10px)',
-            mt: 1,
-            mb: 2,
-            display: 'flex',
-            alignItems: 'center',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
-          }}
-        >
-          <Box
-            sx={{
-              backgroundColor: theme.palette.secondary.main,
-              borderRadius: '50%',
-              p: 1,
-              mr: 1.5,
-            }}
-          >
-            <ConstructionIcon sx={{ color: 'white', fontSize: 20 }} />
-          </Box>
-          <Box>
-            <Typography variant="caption" fontSize={10} sx={{ opacity: 0.8 }}>
-              ACTIVE PROJECTS
-            </Typography>
-            <Typography variant="h6" fontWeight="bold">
-              12
-            </Typography>
-          </Box>
-        </Paper>
       </Box>
 
       <Box sx={{ overflowY: 'auto', flex: 1, py: 2 }}>

@@ -29,6 +29,10 @@ import {
   ArrowDownward,
   Speed,
   Refresh,
+  PublishedWithChanges, // Added icon for conversion rate
+  Groups as CustomerIcon, // Added for button
+  Person as LeadIcon, // Added for button
+  Assignment as ProjectIcon, // Added for button
 } from '@mui/icons-material';
 import { AuthContext } from '../features/auth/context/AuthContext';
 import apiService from '../api/apiService';
@@ -125,44 +129,49 @@ const Dashboard = () => {
         const customerPromise = customerService
           .getCustomers({ limit: 1000 })
           .then((response) => {
-            // Normalize response - ensure it has a data property that's an array
-            if (!response) return { data: [] };
-            if (!response.data) return { ...response, data: [] };
-            if (!Array.isArray(response.data))
-              return { ...response, data: [response.data] };
-            return response;
+            console.log('Raw Customer API Response Data:', response?.data);
+            // Ensure the response structure is always { data: { customers: [...] } }
+            const customers = response?.data?.customers;
+            if (Array.isArray(customers)) {
+              return { data: { customers } };
+            }
+            return { data: { customers: [] } }; // Default empty structure
           })
           .catch((error) => {
             console.error('Error fetching customers:', error);
-            return { data: [] };
+            return { data: { customers: [] } }; // Consistent error structure
           });
 
         const proposalPromise = proposalService
           .getProposals({ limit: 100 })
           .then((response) => {
-            if (!response) return { data: [] };
-            if (!response.data) return { ...response, data: [] };
-            if (!Array.isArray(response.data))
-              return { ...response, data: [response.data] };
-            return response;
+            console.log('Raw Proposal API Response Data:', response?.data);
+            // Ensure the response structure is always { data: { proposals: [...] } }
+            const proposals = response?.data?.proposals;
+            if (Array.isArray(proposals)) {
+              return { data: { proposals } };
+            }
+            return { data: { proposals: [] } }; // Default empty structure
           })
           .catch((error) => {
             console.error('Error fetching proposals:', error);
-            return { data: [] };
+            return { data: { proposals: [] } }; // Consistent error structure
           });
 
         const projectPromise = projectService
           .getProjects({ limit: 100 })
           .then((response) => {
-            if (!response) return { data: [] };
-            if (!response.data) return { ...response, data: [] };
-            if (!Array.isArray(response.data))
-              return { ...response, data: [response.data] };
-            return response;
+            console.log('Raw Project API Response Data:', response?.data); // Add log
+            // Ensure the response structure is always { data: { projects: [...] } }
+            const projects = response?.data?.projects; // Assume nested 'projects'
+            if (Array.isArray(projects)) {
+              return { data: { projects } };
+            }
+            return { data: { projects: [] } }; // Default empty structure
           })
           .catch((error) => {
             console.error('Error fetching projects:', error);
-            return { data: [] };
+            return { data: { projects: [] } }; // Consistent error structure
           });
 
         const leadPromise = leadService
@@ -182,7 +191,7 @@ const Dashboard = () => {
           })
           .catch((error) => {
             console.error('Error fetching leads:', error);
-            return { data: [] };
+            return { data: { leads: [] } }; // Consistent error structure
           });
 
         const [customers, proposals, projects, leads] = await Promise.all([
@@ -194,16 +203,11 @@ const Dashboard = () => {
 
         // Prepare stats from individual API responses
         // Ensure we're working with arrays by converting if needed
-        const customersData = Array.isArray(customers.data)
-          ? customers.data
-          : [];
-        const proposalsData = Array.isArray(proposals.data)
-          ? proposals.data
-          : [];
-        const projectsData = Array.isArray(projects.data) ? projects.data : [];
-        const leadsData = Array.isArray(leads.data?.leads)
-          ? leads.data.leads
-          : []; // Access nested leads array
+        // Access the data reliably after normalization
+        const customersData = customers.data.customers;
+        const proposalsData = proposals.data.proposals;
+        const projectsData = projects.data.projects; // Access nested projects
+        const leadsData = leads.data.leads; // Access nested leads array
 
         console.log('Dashboard data types:', {
           customers: typeof customers.data,
@@ -680,102 +684,6 @@ const Dashboard = () => {
                 </CardContent>
               </Card>
             </Grid>
-
-            <Grid item xs={12} sm={6} md={3}>
-              <Card
-                sx={{
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  position: 'relative',
-                  overflow: 'hidden',
-                }}
-              >
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    top: 0,
-                    right: 0,
-                    width: 80,
-                    height: 80,
-                    background: `radial-gradient(circle at 100% 0%, ${theme.palette.info.light}40 0%, transparent 70%)`,
-                    borderRadius: '0 0 0 100%',
-                  }}
-                />
-                <CardContent>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      mb: 2,
-                    }}
-                  >
-                    <Avatar
-                      sx={{
-                        bgcolor: theme.palette.info.light,
-                        color: theme.palette.info.dark,
-                      }}
-                    >
-                      <Assignment />
-                    </Avatar>
-                    <IconButton size="small">
-                      <MoreVert />
-                    </IconButton>
-                  </Box>
-                  <Typography variant="h4" fontWeight="bold" sx={{ mb: 0.5 }}>
-                    {stats.projects.active}
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{ mb: 1 }}
-                  >
-                    Active Projects
-                  </Typography>
-                  {stats.projects.changePercent !== undefined &&
-                    stats.projects.changePercent !== 0 && (
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        {stats.projects.changePercent > 0 ? (
-                          <>
-                            <ArrowUpward
-                              sx={{
-                                color: theme.palette.success.main,
-                                fontSize: 16,
-                                mr: 0.5,
-                              }}
-                            />
-                            <Typography
-                              variant="caption"
-                              color="success.main"
-                              fontWeight="medium"
-                            >
-                              {stats.projects.changePercent}% increase
-                            </Typography>
-                          </>
-                        ) : (
-                          <>
-                            <ArrowDownward
-                              sx={{
-                                color: theme.palette.error.main,
-                                fontSize: 16,
-                                mr: 0.5,
-                              }}
-                            />
-                            <Typography
-                              variant="caption"
-                              color="error.main"
-                              fontWeight="medium"
-                            >
-                              {Math.abs(stats.projects.changePercent)}% decrease
-                            </Typography>
-                          </>
-                        )}
-                      </Box>
-                    )}
-                </CardContent>
-              </Card>
-            </Grid>
-
             <Grid item xs={12} sm={6} md={3}>
               <Card
                 sx={{
@@ -857,6 +765,154 @@ const Dashboard = () => {
                         )}
                       </Box>
                     )}
+                </CardContent>
+              </Card>
+            </Grid>
+
+            {/* Total Customers Card */}
+            <Grid item xs={12} sm={6} md={3}>
+              <Card sx={{ height: '100%' }}>
+                <CardContent>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      mb: 2,
+                    }}
+                  >
+                    <Avatar
+                      sx={{
+                        bgcolor: theme.palette.info.light,
+                        color: theme.palette.info.dark,
+                      }}
+                    >
+                      <PeopleAlt />
+                    </Avatar>
+                    <IconButton size="small">
+                      <MoreVert />
+                    </IconButton>
+                  </Box>
+                  <Typography variant="h4" fontWeight="bold" sx={{ mb: 0.5 }}>
+                    {stats.customers.total}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mb: 1 }}
+                  >
+                    Total Customers
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            {/* Total Proposals Card */}
+            <Grid item xs={12} sm={6} md={3}>
+              <Card sx={{ height: '100%' }}>
+                <CardContent>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      mb: 2,
+                    }}
+                  >
+                    <Avatar
+                      sx={{
+                        bgcolor: theme.palette.secondary.light,
+                        color: theme.palette.secondary.dark,
+                      }}
+                    >
+                      <Description />
+                    </Avatar>
+                    <IconButton size="small">
+                      <MoreVert />
+                    </IconButton>
+                  </Box>
+                  <Typography variant="h4" fontWeight="bold" sx={{ mb: 0.5 }}>
+                    {stats.proposals.total}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mb: 1 }}
+                  >
+                    Total Proposals
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            {/* Average Project Value Card */}
+            <Grid item xs={12} sm={6} md={3}>
+              <Card sx={{ height: '100%' }}>
+                <CardContent>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      mb: 2,
+                    }}
+                  >
+                    <Avatar
+                      sx={{
+                        bgcolor: theme.palette.success.light,
+                        color: theme.palette.success.dark,
+                      }}
+                    >
+                      <AttachMoney />
+                    </Avatar>
+                    <IconButton size="small">
+                      <MoreVert />
+                    </IconButton>
+                  </Box>
+                  <Typography variant="h4" fontWeight="bold" sx={{ mb: 0.5 }}>
+                    <CurrencyDisplay amount={stats.projects.avgValue || 0} />
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mb: 1 }}
+                  >
+                    Avg. Project Value
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            {/* Lead Conversion Rate Card */}
+            <Grid item xs={12} sm={6} md={3}>
+              <Card sx={{ height: '100%' }}>
+                <CardContent>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      mb: 2,
+                    }}
+                  >
+                    <Avatar
+                      sx={{
+                        bgcolor: theme.palette.primary.light,
+                        color: theme.palette.primary.dark,
+                      }}
+                    >
+                      <PublishedWithChanges />
+                    </Avatar>
+                    <IconButton size="small">
+                      <MoreVert />
+                    </IconButton>
+                  </Box>
+                  <Typography variant="h4" fontWeight="bold" sx={{ mb: 0.5 }}>
+                    {leadConversionRate}%
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mb: 1 }}
+                  >
+                    Lead Conversion Rate
+                  </Typography>
                 </CardContent>
               </Card>
             </Grid>
@@ -967,11 +1023,9 @@ const Dashboard = () => {
                         AVG. PROJECT VALUE
                       </Typography>
                       <Typography variant="body2" fontWeight="medium">
-                        {stats.projects.avgValue ? (
-                          <CurrencyDisplay amount={stats.projects.avgValue} />
-                        ) : (
-                          '-'
-                        )}
+                        <CurrencyDisplay
+                          amount={stats.projects.avgValue || 0}
+                        />
                       </Typography>
                     </Box>
                   </Box>
@@ -992,9 +1046,7 @@ const Dashboard = () => {
                         AVG. SYSTEM SIZE
                       </Typography>
                       <Typography variant="body2" fontWeight="medium">
-                        {stats.projects.avgSize
-                          ? `${stats.projects.avgSize} kW`
-                          : '-'}
+                        {stats.projects.avgSize || '-'} kW
                       </Typography>
                     </Box>
                   </Box>
@@ -1018,7 +1070,14 @@ const Dashboard = () => {
                   <Typography variant="h6" fontWeight="bold">
                     Recent Leads
                   </Typography>
-                  <Button size="small" component={Link} to="/leads">
+                  <Button
+                    component={Link}
+                    to="/leads"
+                    size="small"
+                    endIcon={
+                      <ArrowUpward sx={{ transform: 'rotate(45deg)' }} />
+                    }
+                  >
                     View All
                   </Button>
                 </Box>
@@ -1031,21 +1090,22 @@ const Dashboard = () => {
                           <Avatar
                             sx={{
                               bgcolor: theme.palette.primary.light,
-                              color: theme.palette.primary.main,
+                              color: theme.palette.primary.dark,
                               width: 40,
                               height: 40,
                             }}
                           >
-                            {lead.name.charAt(0)}
+                            {lead.name.charAt(0).toUpperCase()}
                           </Avatar>
                           <Box sx={{ ml: 2, flex: 1 }}>
                             <Box
                               sx={{
                                 display: 'flex',
                                 justifyContent: 'space-between',
+                                alignItems: 'center',
                               }}
                             >
-                              <Typography variant="body2" fontWeight="medium">
+                              <Typography variant="body2" fontWeight={500}>
                                 {lead.name}
                               </Typography>
                               <Typography
@@ -1064,76 +1124,68 @@ const Dashboard = () => {
                             <Box
                               sx={{
                                 display: 'flex',
+                                justifyContent: 'space-between',
                                 alignItems: 'center',
                                 mt: 0.5,
                               }}
                             >
                               <Box
                                 sx={{
-                                  width: 8,
-                                  height: 8,
-                                  borderRadius: '50%',
                                   bgcolor:
                                     lead.status === 'New'
-                                      ? theme.palette.success.main
-                                      : lead.status === 'Contacted'
-                                        ? theme.palette.warning.main
-                                        : theme.palette.info.main,
-                                  mr: 1,
+                                      ? theme.palette.info.light
+                                      : theme.palette.warning.light,
+                                  color:
+                                    lead.status === 'New'
+                                      ? theme.palette.info.dark
+                                      : theme.palette.warning.dark,
+                                  px: 1,
+                                  py: 0.2,
+                                  borderRadius: 1,
+                                  fontSize: 10,
+                                  fontWeight: 500,
+                                  display: 'inline-block',
                                 }}
-                              />
+                              >
+                                {lead.status}
+                              </Box>
                               <Typography
                                 variant="caption"
                                 color="text.secondary"
                               >
-                                {lead.status}
+                                ID: {lead.id.substring(0, 6)}...
                               </Typography>
                             </Box>
                           </Box>
                         </Box>
-                        {index < recentLeads.length - 1 && (
-                          <Divider sx={{ my: 1 }} />
-                        )}
+                        {index < recentLeads.length - 1 && <Divider />}
                       </Box>
                     ))}
                   </Box>
                 ) : (
                   <Box sx={{ py: 4, textAlign: 'center' }}>
-                    <Typography variant="body2" color="text.secondary">
-                      No recent leads available
+                    <Typography color="text.secondary">
+                      No recent leads.
                     </Typography>
                   </Box>
                 )}
 
                 <Box sx={{ mt: 3 }}>
-                  <Typography
-                    variant="subtitle2"
-                    fontWeight="medium"
-                    gutterBottom
-                  >
+                  <Typography variant="body2" fontWeight={500} sx={{ mb: 1 }}>
                     Lead Conversion Rate
                   </Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                    <Typography
-                      variant="body2"
-                      fontWeight="bold"
-                      sx={{ mr: 1 }}
-                    >
+                    <Typography variant="h5" fontWeight="bold" sx={{ mr: 1 }}>
                       {leadConversionRate}%
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      (last 100 leads)
                     </Typography>
                   </Box>
                   <LinearProgress
                     variant="determinate"
                     value={leadConversionRate}
-                    sx={{
-                      height: 8,
-                      borderRadius: 4,
-                      bgcolor: theme.palette.grey[200],
-                      '& .MuiLinearProgress-bar': {
-                        borderRadius: 4,
-                        background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.primary.light})`,
-                      },
-                    }}
+                    sx={{ height: 8, borderRadius: 4 }}
                   />
                 </Box>
               </CardContent>
@@ -1145,47 +1197,46 @@ const Dashboard = () => {
       {!loading && !error && projectStatuses.length === 0 && (
         <Box
           sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            py: 8,
+            mt: 4,
+            p: 3,
+            textAlign: 'center',
+            bgcolor: theme.palette.grey[50],
+            borderRadius: 2,
+            border: `1px dashed ${theme.palette.grey[300]}`,
           }}
         >
-          <Typography variant="h6" gutterBottom>
-            No dashboard data available
+          <Assignment
+            sx={{ fontSize: 48, color: theme.palette.grey[400], mb: 2 }}
+          />
+          <Typography variant="h6" color="text.secondary" gutterBottom>
+            No Project Data Yet
           </Typography>
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            sx={{ mb: 3, textAlign: 'center', maxWidth: 500 }}
-          >
-            There doesn't seem to be any active projects, leads, or proposals in
-            the system. Start by adding some customers, leads, or projects to
-            see your dashboard populate with data.
+          <Typography color="text.secondary" sx={{ mb: 3 }}>
+            Start by creating customers, leads, or projects to see statistics
+            here.
           </Typography>
           <Box sx={{ display: 'flex', gap: 2 }}>
             <Button
-              variant="outlined"
               component={Link}
               to="/customers/new"
-              startIcon={<PeopleAlt />}
+              variant="contained"
+              startIcon={<CustomerIcon />}
             >
               Add Customer
             </Button>
             <Button
-              variant="outlined"
               component={Link}
               to="/leads/new"
-              startIcon={<Description />}
+              variant="outlined"
+              startIcon={<LeadIcon />}
             >
               Add Lead
             </Button>
             <Button
-              variant="outlined"
               component={Link}
               to="/projects/new"
-              startIcon={<Assignment />}
+              variant="outlined"
+              startIcon={<ProjectIcon />}
             >
               Add Project
             </Button>
