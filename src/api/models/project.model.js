@@ -63,6 +63,11 @@ const projectSchema = new mongoose.Schema({
       required: [true, 'City is required'],
       trim: true
     },
+    district: {
+      type: String,
+      required: [true, 'District is required'],
+      trim: true
+    },
     state: {
       type: String,
       required: [true, 'State is required'],
@@ -75,7 +80,7 @@ const projectSchema = new mongoose.Schema({
     },
     country: {
       type: String,
-      default: 'USA',
+      default: 'India',
       trim: true
     }
   },
@@ -270,6 +275,11 @@ const projectSchema = new mongoose.Schema({
       required: [true, 'Total contract value is required'],
       min: 0
     },
+    totalContractValueCurrency: {
+      type: String,
+      default: 'INR',
+      required: true
+    },
     paymentSchedule: [{
       name: {
         type: String,
@@ -279,6 +289,11 @@ const projectSchema = new mongoose.Schema({
         type: Number,
         required: [true, 'Payment amount is required'],
         min: 0
+      },
+      amountCurrency: {
+        type: String,
+        default: 'INR',
+        required: true
       },
       percentage: {
         type: Number,
@@ -319,6 +334,11 @@ const projectSchema = new mongoose.Schema({
         type: Number,
         required: [true, 'Expense amount is required'],
         min: 0
+      },
+      amountCurrency: {
+        type: String,
+        default: 'INR',
+        required: true
       },
       vendor: String,
       date: {

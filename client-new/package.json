@@ -51,7 +51,7 @@
     "eject": "react-scripts eject",
     "lint": "eslint src/**/*.{ts,tsx}",
     "lint:fix": "eslint src/**/*.{ts,tsx} --fix && prettier --write src/**/*.{ts,tsx}",
-    "format": "prettier --write src/**/*.{ts,tsx,css,json}"
+    "format": "prettier --write src/**/*.{ts,tsx,css}"
   },
   "browserslist": {
     "production": [

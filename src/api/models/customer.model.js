@@ -34,6 +34,11 @@ const customerSchema = new mongoose.Schema({
       required: [true, 'City is required'],
       trim: true
     },
+    district: {
+      type: String,
+      required: [true, 'District is required'],
+      trim: true
+    },
     state: {
       type: String,
       required: [true, 'State is required'],
@@ -46,7 +51,7 @@ const customerSchema = new mongoose.Schema({
     },
     country: {
       type: String,
-      default: 'USA',
+      default: 'India',
       trim: true
     }
   },

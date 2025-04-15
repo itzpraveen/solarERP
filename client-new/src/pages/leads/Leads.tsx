@@ -48,6 +48,28 @@ const statusColors = {
 } as const;
 
 // Lead form component for creating new leads
+interface LeadFormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  address: {
+    street: string;
+    city: string;
+    district: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  };
+  source: string;
+  status: string;
+  category: string;
+  monthlyElectricBill: {
+    amount: string; // Keep as string to match input
+    currency: string;
+  };
+}
+
 const LeadForm = ({
   open,
   onClose,
@@ -67,6 +89,7 @@ const LeadForm = ({
     address: {
       street: '',
       city: '',
+      district: '',
       state: '',
       zipCode: '',
       country: 'USA',
@@ -74,7 +97,7 @@ const LeadForm = ({
     source: 'website',
     status: 'new',
     category: 'warm',
-    monthlyElectricBill: '',
+    monthlyElectricBill: { amount: '', currency: 'INR' }, // Revert amount to empty string
   });
 
   const handleChange = (
@@ -109,13 +132,23 @@ const LeadForm = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Convert any numeric strings to numbers
-    const processedData = {
-      ...formData,
-      monthlyElectricBill: formData.monthlyElectricBill
-        ? parseFloat(formData.monthlyElectricBill as string)
-        : undefined,
-    };
+    // Prepare data for submission
+    // Create a new object excluding monthlyElectricBill initially
+    const { monthlyElectricBill, ...restData } = formData;
+    let processedData: any = { ...restData }; // Use 'any' for flexibility here
+
+    const billAmountString = monthlyElectricBill.amount;
+
+    // Only include monthlyElectricBill if amount is a valid number string
+    if (billAmountString && !isNaN(parseFloat(billAmountString))) {
+      processedData.monthlyElectricBill = {
+        amount: parseFloat(billAmountString), // Convert valid string to number
+        currency: 'INR',
+      };
+    }
+    // If billAmountString is empty or not a valid number,
+    // monthlyElectricBill will not be included in processedData
+
     onSubmit(processedData);
   };
 
@@ -174,7 +207,7 @@ const LeadForm = ({
                 onChange={handleChange}
               />
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} md={3}> {/* Adjusted md size */}
               <TextField
                 fullWidth
                 required
@@ -184,7 +217,18 @@ const LeadForm = ({
                 onChange={handleChange}
               />
             </Grid>
-            <Grid item xs={12} md={4}>
+            {/* Added District Field */}
+            <Grid item xs={12} md={3}>
+              <TextField
+                fullWidth
+                required
+                label="District"
+                name="address.district"
+                value={formData.address.district}
+                onChange={handleChange}
+              />
+            </Grid>
+            <Grid item xs={12} md={3}> {/* Adjusted md size */}
               <TextField
                 fullWidth
                 required
@@ -194,7 +238,7 @@ const LeadForm = ({
                 onChange={handleChange}
               />
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} md={3}> {/* Adjusted md size */}
               <TextField
                 fullWidth
                 required
@@ -242,9 +286,9 @@ const LeadForm = ({
               <TextField
                 fullWidth
                 label="Monthly Electric Bill (₹)"
-                name="monthlyElectricBill"
+                name="monthlyElectricBill.amount" // Updated name
                 type="number"
-                value={formData.monthlyElectricBill}
+                value={formData.monthlyElectricBill.amount} // Updated value
                 onChange={handleChange}
               />
             </Grid>

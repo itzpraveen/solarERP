@@ -74,11 +74,14 @@ const ProposalForm = ({
     },
     pricing: {
       grossCost: 0,
-      federalTaxCredit: 0,
-      stateTaxCredit: 0,
+      centralSubsidy: 0, // Renamed
+      stateSubsidy: 0,   // Renamed
+      gstRate: 12,       // Added (example default)
+      gstAmount: 0,      // Added
       utilityRebate: 0,
       otherIncentives: 0,
       netCost: 0,
+      currency: 'INR',   // Added currency
     },
     notes: '',
   });
@@ -144,19 +147,26 @@ const ProposalForm = ({
     // Add initialLeadId to dependency array
   }, [open, initialLeadId]);
 
-  // Calculate netCost whenever pricing values change
+  // Calculate gstAmount and netCost whenever relevant pricing values change
   useEffect(() => {
     const {
       grossCost,
-      federalTaxCredit,
-      stateTaxCredit,
+      centralSubsidy,
+      stateSubsidy,
+      gstRate,
       utilityRebate,
       otherIncentives,
     } = formData.pricing;
-    const netCost =
-      grossCost -
-      federalTaxCredit -
-      stateTaxCredit -
+
+    // Calculate GST Amount
+    const calculatedGstAmount = (grossCost * gstRate) / 100;
+
+    // Calculate Net Cost (Gross + GST - Subsidies/Rebates)
+    const calculatedNetCost =
+      grossCost +
+      calculatedGstAmount -
+      centralSubsidy -
+      stateSubsidy -
       utilityRebate -
       otherIncentives;
 
@@ -164,13 +174,15 @@ const ProposalForm = ({
       ...prev,
       pricing: {
         ...prev.pricing,
-        netCost: netCost > 0 ? netCost : 0,
+        gstAmount: calculatedGstAmount > 0 ? calculatedGstAmount : 0,
+        netCost: calculatedNetCost > 0 ? calculatedNetCost : 0,
       },
     }));
-  }, [
+  }, [ // Update dependencies
     formData.pricing.grossCost,
-    formData.pricing.federalTaxCredit,
-    formData.pricing.stateTaxCredit,
+    formData.pricing.centralSubsidy,
+    formData.pricing.stateSubsidy,
+    formData.pricing.gstRate,
     formData.pricing.utilityRebate,
     formData.pricing.otherIncentives,
   ]);
@@ -444,26 +456,28 @@ const ProposalForm = ({
                 onChange={handleNumberChange}
               />
             </Grid>
+            {/* Using Central Subsidy */}
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
                 required
-                label={`Federal Tax Credit (₹)`}
-                name="pricing.federalTaxCredit"
+                label={`Central Subsidy (₹)`}
+                name="pricing.centralSubsidy"
                 type="number"
                 inputProps={{ min: 0, step: 0.01 }}
-                value={formData.pricing.federalTaxCredit}
+                value={formData.pricing.centralSubsidy}
                 onChange={handleNumberChange}
               />
             </Grid>
+            {/* Using State Subsidy */}
             <Grid item xs={12} md={4}>
               <TextField
                 fullWidth
-                label={`State Tax Credit (₹)`}
-                name="pricing.stateTaxCredit"
+                label={`State Subsidy (₹)`}
+                name="pricing.stateSubsidy"
                 type="number"
                 inputProps={{ min: 0, step: 0.01 }}
-                value={formData.pricing.stateTaxCredit}
+                value={formData.pricing.stateSubsidy}
                 onChange={handleNumberChange}
               />
             </Grid>
@@ -488,6 +502,33 @@ const ProposalForm = ({
                 value={formData.pricing.otherIncentives}
                 onChange={handleNumberChange}
               />
+            </Grid>
+            {/* Added GST Rate Field */}
+            <Grid item xs={12} md={4}>
+               <TextField
+                 fullWidth
+                 required
+                 label={`GST Rate (%)`}
+                 name="pricing.gstRate"
+                 type="number"
+                 inputProps={{ min: 0, step: 0.1 }}
+                 value={formData.pricing.gstRate}
+                 onChange={handleNumberChange}
+               />
+            </Grid>
+            {/* Added GST Amount Field (Read Only) */}
+             <Grid item xs={12} md={4}>
+               <TextField
+                 fullWidth
+                 required
+                 label={`GST Amount (₹)`}
+                 name="pricing.gstAmount"
+                 type="number"
+                 value={formData.pricing.gstAmount}
+                 InputProps={{
+                   readOnly: true, // GST Amount is calculated
+                 }}
+               />
             </Grid>
             <Grid item xs={12}>
               <TextField

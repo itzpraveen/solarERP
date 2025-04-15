@@ -75,15 +75,25 @@ const proposalSchema = new mongoose.Schema({
       required: [true, 'Gross system cost is required'],
       min: 0
     },
-    federalTaxCredit: {
+    centralSubsidy: { // Renamed from federalTaxCredit
       type: Number,
-      required: [true, 'Federal tax credit amount is required'],
+      required: [true, 'Central subsidy amount is required'],
       min: 0
     },
-    stateTaxCredit: {
+    stateSubsidy: { // Renamed from stateTaxCredit
       type: Number,
       default: 0,
       min: 0
+    },
+    gstRate: { // Added GST Rate
+      type: Number,
+      default: 12, // Example default GST rate for solar in India
+      min: 0
+    },
+    gstAmount: { // Added GST Amount
+       type: Number,
+       default: 0,
+       min: 0
     },
     utilityRebate: {
       type: Number,
@@ -99,6 +109,11 @@ const proposalSchema = new mongoose.Schema({
       type: Number,
       required: [true, 'Net system cost after incentives is required'],
       min: 0
+    },
+    currency: {
+      type: String,
+      default: 'INR',
+      required: true
     }
   },
   financingOptions: [
@@ -122,6 +137,11 @@ const proposalSchema = new mongoose.Schema({
         default: 0,
         min: 0
       },
+      downPaymentCurrency: {
+        type: String,
+        default: 'INR',
+        required: true
+      },
       apr: {
         type: Number,
         min: 0
@@ -130,9 +150,19 @@ const proposalSchema = new mongoose.Schema({
         type: Number,
         min: 0
       },
+      monthlyPaymentCurrency: {
+        type: String,
+        default: 'INR',
+        required: true
+      },
       totalCost: {
         type: Number,
         min: 0
+      },
+      totalCostCurrency: {
+        type: String,
+        default: 'INR',
+        required: true
       },
       selected: {
         type: Boolean,
@@ -210,13 +240,26 @@ proposalSchema.pre(/^find/, function(next) {
 
 // Calculate derived values before saving
 proposalSchema.pre('save', function(next) {
-  // Set net cost based on incentives if not provided
-  if (!this.pricing.netCost) {
-    this.pricing.netCost = this.pricing.grossCost - 
-      this.pricing.federalTaxCredit - 
-      this.pricing.stateTaxCredit - 
-      this.pricing.utilityRebate - 
-      this.pricing.otherIncentives;
+  // Calculate GST amount and Net Cost based on Indian standards
+  if (this.isModified('pricing') || !this.pricing.netCost) {
+    const grossCost = this.pricing.grossCost || 0;
+    const gstRate = this.pricing.gstRate || 0; // Assuming gstRate is stored as percentage, e.g., 12 for 12%
+    const centralSubsidy = this.pricing.centralSubsidy || 0;
+    const stateSubsidy = this.pricing.stateSubsidy || 0;
+    const utilityRebate = this.pricing.utilityRebate || 0;
+    const otherIncentives = this.pricing.otherIncentives || 0;
+
+    // Calculate GST Amount (GST applied on gross cost)
+    const gstAmount = (grossCost * gstRate) / 100;
+    this.pricing.gstAmount = gstAmount;
+
+    // Calculate Net Cost (Gross Cost + GST - Subsidies/Rebates)
+    // Verify this calculation aligns with current Indian regulations
+    this.pricing.netCost = grossCost + gstAmount -
+                           centralSubsidy -
+                           stateSubsidy -
+                           utilityRebate -
+                           otherIncentives;
   }
   
   next();

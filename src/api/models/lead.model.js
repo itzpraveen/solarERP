@@ -32,6 +32,11 @@ const leadSchema = new mongoose.Schema({
       required: [true, 'City is required'],
       trim: true
     },
+    district: {
+      type: String,
+      required: [true, 'District is required'],
+      trim: true
+    },
     state: {
       type: String,
       required: [true, 'State is required'],
@@ -44,7 +49,7 @@ const leadSchema = new mongoose.Schema({
     },
     country: {
       type: String,
-      default: 'USA',
+      default: 'India',
       trim: true
     }
   },
@@ -142,8 +147,15 @@ const leadSchema = new mongoose.Schema({
     min: 0
   },
   monthlyElectricBill: {
-    type: Number,
-    min: 0
+    amount: {
+      type: Number,
+      min: 0
+    },
+    currency: {
+      type: String,
+      default: 'INR',
+      required: true
+    }
   },
   propertyType: {
     type: String,
