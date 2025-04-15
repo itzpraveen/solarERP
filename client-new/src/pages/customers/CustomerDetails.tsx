@@ -952,6 +952,49 @@ const CustomerDetails = () => {
                         </Typography>
                       )}
                     </Grid>
+
+                    {/* Added KSEB Consumer Number */}
+                    <Grid item xs={12} sm={6}>
+                       <Typography variant="subtitle2" color="text.secondary">
+                         KSEB Consumer Number
+                       </Typography>
+                       {editMode ? (
+                         <TextField
+                           fullWidth
+                           size="small"
+                           name="ksebConsumerNumber"
+                           value={editData.ksebConsumerNumber || ''}
+                           onChange={handleEditChange}
+                           sx={{ mt: 0.5 }}
+                         />
+                       ) : (
+                         <Typography variant="body1" sx={{ mt: 0.5 }}>
+                           {customer.ksebConsumerNumber || 'N/A'}
+                         </Typography>
+                       )}
+                     </Grid>
+
+                     {/* Added GSTIN */}
+                     <Grid item xs={12} sm={6}>
+                       <Typography variant="subtitle2" color="text.secondary">
+                         GSTIN
+                       </Typography>
+                       {editMode ? (
+                         <TextField
+                           fullWidth
+                           size="small"
+                           name="gstin"
+                           value={editData.gstin || ''}
+                           onChange={handleEditChange}
+                           sx={{ mt: 0.5 }}
+                         />
+                       ) : (
+                         <Typography variant="body1" sx={{ mt: 0.5 }}>
+                           {customer.gstin || 'N/A'}
+                         </Typography>
+                       )}
+                     </Grid>
+
                   </Grid>
                 </CardContent>
               </Card>

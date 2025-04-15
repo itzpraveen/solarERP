@@ -55,6 +55,17 @@ const customerSchema = new mongoose.Schema({
       trim: true
     }
   },
+  // India-specific identifiers
+  ksebConsumerNumber: {
+    type: String,
+    trim: true,
+    // Add validation if needed (e.g., length, format)
+  },
+  gstin: {
+    type: String,
+    trim: true,
+    // Add validation if needed (e.g., length, format for GSTIN)
+  },
   // Additional contact person (optional)
   secondaryContact: {
     firstName: {

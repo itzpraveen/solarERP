@@ -13,6 +13,9 @@ export interface Customer {
     zipCode: string;
     country: string;
   };
+  // India-specific fields (optional)
+  ksebConsumerNumber?: string;
+  gstin?: string;
   notes?: Array<{
     text: string;
     createdBy: string;
