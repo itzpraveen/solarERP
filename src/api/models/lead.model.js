@@ -58,12 +58,41 @@ const leadSchema = new mongoose.Schema({
     required: [true, 'Lead source is required'],
     enum: [
       'website',
-      'referral',
-      'partner',
-      'cold_call',
-      'event',
-      'social_media',
-      'other'
+      'dealer_referral', // Specific referral types
+      'customer_referral',
+      'staff_referral',
+      'bni_referral',
+      'google_page',
+      'social_media_promo', // More specific than just social_media
+      'partner', // Kept existing
+      'cold_call', // Kept existing
+      'event', // Kept existing
+      'other' // Kept existing
+    ]
+  },
+  // Fields to store the specific referrer based on the source type
+  referringDealer: {
+    type: mongoose.Schema.ObjectId,
+    ref: 'Dealer',
+    required: [
+      function() { return this.source === 'dealer_referral'; },
+      'Dealer reference is required for dealer referrals.'
+    ]
+  },
+  referringCustomer: {
+    type: mongoose.Schema.ObjectId,
+    ref: 'Customer',
+    required: [
+      function() { return this.source === 'customer_referral'; },
+      'Customer reference is required for customer referrals.'
+    ]
+  },
+  referringUser: { // For staff referrals
+    type: mongoose.Schema.ObjectId,
+    ref: 'User',
+    required: [
+      function() { return this.source === 'staff_referral'; },
+      'User reference is required for staff referrals.'
     ]
   },
   status: {

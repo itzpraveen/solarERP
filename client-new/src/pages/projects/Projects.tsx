@@ -67,9 +67,10 @@ const ProjectForm = ({
     installAddress: {
       street: '',
       city: '',
+      district: '', // Add district field
       state: '',
       zipCode: '',
-      country: 'USA',
+      country: 'USA', // Consider changing default to 'India' later if needed
     },
     financials: {
       totalContractValue: 0,
@@ -210,37 +211,46 @@ const ProjectForm = ({
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                required
                 label="Street Address"
                 name="installAddress.street"
                 value={formData.installAddress.street}
                 onChange={handleChange}
               />
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} md={3}>
               <TextField
                 fullWidth
-                required
                 label="City"
                 name="installAddress.city"
                 value={formData.installAddress.city}
                 onChange={handleChange}
               />
-            </Grid>
-            <Grid item xs={12} md={4}>
+            </Grid> {/* Close City Grid item */}
+            
+            {/* District Grid item - Now a sibling */}
+            <Grid item xs={12} md={3}>
               <TextField
                 fullWidth
-                required
+                label="District"
+                name="installAddress.district"
+                value={formData.installAddress.district}
+                onChange={handleChange}
+              />
+            </Grid>
+
+            {/* State Grid item */}
+            <Grid item xs={12} md={3}>
+              <TextField
+                fullWidth
                 label="State"
                 name="installAddress.state"
                 value={formData.installAddress.state}
                 onChange={handleChange}
               />
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} md={3}>
               <TextField
                 fullWidth
-                required
                 label="ZIP Code"
                 name="installAddress.zipCode"
                 value={formData.installAddress.zipCode}
@@ -359,7 +369,8 @@ const ProjectForm = ({
                 onChange={handleNumberChange}
               />
             </Grid>
-          </Grid>
+          </Grid> {/* This closes the main Grid container */}
+          {/* Removed the extra closing </Grid> tag that was here */}
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose}>Cancel</Button>

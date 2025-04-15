@@ -36,6 +36,9 @@ const projectSchema = new mongoose.Schema({
       },
       assignedTo: { type: Schema.Types.ObjectId, ref: 'User' },
       dueDate: { type: Date },
+      startDate: { type: Date },
+      duration: { type: Number }, // Representing e.g., estimated days
+      dependsOn: [{ type: Schema.Types.ObjectId }], // IDs of tasks in this project's tasks array
       createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
       createdAt: { type: Date, default: Date.now },
     },
@@ -55,27 +58,27 @@ const projectSchema = new mongoose.Schema({
   installAddress: {
     street: {
       type: String,
-      required: [true, 'Street address is required'],
+      // required: [true, 'Street address is required'], // Made optional
       trim: true
     },
     city: {
       type: String,
-      required: [true, 'City is required'],
+      // required: [true, 'City is required'], // Made optional
       trim: true
     },
     district: {
       type: String,
-      required: [true, 'District is required'],
+      // required: [true, 'District is required'], // Made optional
       trim: true
     },
     state: {
       type: String,
-      required: [true, 'State is required'],
+      // required: [true, 'State is required'], // Made optional
       trim: true
     },
     zipCode: {
       type: String,
-      required: [true, 'ZIP code is required'],
+      // required: [true, 'ZIP code is required'], // Made optional
       trim: true
     },
     country: {
@@ -413,27 +416,41 @@ projectSchema.pre(/^find/, function(next) {
 
 // Calculate project financials before saving
 projectSchema.pre('save', function(next) {
-  // Calculate total expenses
-  if (this.financials && this.financials.expenses && this.financials.expenses.length > 0) {
-    this.financials.totalExpenses = this.financials.expenses.reduce(
-      (total, expense) => total + expense.amount, 
-      0
-    );
+  // Ensure financials object exists
+  if (!this.financials) {
+    this.financials = {};
   }
-  
-  // Calculate project profit
-  if (this.financials && this.financials.totalContractValue && this.financials.totalExpenses) {
-    this.financials.projectedProfit = this.financials.totalContractValue - this.financials.totalExpenses;
+  // Ensure expenses array exists and initialize totalExpenses
+  if (!this.financials.expenses) {
+    this.financials.expenses = [];
   }
-  
+  this.financials.totalExpenses = this.financials.expenses.reduce(
+    (total, expense) => total + (expense.amount || 0), // Add safety check for expense.amount
+    0
+  );
+
+  // Calculate project profit if possible
+  if (typeof this.financials.totalContractValue === 'number') {
+      // Use the just-calculated totalExpenses
+      this.financials.projectedProfit = this.financials.totalContractValue - this.financials.totalExpenses;
+  } else {
+      // Ensure projectedProfit is not left undefined if calculation can't happen
+      this.financials.projectedProfit = undefined; // Or 0, depending on desired behavior
+  }
+
   next();
 });
 
 // Auto-update stage dates
 projectSchema.pre('save', function(next) {
+  // Ensure dates object exists before trying to access properties
+  if (!this.dates) {
+      this.dates = {};
+  }
+
   if (this.isModified('stage')) {
     const now = Date.now();
-    
+
     switch (this.stage) {
       case 'planning':
         // No date update needed as it's the initial stage
@@ -461,7 +478,7 @@ projectSchema.pre('save', function(next) {
         break;
     }
   }
-  
+
   next();
 });
 

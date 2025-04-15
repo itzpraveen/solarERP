@@ -15,9 +15,15 @@ exports.getAllLeads = catchAsync(async (req, res, next) => {
   excludedFields.forEach(el => delete standardFilters[el]);
 
   Object.keys(standardFilters).forEach(key => {
-    if (standardFilters[key] !== '' && standardFilters[key] !== undefined && standardFilters[key] !== null) {
-      // Basic equality check for most fields
-      filterConditions[key] = standardFilters[key];
+    const value = standardFilters[key];
+    if (value !== '' && value !== undefined && value !== null) {
+      if (key === 'status' && typeof value === 'string' && value.includes(',')) {
+        // Handle comma-separated status values using $in
+        filterConditions[key] = { $in: value.split(',').map(s => s.trim()).filter(s => s) }; // Trim whitespace and filter empty strings
+      } else {
+        // Basic equality check for other fields or single status
+        filterConditions[key] = value;
+      }
       // Add logic here if range filters (gte, lte) are needed for specific fields
     }
   });
@@ -102,9 +108,30 @@ exports.getLead = catchAsync(async (req, res, next) => {
 exports.createLead = catchAsync(async (req, res, next) => {
   // Set the creator to the current user
   req.body.createdBy = req.user.id;
-  
+
+  // --- Handle Referral Fields ---
+  const { source, referringDealer, referringCustomer, referringUser } = req.body;
+
+  // Clear irrelevant referral fields based on source
+  if (source === 'dealer_referral') {
+    req.body.referringCustomer = undefined;
+    req.body.referringUser = undefined;
+  } else if (source === 'customer_referral') {
+    req.body.referringDealer = undefined;
+    req.body.referringUser = undefined;
+  } else if (source === 'staff_referral') {
+    req.body.referringDealer = undefined;
+    req.body.referringCustomer = undefined;
+  } else {
+    // If source is not a specific referral type, clear all referral fields
+    req.body.referringDealer = undefined;
+    req.body.referringCustomer = undefined;
+    req.body.referringUser = undefined;
+  }
+  // --- End Handle Referral Fields ---
+
   const newLead = await Lead.create(req.body);
-  
+
   res.status(201).json({
     status: 'success',
     data: {
@@ -116,11 +143,42 @@ exports.createLead = catchAsync(async (req, res, next) => {
 // Update lead
 exports.updateLead = catchAsync(async (req, res, next) => {
   // Exclude fields that shouldn't be updated via this generic route
-  const excludedFields = ['createdBy', 'assignedTo', 'status', 'converted', 'active', 'notes', 'interactions', 'proposals'];
-  const filteredBody = { ...req.body };
-  excludedFields.forEach(el => delete filteredBody[el]);
+  // Allow 'source' and referral fields to be updated here, but handle them carefully
+  const excludedFields = ['createdBy', 'assignedTo', 'status', 'converted', 'active', 'notes', 'interactions', 'proposals']; // Keep basic exclusions
+  const updateData = { ...req.body };
+  excludedFields.forEach(el => delete updateData[el]);
 
-  const lead = await Lead.findByIdAndUpdate(req.params.id, filteredBody, {
+  // --- Handle Referral Fields on Update ---
+  if (updateData.source) { // Only apply logic if source is being updated
+    const { source, referringDealer, referringCustomer, referringUser } = updateData;
+
+    // Clear irrelevant referral fields based on the NEW source
+    if (source === 'dealer_referral') {
+      updateData.referringCustomer = undefined;
+      updateData.referringUser = undefined;
+    } else if (source === 'customer_referral') {
+      updateData.referringDealer = undefined;
+      updateData.referringUser = undefined;
+    } else if (source === 'staff_referral') {
+      updateData.referringDealer = undefined;
+      updateData.referringCustomer = undefined;
+    } else {
+      // If source is not a specific referral type, clear all referral fields
+      updateData.referringDealer = undefined;
+      updateData.referringCustomer = undefined;
+      updateData.referringUser = undefined;
+    }
+  } else {
+      // If source is NOT being updated, remove referral fields from the update payload
+      // to prevent accidental clearing if they weren't included in the request.
+      delete updateData.referringDealer;
+      delete updateData.referringCustomer;
+      delete updateData.referringUser;
+  }
+  // --- End Handle Referral Fields on Update ---
+
+
+  const lead = await Lead.findByIdAndUpdate(req.params.id, updateData, {
     new: true,
     runValidators: true,
   });

@@ -124,7 +124,9 @@ exports.createProject = catchAsync(async (req, res, next) => {
   if (!customer) {
     return next(new AppError('No customer found with that ID', 404));
   }
-  
+  // Log the fetched customer's address
+  console.log(`DEBUG: Fetched Customer ${customer._id} address data:`, JSON.stringify(customer.address, null, 2));
+
   // Verify that the proposal exists if provided
   if (req.body.proposal) {
     const proposal = await Proposal.findById(req.body.proposal);
@@ -150,13 +152,59 @@ exports.createProject = catchAsync(async (req, res, next) => {
     }
   }
   
-  // Auto-populate install address from customer address if not provided
-  if (!req.body.installAddress) {
-    req.body.installAddress = customer.address;
+  // --- Handle Install Address ---
+  let finalInstallAddress = {}; // Start with an empty object
+
+  // Use customer address as a base if it exists and is an object
+  if (customer.address && typeof customer.address === 'object') {
+      finalInstallAddress = { ...customer.address }; // Copy customer address
+      console.log('Using customer address as base:', JSON.stringify(finalInstallAddress));
+  }
+
+  // Override with fields from req.body.installAddress if it exists and is an object
+  if (req.body.installAddress && typeof req.body.installAddress === 'object') {
+      console.log('Merging with req.body.installAddress:', JSON.stringify(req.body.installAddress));
+      finalInstallAddress = { ...finalInstallAddress, ...req.body.installAddress }; // Merge, req.body takes precedence
   }
   
-  const newProject = await Project.create(req.body);
-  
+  // Ensure installAddress is at least an object if it exists, otherwise let Mongoose handle defaults/validation
+  if (finalInstallAddress && typeof finalInstallAddress === 'object') {
+      req.body.installAddress = finalInstallAddress;
+      console.log('Final installAddress being used:', JSON.stringify(finalInstallAddress));
+  } else {
+      // If neither request nor customer provided a valid address object,
+      // ensure it's not set or is set to null/undefined depending on model schema defaults
+      // In this case, since sub-fields are not required, we can just ensure it's not invalid
+      req.body.installAddress = finalInstallAddress && typeof finalInstallAddress === 'object' ? finalInstallAddress : {};
+      console.log('Install address was incomplete or invalid, using default empty object or letting model handle it.');
+  }
+  // --- End Handle Install Address ---
+
+
+  // --- Ensure Numeric Types ---
+  // Explicitly parse potentially stringified numbers from req.body
+  if (req.body.systemSize) req.body.systemSize = parseFloat(req.body.systemSize);
+  if (req.body.panelCount) req.body.panelCount = parseInt(req.body.panelCount, 10);
+  if (req.body.financials && req.body.financials.totalContractValue) {
+      req.body.financials.totalContractValue = parseFloat(req.body.financials.totalContractValue);
+  }
+  // Add similar parsing for other numeric fields if needed (e.g., batteryCount)
+  if (req.body.batteryCount) req.body.batteryCount = parseInt(req.body.batteryCount, 10);
+  // --- End Ensure Numeric Types ---
+
+
+  // Log the final data being sent to Project.create
+  console.log('Data for Project.create:', JSON.stringify(req.body, null, 2));
+
+  let newProject;
+  try {
+    newProject = await Project.create(req.body);
+  } catch (error) {
+    console.error('Error during Project.create:', error); // Log the full error
+    // Pass the error to the global error handler
+    return next(new AppError(`Project creation failed: ${error.message}`, 400));
+  }
+
   res.status(201).json({
     status: 'success',
     data: {
@@ -468,6 +516,10 @@ exports.addTask = catchAsync(async (req, res, next) => {
   }
 
   // Add the task to the project's tasks array
+  // Ensure dependsOn contains valid task IDs if provided
+  if (taskData.dependsOn) {
+    taskData.dependsOn = taskData.dependsOn.filter(depId => project.tasks.some(t => t._id.equals(depId)));
+  }
   project.tasks.push(taskData);
   await project.save(); // Use save to trigger potential middleware if needed
 
@@ -498,11 +550,31 @@ exports.updateTask = catchAsync(async (req, res, next) => {
   // Find the task subdocument
   const task = project.tasks.id(taskId);
   if (!task) {
-     // This check is somewhat redundant due to the findOne query, but good practice
-    return next(new AppError('No task found with that ID within the project', 404));
+    // This case should ideally not happen if the findOne worked, but good practice
+    return next(new AppError('Task not found within the project', 404));
   }
 
-  // Update the task fields
+  // --- Dependency Check ---
+  // Check dependencies ONLY if the status is being changed to 'in_progress' or 'done'
+  if (updateData.status && (updateData.status === 'in_progress' || updateData.status === 'done') && task.dependsOn && task.dependsOn.length > 0) {
+    // Check if all dependencies are 'done'
+    const dependencies = project.tasks.filter(t => task.dependsOn.includes(t._id));
+    const incompleteDependencies = dependencies.filter(dep => dep.status !== 'done');
+
+    if (incompleteDependencies.length > 0) {
+        // Construct a meaningful error message
+        const incompleteTaskDescriptions = incompleteDependencies.map(t => t.description).join(', ');
+        return next(new AppError(`Cannot update task status. Prerequisite tasks not completed: ${incompleteTaskDescriptions}`, 400));
+    }
+  }
+  // --- End Dependency Check ---
+
+  // Ensure dependsOn contains valid task IDs if provided in update
+  if (updateData.dependsOn) {
+    updateData.dependsOn = updateData.dependsOn.filter(depId => project.tasks.some(t => t._id.equals(depId) && !t._id.equals(taskId))); // Ensure valid and not self-referential
+  }
+
+  // Apply updates to the task subdocument
   Object.assign(task, updateData);
 
   // Save the parent project document

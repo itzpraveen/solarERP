@@ -54,8 +54,8 @@ interface SidebarProps {
 const menuItems = [
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
   { text: 'Leads', icon: <LeadIcon />, path: '/leads' },
-  { text: 'Customers', icon: <CustomerIcon />, path: '/customers' },
-  { text: 'Proposals', icon: <ProposalIcon />, path: '/proposals' },
+  { text: 'Proposals', icon: <ProposalIcon />, path: '/proposals' }, // Moved Proposals up
+  { text: 'Customers', icon: <CustomerIcon />, path: '/customers' }, // Moved Customers down
   { text: 'Projects', icon: <ProjectIcon />, path: '/projects' },
   { text: 'Equipment', icon: <EquipmentIcon />, path: '/equipment' },
   { text: 'Service Requests', icon: <ServiceIcon />, path: '/services' },
