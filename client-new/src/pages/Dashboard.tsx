@@ -479,7 +479,7 @@ const Dashboard = () => {
         sx={{
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center',
+          alignItems: 'flex-start', // Align items at the top
           mb: 3,
         }}
       >
@@ -491,30 +491,37 @@ const Dashboard = () => {
             Welcome back, {user?.name || 'User'}! Here's what's happening today.
           </Typography>
         </Box>
-        <Box>
+        <Box sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' }, // Stack on mobile, side-by-side on larger screens
+          alignItems: { xs: 'stretch', sm: 'center' }, // Full width on mobile, centered on larger screens
+          gap: 2,
+        }}>
           <Button
             variant="outlined"
-            size="medium"
             onClick={handleRefresh}
             startIcon={<Refresh />}
-            sx={{ mr: 2 }}
+            sx={{
+              borderRadius: 28, // Make it pill-shaped like in the screenshot
+              px: 3,
+              height: 40,
+            }}
           >
             Refresh
           </Button>
           <Button
-            component={Link} // Add component prop
-            to="/reports" // Add to prop
+            component={Link}
+            to="/reports"
             variant="contained"
-            size="large"
             startIcon={<TrendingUp />}
             sx={{
-              height: 48,
-              px: 3,
               borderRadius: 2,
+              px: 3,
+              height: 40,
               boxShadow: '0 4px 14px 0 rgba(76, 175, 80, 0.39)',
             }}
           >
-            Generate Report
+            Report
           </Button>
         </Box>
       </Box>
@@ -1245,7 +1252,12 @@ const Dashboard = () => {
             Start by creating customers, leads, or projects to see statistics
             here.
           </Typography>
-          <Box sx={{ display: 'flex', gap: 2 }}>
+          <Box sx={{
+            display: 'flex',
+            gap: 2,
+            flexDirection: { xs: 'column', sm: 'row' }, // Stack vertically on mobile
+            alignItems: { xs: 'stretch', sm: 'center' } // Stretch buttons on mobile
+          }}>
             <Button
               component={Link}
               to="/customers/new"
