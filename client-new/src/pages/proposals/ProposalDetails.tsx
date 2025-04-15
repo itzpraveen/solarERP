@@ -174,33 +174,42 @@ const ProposalDetails = () => {
 
     const {
       grossCost,
-      federalTaxCredit,
-      stateTaxCredit,
+      centralSubsidy, // Updated name
+      stateSubsidy,   // Updated name
+      gstRate,        // Added
       utilityRebate,
       otherIncentives,
     } = editData.pricing;
 
-    if (grossCost !== undefined) {
-      const netCost =
-        grossCost -
-        (federalTaxCredit || 0) -
-        (stateTaxCredit || 0) -
+    if (grossCost !== undefined && gstRate !== undefined) {
+       // Calculate GST Amount
+      const calculatedGstAmount = (grossCost * gstRate) / 100;
+
+      // Calculate Net Cost (Gross + GST - Subsidies/Rebates)
+      const calculatedNetCost =
+        grossCost +
+        calculatedGstAmount -
+        (centralSubsidy || 0) -
+        (stateSubsidy || 0) -
         (utilityRebate || 0) -
         (otherIncentives || 0);
+
 
       setEditData((prev) => ({
         ...prev,
         pricing: {
           ...prev.pricing!,
-          netCost: netCost > 0 ? netCost : 0,
+          gstAmount: calculatedGstAmount > 0 ? calculatedGstAmount : 0, // Update gstAmount
+          netCost: calculatedNetCost > 0 ? calculatedNetCost : 0,     // Update netCost
         },
       }));
     }
-  }, [
+  }, [ // Update dependencies
     editMode,
     editData.pricing?.grossCost,
-    editData.pricing?.federalTaxCredit,
-    editData.pricing?.stateTaxCredit,
+    editData.pricing?.centralSubsidy,
+    editData.pricing?.stateSubsidy,
+    editData.pricing?.gstRate,
     editData.pricing?.utilityRebate,
     editData.pricing?.otherIncentives,
   ]);
@@ -1367,20 +1376,21 @@ const ProposalDetails = () => {
                       )}
                     </Grid>
 
+                    {/* Updated to Central Subsidy */}
                     <Grid item xs={12} sm={6}>
                       <Typography variant="subtitle2" color="text.secondary">
-                        Federal Tax Credit
+                        Central Subsidy
                       </Typography>
                       {editMode ? (
                         <TextField
                           fullWidth
                           size="small"
-                          name="pricing.federalTaxCredit"
+                          name="pricing.centralSubsidy" // Updated name
                           type="number"
                           inputProps={{ min: 0, step: 0.01 }}
                           value={
-                            editData.pricing?.federalTaxCredit ||
-                            proposal.pricing.federalTaxCredit
+                            editData.pricing?.centralSubsidy ?? // Use nullish coalescing
+                            proposal.pricing.centralSubsidy
                           }
                           onChange={handleNumberChange}
                           sx={{ mt: 1 }}
@@ -1388,26 +1398,27 @@ const ProposalDetails = () => {
                       ) : (
                         <Typography variant="body1" sx={{ mt: 0.5 }}>
                           <CurrencyDisplay
-                            amount={proposal.pricing.federalTaxCredit}
+                            amount={proposal.pricing.centralSubsidy}
                           />
                         </Typography>
                       )}
                     </Grid>
 
+                    {/* Updated to State Subsidy */}
                     <Grid item xs={12} sm={6}>
                       <Typography variant="subtitle2" color="text.secondary">
-                        State Tax Credit
+                        State Subsidy
                       </Typography>
                       {editMode ? (
                         <TextField
                           fullWidth
                           size="small"
-                          name="pricing.stateTaxCredit"
+                          name="pricing.stateSubsidy" // Updated name
                           type="number"
                           inputProps={{ min: 0, step: 0.01 }}
                           value={
-                            editData.pricing?.stateTaxCredit ||
-                            proposal.pricing.stateTaxCredit ||
+                            editData.pricing?.stateSubsidy ?? // Use nullish coalescing
+                            proposal.pricing.stateSubsidy ??
                             0
                           }
                           onChange={handleNumberChange}
@@ -1416,7 +1427,7 @@ const ProposalDetails = () => {
                       ) : (
                         <Typography variant="body1" sx={{ mt: 0.5 }}>
                           <CurrencyDisplay
-                            amount={proposal.pricing.stateTaxCredit || 0}
+                            amount={proposal.pricing.stateSubsidy || 0}
                           />
                         </Typography>
                       )}
@@ -1478,10 +1489,50 @@ const ProposalDetails = () => {
                       )}
                     </Grid>
 
+                    {/* Added GST Rate */}
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        GST Rate (%)
+                      </Typography>
+                      {editMode ? (
+                        <TextField
+                          fullWidth
+                          size="small"
+                          name="pricing.gstRate"
+                          type="number"
+                          inputProps={{ min: 0, step: 0.1 }}
+                          value={
+                            editData.pricing?.gstRate ??
+                            proposal.pricing.gstRate ??
+                            12 // Default example
+                          }
+                          onChange={handleNumberChange}
+                          sx={{ mt: 1 }}
+                        />
+                      ) : (
+                        <Typography variant="body1" sx={{ mt: 0.5 }}>
+                          {proposal.pricing.gstRate || 0}%
+                        </Typography>
+                      )}
+                    </Grid>
+
+                    {/* Added GST Amount (Read Only) */}
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        GST Amount
+                      </Typography>
+                      <Typography variant="body1" sx={{ mt: 0.5 }}>
+                        <CurrencyDisplay
+                          amount={proposal.pricing.gstAmount || 0}
+                        />
+                      </Typography>
+                    </Grid>
+
+
                     <Grid item xs={12}>
                       <Divider sx={{ my: 1 }} />
                       <Typography variant="subtitle2" color="text.secondary">
-                        Net Cost After Incentives
+                        Net Cost (Incl. GST, After Incentives)
                       </Typography>
                       <Typography
                         variant="h6"

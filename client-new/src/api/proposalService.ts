@@ -12,11 +12,14 @@ export interface ProposalFinancingOption {
 
 export interface ProposalPricing {
   grossCost: number;
-  federalTaxCredit: number;
-  stateTaxCredit?: number;
+  centralSubsidy: number; // Renamed
+  stateSubsidy?: number; // Renamed
+  gstRate?: number; // Added
+  gstAmount?: number; // Added
   utilityRebate?: number;
   otherIncentives?: number;
   netCost: number;
+  currency?: string; // Added
 }
 
 export interface ProposalEstimatedSavings {

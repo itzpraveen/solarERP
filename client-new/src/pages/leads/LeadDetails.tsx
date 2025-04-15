@@ -1523,8 +1523,25 @@ const LeadDetails = () => {
 
               // Ensure the full lead object is passed, along with defaults
 
+              // Ensure pricing object has required fields for the type
+              const defaultPricing = {
+                grossCost: 0,
+                centralSubsidy: 0,
+                stateSubsidy: 0,
+                gstRate: 12, // Default GST
+                gstAmount: 0,
+                utilityRebate: 0,
+                otherIncentives: 0,
+                netCost: 0,
+                currency: 'INR',
+              };
+
               const dataToSubmit = {
                 ...proposalData,
+                pricing: { // Merge default pricing with form data
+                  ...defaultPricing,
+                  ...(proposalData.pricing || {}),
+                },
                 lead: lead, // Pass the full lead object from state
                 status: 'draft' as
                   | 'draft'
