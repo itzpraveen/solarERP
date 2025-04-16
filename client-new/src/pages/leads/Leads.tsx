@@ -92,7 +92,7 @@ const LeadForm = ({
       district: '',
       state: '',
       zipCode: '',
-      country: 'USA',
+      country: 'India',
     },
     source: 'website',
     status: 'new',
