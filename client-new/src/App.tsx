@@ -37,7 +37,6 @@ import ServiceRequests from './pages/services/ServiceRequests';
 import ServiceRequestForm from './pages/services/ServiceRequestForm';
 import ServiceRequestDetails from './pages/services/ServiceRequestDetails';
 
-
 function App() {
   // Clear any dummy data from localStorage on app startup
   const clearResult = clearDummyData();

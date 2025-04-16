@@ -11,8 +11,8 @@ import {
   CircularProgress,
   Divider,
 } from '@mui/material';
-import { AuthContext } from '../features/auth/context/AuthContext';
 import * as axiosModule from 'axios';
+import { AuthContext } from '../features/auth/context/AuthContext';
 import apiService from '../api/apiService';
 
 const axios = axiosModule.default || axiosModule;
@@ -115,7 +115,7 @@ const Profile = () => {
       if (res.token) {
         localStorage.setItem('token', res.token);
         // Update auth token header
-        axios.defaults.headers.common['Authorization'] = `Bearer ${res.token}`;
+        axios.defaults.headers.common.Authorization = `Bearer ${res.token}`;
       }
 
       // Update user in context

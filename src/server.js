@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
+const compression = require('compression');
 const mongoSanitize = require('express-mongo-sanitize'); // Import mongo-sanitize
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
@@ -31,6 +32,7 @@ const app = express();
 
 // Set security HTTP headers
 app.use(helmet());
+app.use(compression());
 
 // Logger middleware
 app.use(morgan('dev'));
@@ -60,11 +62,13 @@ app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(mongoSanitize());
 
 // CORS with more permissive settings for production
-app.use(cors({
-  origin: '*', // In production you might want to restrict this
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: '*', // In production you might want to restrict this
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    credentials: true,
+  })
+);
 
 // Set Content-Security-Policy header
 app.use((req, res, next) => {
@@ -90,11 +94,14 @@ app.use('/api/users', userRoutes); // Mount user routes
 // Serve static assets in production
 if (process.env.NODE_ENV === 'production') {
   // Ensure client build directory exists
-  console.log('Running in production mode, serving static files from:', path.join(__dirname, '../client-new/build'));
-  
+  console.log(
+    'Running in production mode, serving static files from:',
+    path.join(__dirname, '../client-new/build')
+  );
+
   // Serve static files from the React app
   app.use(express.static(path.join(__dirname, '../client-new/build')));
-  
+
   // Handle React routing, return all requests to React app
   app.get('*', (req, res, next) => {
     // Skip API routes
@@ -106,7 +113,9 @@ if (process.env.NODE_ENV === 'production') {
 } else {
   // For development - respond with API information at root
   app.get('/', (req, res) => {
-    res.json({ message: 'SolarERP API - Use /api endpoints to access the API' });
+    res.json({
+      message: 'SolarERP API - Use /api endpoints to access the API',
+    });
   });
 }
 
@@ -114,11 +123,12 @@ if (process.env.NODE_ENV === 'production') {
 app.use(errorHandler);
 
 // Database connection
-mongoose.connect(config.database.uri, config.database.options)
+mongoose
+  .connect(config.database.uri, config.database.options)
   .then(() => {
     console.log('Connected to MongoDB');
   })
-  .catch(err => {
+  .catch((err) => {
     console.error('MongoDB connection error:', err);
     console.log('Running in development mode without MongoDB connection');
     // Don't exit the process in development mode
@@ -128,7 +138,7 @@ mongoose.connect(config.database.uri, config.database.options)
   });
 
 // Handle unhandled promise rejections
-process.on('unhandledRejection', err => {
+process.on('unhandledRejection', (err) => {
   console.error('UNHANDLED REJECTION! Shutting down...');
   console.error(err.name, err.message);
   if (config.server.env === 'production') {

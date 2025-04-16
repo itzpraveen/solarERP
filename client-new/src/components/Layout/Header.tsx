@@ -168,7 +168,7 @@ const Header = ({ handleDrawerToggle }: HeaderProps) => {
               }}
             />
             <InputBase
-              placeholder={isMobile ? "Search" : "Search..."}
+              placeholder={isMobile ? 'Search' : 'Search...'}
               inputProps={{ 'aria-label': 'search' }}
               sx={{
                 color: theme.palette.text.primary,
@@ -187,7 +187,13 @@ const Header = ({ handleDrawerToggle }: HeaderProps) => {
         </Box>
 
         {/* Right side icons */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 1 } }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: { xs: 0.5, sm: 1 },
+          }}
+        >
           {/* Energy production chip */}
           <Tooltip
             title="Current energy production"
@@ -265,7 +271,7 @@ const Header = ({ handleDrawerToggle }: HeaderProps) => {
                     fontWeight: 'bold',
                     minWidth: '18px',
                     height: '18px',
-                  }
+                  },
                 }}
               >
                 <NotificationsIcon />

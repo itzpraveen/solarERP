@@ -175,14 +175,14 @@ const ProposalDetails = () => {
     const {
       grossCost,
       centralSubsidy, // Updated name
-      stateSubsidy,   // Updated name
-      gstRate,        // Added
+      stateSubsidy, // Updated name
+      gstRate, // Added
       utilityRebate,
       otherIncentives,
     } = editData.pricing;
 
     if (grossCost !== undefined && gstRate !== undefined) {
-       // Calculate GST Amount
+      // Calculate GST Amount
       const calculatedGstAmount = (grossCost * gstRate) / 100;
 
       // Calculate Net Cost (Gross + GST - Subsidies/Rebates)
@@ -194,17 +194,17 @@ const ProposalDetails = () => {
         (utilityRebate || 0) -
         (otherIncentives || 0);
 
-
       setEditData((prev) => ({
         ...prev,
         pricing: {
           ...prev.pricing!,
           gstAmount: calculatedGstAmount > 0 ? calculatedGstAmount : 0, // Update gstAmount
-          netCost: calculatedNetCost > 0 ? calculatedNetCost : 0,     // Update netCost
+          netCost: calculatedNetCost > 0 ? calculatedNetCost : 0, // Update netCost
         },
       }));
     }
-  }, [ // Update dependencies
+  }, [
+    // Update dependencies
     editMode,
     editData.pricing?.grossCost,
     editData.pricing?.centralSubsidy,
@@ -1527,7 +1527,6 @@ const ProposalDetails = () => {
                         />
                       </Typography>
                     </Grid>
-
 
                     <Grid item xs={12}>
                       <Divider sx={{ my: 1 }} />

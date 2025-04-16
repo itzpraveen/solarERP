@@ -1,17 +1,29 @@
-const ServiceRequest = require('../models/ServiceRequest');
 const mongoose = require('mongoose');
+const ServiceRequest = require('../models/ServiceRequest');
 
 // Get all service requests with optional filtering
 exports.getServiceRequests = async (req, res) => {
   try {
-    const { page = 1, limit = 10, sort = '-createdAt', search, startDate, endDate, ...filters } = req.query;
+    const {
+      page = 1,
+      limit = 10,
+      sort = '-createdAt',
+      search,
+      startDate,
+      endDate,
+      ...filters
+    } = req.query;
 
     // BUILD FILTER CONDITIONS
     const filterConditions = {};
 
     // 1) Add standard filters from req.query (customer, project, status, etc.)
-    Object.keys(filters).forEach(key => {
-      if (filters[key] !== '' && filters[key] !== undefined && filters[key] !== null) {
+    Object.keys(filters).forEach((key) => {
+      if (
+        filters[key] !== '' &&
+        filters[key] !== undefined &&
+        filters[key] !== null
+      ) {
         filterConditions[key] = filters[key];
       }
     });
@@ -27,12 +39,15 @@ exports.getServiceRequests = async (req, res) => {
     if (search) {
       filterConditions.$or = [
         { title: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } }
+        { description: { $regex: search, $options: 'i' } },
         // Add other fields to search if needed (e.g., customer name after population?)
       ];
     }
 
-    console.log('getServiceRequests - Final filter conditions before find:', JSON.stringify(filterConditions)); // Keep this log
+    console.log(
+      'getServiceRequests - Final filter conditions before find:',
+      JSON.stringify(filterConditions)
+    ); // Keep this log
 
     // Pagination
     const skip = (parseInt(page) - 1) * parseInt(limit);
@@ -56,14 +71,14 @@ exports.getServiceRequests = async (req, res) => {
       total,
       page: parseInt(page),
       pages: Math.ceil(total / parseInt(limit)),
-      serviceRequests
+      serviceRequests,
     });
   } catch (error) {
     console.error('Error in getServiceRequests:', error);
     res.status(500).json({
       status: 'error',
       message: 'Failed to fetch service requests',
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -81,20 +96,20 @@ exports.getServiceRequest = async (req, res) => {
     if (!serviceRequest) {
       return res.status(404).json({
         status: 'fail',
-        message: 'Service request not found'
+        message: 'Service request not found',
       });
     }
 
     res.status(200).json({
       status: 'success',
-      serviceRequest
+      serviceRequest,
     });
   } catch (error) {
     console.error('Error in getServiceRequest:', error);
     res.status(500).json({
       status: 'error',
       message: 'Failed to fetch service request',
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -104,10 +119,12 @@ exports.createServiceRequest = async (req, res) => {
   try {
     // Add the current user as createdBy
     req.body.createdBy = req.user.id;
-    
+
     const serviceRequest = await ServiceRequest.create(req.body);
-    
-    const populatedServiceRequest = await ServiceRequest.findById(serviceRequest._id)
+
+    const populatedServiceRequest = await ServiceRequest.findById(
+      serviceRequest._id
+    )
       .populate('customer', 'firstName lastName email phone')
       .populate('project', 'name projectNumber')
       .populate('assignedTechnician', 'firstName lastName email')
@@ -115,14 +132,14 @@ exports.createServiceRequest = async (req, res) => {
 
     res.status(201).json({
       status: 'success',
-      serviceRequest: populatedServiceRequest
+      serviceRequest: populatedServiceRequest,
     });
   } catch (error) {
     console.error('Error in createServiceRequest:', error);
     res.status(400).json({
       status: 'error',
       message: 'Failed to create service request',
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -140,10 +157,10 @@ exports.updateServiceRequest = async (req, res) => {
       'scheduledDate',
       'completionDate',
       'notes',
-      'updatedBy' // This should be set internally, not via request body
+      'updatedBy', // This should be set internally, not via request body
     ];
     const filteredBody = { ...req.body };
-    excludedFields.forEach(el => delete filteredBody[el]);
+    excludedFields.forEach((el) => delete filteredBody[el]);
 
     // Add updatedBy field internally
     filteredBody.updatedBy = req.user.id;
@@ -165,20 +182,20 @@ exports.updateServiceRequest = async (req, res) => {
     if (!serviceRequest) {
       return res.status(404).json({
         status: 'fail',
-        message: 'Service request not found'
+        message: 'Service request not found',
       });
     }
 
     res.status(200).json({
       status: 'success',
-      serviceRequest
+      serviceRequest,
     });
   } catch (error) {
     console.error('Error in updateServiceRequest:', error);
     res.status(400).json({
       status: 'error',
       message: 'Failed to update service request',
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -186,25 +203,27 @@ exports.updateServiceRequest = async (req, res) => {
 // Delete a service request
 exports.deleteServiceRequest = async (req, res) => {
   try {
-    const serviceRequest = await ServiceRequest.findByIdAndDelete(req.params.id);
+    const serviceRequest = await ServiceRequest.findByIdAndDelete(
+      req.params.id
+    );
 
     if (!serviceRequest) {
       return res.status(404).json({
         status: 'fail',
-        message: 'Service request not found'
+        message: 'Service request not found',
       });
     }
 
     res.status(200).json({
       status: 'success',
-      message: 'Service request deleted successfully'
+      message: 'Service request deleted successfully',
     });
   } catch (error) {
     console.error('Error in deleteServiceRequest:', error);
     res.status(500).json({
       status: 'error',
       message: 'Failed to delete service request',
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -215,24 +234,24 @@ exports.addNote = async (req, res) => {
     if (!req.body.text) {
       return res.status(400).json({
         status: 'fail',
-        message: 'Note text is required'
+        message: 'Note text is required',
       });
     }
 
     const note = {
       text: req.body.text,
-      createdBy: req.user.id
+      createdBy: req.user.id,
     };
 
     const serviceRequest = await ServiceRequest.findByIdAndUpdate(
       req.params.id,
       {
         $push: { notes: note },
-        updatedBy: req.user.id
+        updatedBy: req.user.id,
       },
       {
         new: true,
-        runValidators: true
+        runValidators: true,
       }
     )
       .populate('customer', 'firstName lastName email phone')
@@ -244,20 +263,20 @@ exports.addNote = async (req, res) => {
     if (!serviceRequest) {
       return res.status(404).json({
         status: 'fail',
-        message: 'Service request not found'
+        message: 'Service request not found',
       });
     }
 
     res.status(200).json({
       status: 'success',
-      notes: serviceRequest.notes
+      notes: serviceRequest.notes,
     });
   } catch (error) {
     console.error('Error in addNote:', error);
     res.status(500).json({
       status: 'error',
       message: 'Failed to add note',
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -268,7 +287,7 @@ exports.assignTechnician = async (req, res) => {
     if (!req.body.technicianId) {
       return res.status(400).json({
         status: 'fail',
-        message: 'Technician ID is required'
+        message: 'Technician ID is required',
       });
     }
 
@@ -277,11 +296,11 @@ exports.assignTechnician = async (req, res) => {
       {
         assignedTechnician: req.body.technicianId,
         status: 'assigned',
-        updatedBy: req.user.id
+        updatedBy: req.user.id,
       },
       {
         new: true,
-        runValidators: true
+        runValidators: true,
       }
     )
       .populate('customer', 'firstName lastName email phone')
@@ -292,20 +311,20 @@ exports.assignTechnician = async (req, res) => {
     if (!serviceRequest) {
       return res.status(404).json({
         status: 'fail',
-        message: 'Service request not found'
+        message: 'Service request not found',
       });
     }
 
     res.status(200).json({
       status: 'success',
-      serviceRequest
+      serviceRequest,
     });
   } catch (error) {
     console.error('Error in assignTechnician:', error);
     res.status(500).json({
       status: 'error',
       message: 'Failed to assign technician',
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -316,22 +335,22 @@ exports.updateStatus = async (req, res) => {
     if (!req.body.status) {
       return res.status(400).json({
         status: 'fail',
-        message: 'Status is required'
+        message: 'Status is required',
       });
     }
 
     // Add note about status change if provided
     const update = {
       status: req.body.status,
-      updatedBy: req.user.id
+      updatedBy: req.user.id,
     };
 
     if (req.body.note) {
       update.$push = {
         notes: {
           text: req.body.note,
-          createdBy: req.user.id
-        }
+          createdBy: req.user.id,
+        },
       };
     }
 
@@ -345,7 +364,7 @@ exports.updateStatus = async (req, res) => {
       update,
       {
         new: true,
-        runValidators: true
+        runValidators: true,
       }
     )
       .populate('customer', 'firstName lastName email phone')
@@ -356,20 +375,20 @@ exports.updateStatus = async (req, res) => {
     if (!serviceRequest) {
       return res.status(404).json({
         status: 'fail',
-        message: 'Service request not found'
+        message: 'Service request not found',
       });
     }
 
     res.status(200).json({
       status: 'success',
-      serviceRequest
+      serviceRequest,
     });
   } catch (error) {
     console.error('Error in updateStatus:', error);
     res.status(500).json({
       status: 'error',
       message: 'Failed to update status',
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -380,13 +399,13 @@ exports.scheduleService = async (req, res) => {
     if (!req.body.scheduledDate) {
       return res.status(400).json({
         status: 'fail',
-        message: 'Scheduled date is required'
+        message: 'Scheduled date is required',
       });
     }
 
     const update = {
       scheduledDate: req.body.scheduledDate,
-      updatedBy: req.user.id
+      updatedBy: req.user.id,
     };
 
     // Add note about scheduling if provided
@@ -394,8 +413,8 @@ exports.scheduleService = async (req, res) => {
       update.$push = {
         notes: {
           text: req.body.note,
-          createdBy: req.user.id
-        }
+          createdBy: req.user.id,
+        },
       };
     }
 
@@ -404,7 +423,7 @@ exports.scheduleService = async (req, res) => {
       update,
       {
         new: true,
-        runValidators: true
+        runValidators: true,
       }
     )
       .populate('customer', 'firstName lastName email phone')
@@ -415,20 +434,20 @@ exports.scheduleService = async (req, res) => {
     if (!serviceRequest) {
       return res.status(404).json({
         status: 'fail',
-        message: 'Service request not found'
+        message: 'Service request not found',
       });
     }
 
     res.status(200).json({
       status: 'success',
-      serviceRequest
+      serviceRequest,
     });
   } catch (error) {
     console.error('Error in scheduleService:', error);
     res.status(500).json({
       status: 'error',
       message: 'Failed to schedule service',
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -439,14 +458,14 @@ exports.completeService = async (req, res) => {
     if (!req.body.completionDate) {
       return res.status(400).json({
         status: 'fail',
-        message: 'Completion date is required'
+        message: 'Completion date is required',
       });
     }
 
     const update = {
       status: 'completed',
       completionDate: req.body.completionDate,
-      updatedBy: req.user.id
+      updatedBy: req.user.id,
     };
 
     // Add completion note if provided
@@ -454,8 +473,8 @@ exports.completeService = async (req, res) => {
       update.$push = {
         notes: {
           text: req.body.notes,
-          createdBy: req.user.id
-        }
+          createdBy: req.user.id,
+        },
       };
     }
 
@@ -464,7 +483,7 @@ exports.completeService = async (req, res) => {
       update,
       {
         new: true,
-        runValidators: true
+        runValidators: true,
       }
     )
       .populate('customer', 'firstName lastName email phone')
@@ -476,21 +495,21 @@ exports.completeService = async (req, res) => {
     if (!serviceRequest) {
       return res.status(404).json({
         status: 'fail',
-        message: 'Service request not found'
+        message: 'Service request not found',
       });
     }
 
     res.status(200).json({
       status: 'success',
       serviceRequest,
-      notes: serviceRequest.notes
+      notes: serviceRequest.notes,
     });
   } catch (error) {
     console.error('Error in completeService:', error);
     res.status(500).json({
       status: 'error',
       message: 'Failed to complete service',
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -498,8 +517,8 @@ exports.completeService = async (req, res) => {
 // Get service requests for a customer
 exports.getCustomerServiceRequests = async (req, res) => {
   try {
-    const customerId = req.params.customerId;
-    
+    const { customerId } = req.params;
+
     const serviceRequests = await ServiceRequest.find({ customer: customerId })
       .populate('project', 'name projectNumber')
       .populate('assignedTechnician', 'firstName lastName email')
@@ -508,14 +527,14 @@ exports.getCustomerServiceRequests = async (req, res) => {
     res.status(200).json({
       status: 'success',
       results: serviceRequests.length,
-      serviceRequests
+      serviceRequests,
     });
   } catch (error) {
     console.error('Error in getCustomerServiceRequests:', error);
     res.status(500).json({
       status: 'error',
       message: 'Failed to fetch customer service requests',
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -523,8 +542,8 @@ exports.getCustomerServiceRequests = async (req, res) => {
 // Get service requests for a project
 exports.getProjectServiceRequests = async (req, res) => {
   try {
-    const projectId = req.params.projectId;
-    
+    const { projectId } = req.params;
+
     const serviceRequests = await ServiceRequest.find({ project: projectId })
       .populate('customer', 'firstName lastName email phone')
       .populate('assignedTechnician', 'firstName lastName email')
@@ -533,14 +552,14 @@ exports.getProjectServiceRequests = async (req, res) => {
     res.status(200).json({
       status: 'success',
       results: serviceRequests.length,
-      serviceRequests
+      serviceRequests,
     });
   } catch (error) {
     console.error('Error in getProjectServiceRequests:', error);
     res.status(500).json({
       status: 'error',
       message: 'Failed to fetch project service requests',
-      error: error.message
+      error: error.message,
     });
   }
 };

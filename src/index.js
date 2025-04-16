@@ -1,10 +1,37 @@
 const app = require('./server');
 
 // Start the server
-const port = process.env.PORT || 5002;
-const server = app.listen(port, () => {
-  console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${port}`);
-});
+const DEFAULT_PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 5002;
+
+const startServer = (portArg) => {
+  const port = Number(portArg);
+  const server = app.listen(port, () => {
+    console.log(
+      `Server running in ${process.env.NODE_ENV || 'development'} mode on port ${port}`
+    );
+  });
+
+  // Handle listen errors (e.g., port in use)
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn(`Port ${port} is in use, trying ${port + 1}`);
+        startServer(port + 1);
+      } else {
+        console.error(
+          `Port ${port} is already in use. Please free the port or set a different PORT.`
+        );
+        process.exit(1);
+      }
+    } else {
+      console.error('Server error:', err);
+      process.exit(1);
+    }
+  });
+};
+
+// Start server with possible fallback on port conflict
+startServer(DEFAULT_PORT);
 
 // Handle graceful shutdown
 process.on('SIGTERM', () => {

@@ -202,7 +202,6 @@ const ProjectForm = ({
                 </Select>
               </FormControl>
             </Grid>
-
             <Grid item xs={12}>
               <Typography variant="subtitle1" sx={{ mb: 1 }}>
                 Installation Address
@@ -225,8 +224,8 @@ const ProjectForm = ({
                 value={formData.installAddress.city}
                 onChange={handleChange}
               />
-            </Grid> {/* Close City Grid item */}
-            
+            </Grid>{' '}
+            {/* Close City Grid item */}
             {/* District Grid item - Now a sibling */}
             <Grid item xs={12} md={3}>
               <TextField
@@ -237,7 +236,6 @@ const ProjectForm = ({
                 onChange={handleChange}
               />
             </Grid>
-
             {/* State Grid item */}
             <Grid item xs={12} md={3}>
               <TextField
@@ -257,7 +255,6 @@ const ProjectForm = ({
                 onChange={handleChange}
               />
             </Grid>
-
             <Grid item xs={12}>
               <Typography variant="subtitle1" sx={{ mb: 1 }}>
                 System Specifications
@@ -326,7 +323,6 @@ const ProjectForm = ({
                 </Select>
               </FormControl>
             </Grid>
-
             {formData.includesBattery && (
               <>
                 <Grid item xs={12} md={6}>
@@ -351,7 +347,6 @@ const ProjectForm = ({
                 </Grid>
               </>
             )}
-
             <Grid item xs={12}>
               <Typography variant="subtitle1" sx={{ mb: 1 }}>
                 Financial Details
@@ -369,7 +364,8 @@ const ProjectForm = ({
                 onChange={handleNumberChange}
               />
             </Grid>
-          </Grid> {/* This closes the main Grid container */}
+          </Grid>{' '}
+          {/* This closes the main Grid container */}
           {/* Removed the extra closing </Grid> tag that was here */}
         </DialogContent>
         <DialogActions>
@@ -540,12 +536,14 @@ const Projects = () => {
         }}
       >
         <Typography variant="h4">Projects</Typography>
-        <Box sx={{
-          display: 'flex',
-          gap: 1,
-          flexDirection: { xs: 'column-reverse', sm: 'row' }, // Stack reversed on mobile
-          alignItems: { xs: 'stretch', sm: 'center' } // Stretch on mobile
-        }}>
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 1,
+            flexDirection: { xs: 'column-reverse', sm: 'row' }, // Stack reversed on mobile
+            alignItems: { xs: 'stretch', sm: 'center' }, // Stretch on mobile
+          }}
+        >
           <Button variant="outlined" startIcon={<ImportIcon />} sx={{ mr: 1 }}>
             Import
           </Button>

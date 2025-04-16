@@ -19,21 +19,21 @@ const authValidation = {
       .trim()
       .isLength({ min: 2, max: 50 })
       .withMessage('First name must be between 2 and 50 characters'),
-      
+
     check('lastName')
       .notEmpty()
       .withMessage('Last name is required')
       .trim()
       .isLength({ min: 2, max: 50 })
       .withMessage('Last name must be between 2 and 50 characters'),
-      
+
     check('email')
       .notEmpty()
       .withMessage('Email is required')
       .isEmail()
       .withMessage('Please provide a valid email')
       .normalizeEmail(),
-      
+
     check('password')
       .notEmpty()
       .withMessage('Password is required')
@@ -43,11 +43,11 @@ const authValidation = {
       .withMessage('Password must contain at least one number')
       .matches(/[a-zA-Z]/)
       .withMessage('Password must contain at least one letter'),
-      
+
     check('role')
       .optional()
       .isIn(['user', 'admin', 'manager', 'sales', 'installer', 'finance'])
-      .withMessage('Invalid role')
+      .withMessage('Invalid role'),
   ],
 
   /**
@@ -60,10 +60,8 @@ const authValidation = {
       .isEmail()
       .withMessage('Please provide a valid email')
       .normalizeEmail(),
-      
-    check('password')
-      .notEmpty()
-      .withMessage('Password is required')
+
+    check('password').notEmpty().withMessage('Password is required'),
   ],
 
   /**
@@ -75,7 +73,7 @@ const authValidation = {
       .withMessage('Email is required')
       .isEmail()
       .withMessage('Please provide a valid email')
-      .normalizeEmail()
+      .normalizeEmail(),
   ],
 
   /**
@@ -90,7 +88,7 @@ const authValidation = {
       .matches(/\d/)
       .withMessage('Password must contain at least one number')
       .matches(/[a-zA-Z]/)
-      .withMessage('Password must contain at least one letter')
+      .withMessage('Password must contain at least one letter'),
   ],
 
   /**
@@ -100,7 +98,7 @@ const authValidation = {
     check('currentPassword')
       .notEmpty()
       .withMessage('Current password is required'),
-      
+
     check('newPassword')
       .notEmpty()
       .withMessage('New password is required')
@@ -112,11 +110,13 @@ const authValidation = {
       .withMessage('New password must contain at least one letter')
       .custom((value, { req }) => {
         if (value === req.body.currentPassword) {
-          throw new Error('New password cannot be the same as current password');
+          throw new Error(
+            'New password cannot be the same as current password'
+          );
         }
         return true;
-      })
-  ]
+      }),
+  ],
 };
 
 module.exports = authValidation;

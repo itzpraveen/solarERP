@@ -306,7 +306,7 @@ const EquipmentDetails = () => {
 
         // Add to stock history in local state
         const newHistoryEntry = {
-          _id: 'hist_' + Date.now(),
+          _id: `hist_${Date.now()}`,
           date: new Date().toISOString(),
           quantity: adjustmentValue,
           reason: stockAdjustment.reason,

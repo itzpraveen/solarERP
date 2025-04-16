@@ -76,7 +76,10 @@ type TaskStatus = 'todo' | 'in_progress' | 'done' | 'blocked';
 
 // --- Constants ---
 
-const taskStatusColors: Record<TaskStatus, 'default' | 'info' | 'success' | 'error'> = {
+const taskStatusColors: Record<
+  TaskStatus,
+  'default' | 'info' | 'success' | 'error'
+> = {
   todo: 'default',
   in_progress: 'info',
   done: 'success',
@@ -115,8 +118,22 @@ interface TaskCardProps {
   dragActive?: boolean; // For defensive overlay check
 }
 
-const TaskCard: React.FC<TaskCardProps> = ({ task, users, onEdit, onDelete, isOverlay, dragActive }) => {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+const TaskCard: React.FC<TaskCardProps> = ({
+  task,
+  users,
+  onEdit,
+  onDelete,
+  isOverlay,
+  dragActive,
+}) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({
     id: task._id || 'new-task', // Provide a fallback id if needed
     data: { task }, // Pass task data for context
   });
@@ -139,16 +156,22 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, users, onEdit, onDelete, isOv
     boxShadow: isOverlay ? '0px 5px 15px rgba(0, 0, 0, 0.2)' : undefined, // Style overlay
   };
 
-  const getUserFullName = (userId?: string | { _id: string; firstName?: string; lastName?: string; name?: string }) => {
+  const getUserFullName = (
+    userId?:
+      | string
+      | { _id: string; firstName?: string; lastName?: string; name?: string }
+  ) => {
     if (!userId) return 'Unassigned';
     let id: string | undefined;
     let name: string | undefined;
 
     if (typeof userId === 'object' && userId !== null) {
-        id = userId._id;
-        name = userId.name || `${userId.firstName || ''} ${userId.lastName || ''}`.trim();
+      id = userId._id;
+      name =
+        userId.name ||
+        `${userId.firstName || ''} ${userId.lastName || ''}`.trim();
     } else if (typeof userId === 'string') {
-        id = userId;
+      id = userId;
     }
 
     if (!id) return 'Unassigned';
@@ -167,18 +190,34 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, users, onEdit, onDelete, isOv
       sx={{ p: 1.5, '&:hover .task-actions': { opacity: 1 } }}
       {...attributes}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
         <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
           {task.description}
         </Typography>
         {/* Drag handle: only this area is draggable */}
         <Box
-          sx={{ cursor: isOverlay ? 'grabbing' : 'grab', ml: 1, display: 'flex', alignItems: 'center' }}
+          sx={{
+            cursor: isOverlay ? 'grabbing' : 'grab',
+            ml: 1,
+            display: 'flex',
+            alignItems: 'center',
+          }}
           {...listeners}
           tabIndex={0}
           aria-label="Drag task"
         >
-          <svg width="18" height="18" viewBox="0 0 18 18" style={{ opacity: 0.5 }}>
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 18 18"
+            style={{ opacity: 0.5 }}
+          >
             <circle cx="5" cy="5" r="1.5" />
             <circle cx="5" cy="9" r="1.5" />
             <circle cx="5" cy="13" r="1.5" />
@@ -188,21 +227,40 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, users, onEdit, onDelete, isOv
           </svg>
         </Box>
       </Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mt: 1,
+        }}
+      >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           {task.assignedTo && assigneeName !== 'Unassigned' && (
             <Tooltip title={`Assigned to: ${assigneeName}`}>
-              <Avatar sx={{ width: 24, height: 24, fontSize: '0.75rem', bgcolor: 'primary.light' }}>
+              <Avatar
+                sx={{
+                  width: 24,
+                  height: 24,
+                  fontSize: '0.75rem',
+                  bgcolor: 'primary.light',
+                }}
+              >
                 {assigneeName.charAt(0)}
               </Avatar>
             </Tooltip>
           )}
           {dueDate && (
-            <Typography variant="caption" color="text.secondary">Due: {dueDate}</Typography>
+            <Typography variant="caption" color="text.secondary">
+              Due: {dueDate}
+            </Typography>
           )}
         </Box>
         {!isOverlay && ( // Don't show actions on the overlay
-          <Box className="task-actions" sx={{ opacity: { xs: 1, sm: 0 }, transition: 'opacity 0.2s' }}>
+          <Box
+            className="task-actions"
+            sx={{ opacity: { xs: 1, sm: 0 }, transition: 'opacity 0.2s' }}
+          >
             <Tooltip title="Edit Task">
               <IconButton
                 size="small"
@@ -234,52 +292,65 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, users, onEdit, onDelete, isOv
 
 // --- Kanban Column Component ---
 interface KanbanColumnProps {
-    id: TaskStatus;
-    title: string;
-    tasks: ProjectTask[];
-    users: User[];
-    onEditTask: (task: ProjectTask) => void;
-    onDeleteTask: (task: ProjectTask) => void;
+  id: TaskStatus;
+  title: string;
+  tasks: ProjectTask[];
+  users: User[];
+  onEditTask: (task: ProjectTask) => void;
+  onDeleteTask: (task: ProjectTask) => void;
 }
 
-const KanbanColumn: React.FC<KanbanColumnProps> = ({ id, title, tasks, users, onEditTask, onDeleteTask }) => {
-    const { setNodeRef } = useSortable({ id }); // Make column itself sortable if needed later
+const KanbanColumn: React.FC<KanbanColumnProps> = ({
+  id,
+  title,
+  tasks,
+  users,
+  onEditTask,
+  onDeleteTask,
+}) => {
+  const { setNodeRef } = useSortable({ id }); // Make column itself sortable if needed later
 
-    return (
-        <Box
-            ref={setNodeRef} // Use setNodeRef from useSortable for the column
-            sx={{
-                flex: '1 1 280px',
-                minWidth: 280,
-                bgcolor: (theme) => theme.palette.mode === 'dark' ? 'grey.800' : 'grey.100',
-                p: 1.5,
-                borderRadius: 2,
-                display: 'flex',
-                flexDirection: 'column',
-                maxHeight: 'calc(100vh - 300px)', // Adjust as needed
-                boxShadow: 1,
-            }}
+  return (
+    <Box
+      ref={setNodeRef} // Use setNodeRef from useSortable for the column
+      sx={{
+        flex: '1 1 280px',
+        minWidth: 280,
+        bgcolor: (theme) =>
+          theme.palette.mode === 'dark' ? 'grey.800' : 'grey.100',
+        p: 1.5,
+        borderRadius: 2,
+        display: 'flex',
+        flexDirection: 'column',
+        maxHeight: 'calc(100vh - 300px)', // Adjust as needed
+        boxShadow: 1,
+      }}
+    >
+      <Typography
+        variant="subtitle1"
+        sx={{ mb: 2, fontWeight: 600, px: 1, color: 'text.secondary' }}
+      >
+        {title} ({tasks.length})
+      </Typography>
+      <Box sx={{ flexGrow: 1, overflowY: 'auto', pr: 0.5 }}>
+        <SortableContext
+          items={tasks.map((t) => t._id || '')}
+          strategy={verticalListSortingStrategy}
         >
-            <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600, px: 1, color: 'text.secondary' }}>
-                {title} ({tasks.length})
-            </Typography>
-            <Box sx={{ flexGrow: 1, overflowY: 'auto', pr: 0.5 }}>
-                <SortableContext items={tasks.map(t => t._id || '')} strategy={verticalListSortingStrategy}>
-                    {tasks.map((task) => (
-                        <TaskCard
-                            key={task._id}
-                            task={task}
-                            users={users}
-                            onEdit={onEditTask}
-                            onDelete={onDeleteTask}
-                        />
-                    ))}
-                </SortableContext>
-            </Box>
-        </Box>
-    );
+          {tasks.map((task) => (
+            <TaskCard
+              key={task._id}
+              task={task}
+              users={users}
+              onEdit={onEditTask}
+              onDelete={onDeleteTask}
+            />
+          ))}
+        </SortableContext>
+      </Box>
+    </Box>
+  );
 };
-
 
 // --- Main Tab Component ---
 
@@ -297,12 +368,22 @@ const ProjectTasksTab: React.FC<ProjectTasksTabProps> = ({ projectId }) => {
 
   // Group tasks by status
   const tasksByStatus = useMemo(() => {
-    const grouped: Record<TaskStatus, ProjectTask[]> = { todo: [], in_progress: [], done: [], blocked: [] };
+    const grouped: Record<TaskStatus, ProjectTask[]> = {
+      todo: [],
+      in_progress: [],
+      done: [],
+      blocked: [],
+    };
     tasks.forEach((task) => {
       grouped[task.status as TaskStatus]?.push(task);
     });
     // Ensure consistent order within columns if needed (e.g., by creation date)
-    Object.values(grouped).forEach(group => group.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()));
+    Object.values(grouped).forEach((group) =>
+      group.sort(
+        (a, b) =>
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      )
+    );
     return grouped;
   }, [tasks]);
 
@@ -319,7 +400,9 @@ const ProjectTasksTab: React.FC<ProjectTasksTabProps> = ({ projectId }) => {
       const response = await projectService.getProject(projectId);
       setTasks(response.data.project.tasks || []);
     } catch (err: any) {
-      setError(err?.response?.data?.message || err.message || 'Failed to fetch tasks');
+      setError(
+        err?.response?.data?.message || err.message || 'Failed to fetch tasks'
+      );
       setTasks([]);
     } finally {
       setLoading(false);
@@ -350,7 +433,10 @@ const ProjectTasksTab: React.FC<ProjectTasksTabProps> = ({ projectId }) => {
         _id: task._id,
         description: task.description,
         status: task.status,
-        assignedTo: typeof task.assignedTo === 'object' && task.assignedTo !== null ? task.assignedTo._id : task.assignedTo || '',
+        assignedTo:
+          typeof task.assignedTo === 'object' && task.assignedTo !== null
+            ? task.assignedTo._id
+            : task.assignedTo || '',
         dueDate: task.dueDate ? task.dueDate.split('T')[0] : '',
         startDate: task.startDate ? task.startDate.split('T')[0] : '',
         duration: task.duration || 0,
@@ -359,7 +445,13 @@ const ProjectTasksTab: React.FC<ProjectTasksTabProps> = ({ projectId }) => {
     } else {
       setIsEditing(false);
       setCurrentTask({
-        description: '', status: 'todo', assignedTo: '', dueDate: '', startDate: '', duration: 0, dependsOn: [],
+        description: '',
+        status: 'todo',
+        assignedTo: '',
+        dueDate: '',
+        startDate: '',
+        duration: 0,
+        dependsOn: [],
       });
     }
     setOpenDialog(true);
@@ -371,9 +463,14 @@ const ProjectTasksTab: React.FC<ProjectTasksTabProps> = ({ projectId }) => {
     setIsEditing(false);
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
-    setCurrentTask((prev) => ({ ...prev, [name]: name === 'duration' ? parseInt(value, 10) || 0 : value }));
+    setCurrentTask((prev) => ({
+      ...prev,
+      [name]: name === 'duration' ? parseInt(value, 10) || 0 : value,
+    }));
   };
 
   const handleSelectChange = (e: any) => {
@@ -382,10 +479,9 @@ const ProjectTasksTab: React.FC<ProjectTasksTabProps> = ({ projectId }) => {
   };
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-     const { name, value } = e.target;
-     setCurrentTask((prev) => ({ ...prev, [name]: value || undefined }));
+    const { name, value } = e.target;
+    setCurrentTask((prev) => ({ ...prev, [name]: value || undefined }));
   };
-
 
   const handleSaveTask = async () => {
     if (!projectId || !currentTask.description) return;
@@ -402,14 +498,20 @@ const ProjectTasksTab: React.FC<ProjectTasksTabProps> = ({ projectId }) => {
         assignedTo: currentTask.assignedTo || undefined,
       };
       if (isEditing && currentTask._id) {
-        await projectService.updateTask(projectId, currentTask._id, taskPayload);
+        await projectService.updateTask(
+          projectId,
+          currentTask._id,
+          taskPayload
+        );
       } else {
         await projectService.addTask(projectId, taskPayload);
       }
       handleCloseDialog();
       await fetchTasks();
     } catch (err: any) {
-      setError(err?.response?.data?.message || err.message || 'Failed to save task');
+      setError(
+        err?.response?.data?.message || err.message || 'Failed to save task'
+      );
     } finally {
       setLoading(false);
     }
@@ -434,14 +536,16 @@ const ProjectTasksTab: React.FC<ProjectTasksTabProps> = ({ projectId }) => {
       handleCloseDeleteConfirm();
       await fetchTasks();
     } catch (err: any) {
-      setError(err?.response?.data?.message || err.message || 'Failed to delete task');
+      setError(
+        err?.response?.data?.message || err.message || 'Failed to delete task'
+      );
     } finally {
       setLoading(false);
     }
   };
 
   const handleDragStart = (event: DragStartEvent) => {
-    const task = tasks.find(t => t._id === event.active.id);
+    const task = tasks.find((t) => t._id === event.active.id);
     setActiveTask(task || null);
   };
 
@@ -450,55 +554,61 @@ const ProjectTasksTab: React.FC<ProjectTasksTabProps> = ({ projectId }) => {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-        // Check if dropping onto a column (over.id is a status) or reordering within a column (over.id is another task id)
-        const overIsColumn = columnOrder.includes(over.id as TaskStatus);
+      // Check if dropping onto a column (over.id is a status) or reordering within a column (over.id is another task id)
+      const overIsColumn = columnOrder.includes(over.id as TaskStatus);
 
-        if (overIsColumn) {
-            const activeTask = tasks.find(t => t._id === active.id);
-            const newStatus = over.id as TaskStatus;
+      if (overIsColumn) {
+        const activeTask = tasks.find((t) => t._id === active.id);
+        const newStatus = over.id as TaskStatus;
 
-            if (activeTask && activeTask.status !== newStatus) {
-                // Optimistic UI update
-                setTasks((prevTasks) =>
-                    prevTasks.map(t =>
-                        t._id === active.id ? { ...t, status: newStatus } : t
-                    )
-                );
-                // Backend update
-                try {
-                    if (projectId && activeTask._id) {
-                        await projectService.updateTask(projectId, activeTask._id, { status: newStatus });
-                        // fetchTasks(); // Re-fetch on success if needed, or rely on optimistic
-                    }
-                } catch (err: any) {
-                    console.error("Failed to update task status:", err);
-                    setError(err?.response?.data?.message || err.message || 'Failed to update task status');
-                    fetchTasks(); // Revert on error
-                }
+        if (activeTask && activeTask.status !== newStatus) {
+          // Optimistic UI update
+          setTasks((prevTasks) =>
+            prevTasks.map((t) =>
+              t._id === active.id ? { ...t, status: newStatus } : t
+            )
+          );
+          // Backend update
+          try {
+            if (projectId && activeTask._id) {
+              await projectService.updateTask(projectId, activeTask._id, {
+                status: newStatus,
+              });
+              // fetchTasks(); // Re-fetch on success if needed, or rely on optimistic
             }
-        } else {
-             // Handle reordering within the same column if needed
-             // Find the columns involved
-             const activeColumn = tasks.find(t => t._id === active.id)?.status as TaskStatus;
-             const overTask = tasks.find(t => t._id === over.id);
-             const overColumn = overTask?.status as TaskStatus;
-
-             if (activeColumn === overColumn) {
-                 setTasks((prevTasks) => {
-                     const oldIndex = prevTasks.findIndex(t => t._id === active.id);
-                     const newIndex = prevTasks.findIndex(t => t._id === over.id);
-                     // Only move if indices are valid and different
-                     if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
-                         return arrayMove(prevTasks, oldIndex, newIndex);
-                     }
-                     return prevTasks; // Return unchanged if indices invalid or same
-                 });
-                 // Note: Backend update for reordering is often not implemented unless explicit order is stored.
-             }
+          } catch (err: any) {
+            console.error('Failed to update task status:', err);
+            setError(
+              err?.response?.data?.message ||
+                err.message ||
+                'Failed to update task status'
+            );
+            fetchTasks(); // Revert on error
+          }
         }
-    }
-};
+      } else {
+        // Handle reordering within the same column if needed
+        // Find the columns involved
+        const activeColumn = tasks.find((t) => t._id === active.id)
+          ?.status as TaskStatus;
+        const overTask = tasks.find((t) => t._id === over.id);
+        const overColumn = overTask?.status as TaskStatus;
 
+        if (activeColumn === overColumn) {
+          setTasks((prevTasks) => {
+            const oldIndex = prevTasks.findIndex((t) => t._id === active.id);
+            const newIndex = prevTasks.findIndex((t) => t._id === over.id);
+            // Only move if indices are valid and different
+            if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
+              return arrayMove(prevTasks, oldIndex, newIndex);
+            }
+            return prevTasks; // Return unchanged if indices invalid or same
+          });
+          // Note: Backend update for reordering is often not implemented unless explicit order is stored.
+        }
+      }
+    }
+  };
 
   return (
     <DndContext
@@ -509,23 +619,43 @@ const ProjectTasksTab: React.FC<ProjectTasksTabProps> = ({ projectId }) => {
     >
       <Box>
         {/* Header: Title + Add Task Button */}
-        <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box
+          sx={{
+            mb: 3,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
           <Typography variant="h6">Project Tasks</Typography>
-          <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpenDialog()} disabled={loading}>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => handleOpenDialog()}
+            disabled={loading}
+          >
             Add Task
           </Button>
         </Box>
 
         {/* Error Alert */}
-        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
 
         {/* Loading / Empty State */}
         {loading && tasks.length === 0 && (
-          <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}><CircularProgress /></Box>
+          <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
+            <CircularProgress />
+          </Box>
         )}
         {!loading && tasks.length === 0 && !error && (
           <Paper sx={{ p: 4, textAlign: 'center' }}>
-            <Typography variant="body1" color="text.secondary">No tasks added yet.</Typography>
+            <Typography variant="body1" color="text.secondary">
+              No tasks added yet.
+            </Typography>
           </Paper>
         )}
 
@@ -535,15 +665,15 @@ const ProjectTasksTab: React.FC<ProjectTasksTabProps> = ({ projectId }) => {
             {/* Render columns using SortableContext if columns themselves are reorderable */}
             {/* For now, columns are static */}
             {columnOrder.map((status) => (
-               <KanbanColumn
-                 key={status}
-                 id={status}
-                 title={columnTitles[status]}
-                 tasks={tasksByStatus[status]}
-                 users={users}
-                 onEditTask={handleOpenDialog}
-                 onDeleteTask={handleDeleteClick}
-               />
+              <KanbanColumn
+                key={status}
+                id={status}
+                title={columnTitles[status]}
+                tasks={tasksByStatus[status]}
+                users={users}
+                onEditTask={handleOpenDialog}
+                onDeleteTask={handleDeleteClick}
+              />
             ))}
           </Box>
         )}
@@ -563,17 +693,38 @@ const ProjectTasksTab: React.FC<ProjectTasksTabProps> = ({ projectId }) => {
         </DragOverlay>
 
         {/* Add/Edit Task Dialog */}
-        <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
+        <Dialog
+          open={openDialog}
+          onClose={handleCloseDialog}
+          maxWidth="sm"
+          fullWidth
+        >
           <DialogTitle>{isEditing ? 'Edit Task' : 'Add New Task'}</DialogTitle>
           <DialogContent>
             <Grid container spacing={2} sx={{ mt: 1 }}>
               <Grid item xs={12}>
-                <TextField fullWidth required label="Description" name="description" value={currentTask.description || ''} onChange={handleInputChange} multiline rows={3} disabled={loading} />
+                <TextField
+                  fullWidth
+                  required
+                  label="Description"
+                  name="description"
+                  value={currentTask.description || ''}
+                  onChange={handleInputChange}
+                  multiline
+                  rows={3}
+                  disabled={loading}
+                />
               </Grid>
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth>
                   <InputLabel>Status</InputLabel>
-                  <Select name="status" value={currentTask.status || 'todo'} label="Status" onChange={handleSelectChange} disabled={loading}>
+                  <Select
+                    name="status"
+                    value={currentTask.status || 'todo'}
+                    label="Status"
+                    onChange={handleSelectChange}
+                    disabled={loading}
+                  >
                     <MenuItem value="todo">To Do</MenuItem>
                     <MenuItem value="in_progress">In Progress</MenuItem>
                     <MenuItem value="done">Done</MenuItem>
@@ -584,39 +735,106 @@ const ProjectTasksTab: React.FC<ProjectTasksTabProps> = ({ projectId }) => {
               <Grid item xs={12} sm={6}>
                 <FormControl fullWidth>
                   <InputLabel>Assignee</InputLabel>
-                  <Select name="assignedTo" value={currentTask.assignedTo || ''} label="Assignee" onChange={handleSelectChange} disabled={loading || users.length === 0} displayEmpty>
-                    <MenuItem value=""><em>Unassigned</em></MenuItem>
+                  <Select
+                    name="assignedTo"
+                    value={currentTask.assignedTo || ''}
+                    label="Assignee"
+                    onChange={handleSelectChange}
+                    disabled={loading || users.length === 0}
+                    displayEmpty
+                  >
+                    <MenuItem value="">
+                      <em>Unassigned</em>
+                    </MenuItem>
                     {/* Add check for users array before mapping */}
                     {/* Map using correct properties (_id, firstName, lastName) from fetched data */}
-                    {users && users.map((user: any) => ( // Use any temporarily or define a fetchedUser type
-                      <MenuItem key={user._id} value={user._id}>
-                        {`${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email} {/* Display name or email */}
-                      </MenuItem>
-                    ))}
+                    {users &&
+                      users.map(
+                        (
+                          user: any // Use any temporarily or define a fetchedUser type
+                        ) => (
+                          <MenuItem key={user._id} value={user._id}>
+                            {`${user.firstName || ''} ${user.lastName || ''}`.trim() ||
+                              user.email}{' '}
+                            {/* Display name or email */}
+                          </MenuItem>
+                        )
+                      )}
                     {/* Removed duplicate map line above */}
                   </Select>
                 </FormControl>
               </Grid>
               {/* Add Start Date, Duration, Depends On */}
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth label="Start Date" name="startDate" type="date" value={currentTask.startDate || ''} onChange={handleDateChange} InputLabelProps={{ shrink: true }} disabled={loading} />
+                <TextField
+                  fullWidth
+                  label="Start Date"
+                  name="startDate"
+                  type="date"
+                  value={currentTask.startDate || ''}
+                  onChange={handleDateChange}
+                  InputLabelProps={{ shrink: true }}
+                  disabled={loading}
+                />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth label="Duration (days)" name="duration" type="number" inputProps={{ min: 0 }} value={currentTask.duration || 0} onChange={handleInputChange} disabled={loading} />
+                <TextField
+                  fullWidth
+                  label="Duration (days)"
+                  name="duration"
+                  type="number"
+                  inputProps={{ min: 0 }}
+                  value={currentTask.duration || 0}
+                  onChange={handleInputChange}
+                  disabled={loading}
+                />
               </Grid>
               <Grid item xs={12}>
                 <FormControl fullWidth disabled={loading || tasks.length === 0}>
                   <InputLabel>Depends On (Prerequisites)</InputLabel>
-                  <Select multiple name="dependsOn" value={currentTask.dependsOn || []} onChange={handleSelectChange} label="Depends On (Prerequisites)" renderValue={(selected) => (<Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>{(selected as string[]).map((value) => { const task = tasks.find(t => t._id === value); return <Chip key={value} label={task?.description || value} size="small" />; })}</Box>)}>
-                    {tasks.filter(task => task._id !== currentTask._id).map((task) => (<MenuItem key={task._id} value={task._id}>{task.description}</MenuItem>))}
+                  <Select
+                    multiple
+                    name="dependsOn"
+                    value={currentTask.dependsOn || []}
+                    onChange={handleSelectChange}
+                    label="Depends On (Prerequisites)"
+                    renderValue={(selected) => (
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                        {(selected as string[]).map((value) => {
+                          const task = tasks.find((t) => t._id === value);
+                          return (
+                            <Chip
+                              key={value}
+                              label={task?.description || value}
+                              size="small"
+                            />
+                          );
+                        })}
+                      </Box>
+                    )}
+                  >
+                    {tasks
+                      .filter((task) => task._id !== currentTask._id)
+                      .map((task) => (
+                        <MenuItem key={task._id} value={task._id}>
+                          {task.description}
+                        </MenuItem>
+                      ))}
                   </Select>
                 </FormControl>
               </Grid>
             </Grid>
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleCloseDialog} disabled={loading}>Cancel</Button>
-            <Button onClick={handleSaveTask} color="primary" variant="contained" disabled={!currentTask.description || loading}>
+            <Button onClick={handleCloseDialog} disabled={loading}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveTask}
+              color="primary"
+              variant="contained"
+              disabled={!currentTask.description || loading}
+            >
               {isEditing ? 'Save Changes' : 'Add Task'}
             </Button>
           </DialogActions>
@@ -626,11 +844,21 @@ const ProjectTasksTab: React.FC<ProjectTasksTabProps> = ({ projectId }) => {
         <Dialog open={deleteConfirmOpen} onClose={handleCloseDeleteConfirm}>
           <DialogTitle>Confirm Delete</DialogTitle>
           <DialogContent>
-            <Typography>Are you sure you want to delete the task: "{taskToDelete?.description}"?</Typography>
+            <Typography>
+              Are you sure you want to delete the task: "
+              {taskToDelete?.description}"?
+            </Typography>
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleCloseDeleteConfirm} disabled={loading}>Cancel</Button>
-            <Button onClick={handleDeleteConfirm} color="error" variant="contained" disabled={loading}>
+            <Button onClick={handleCloseDeleteConfirm} disabled={loading}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleDeleteConfirm}
+              color="error"
+              variant="contained"
+              disabled={loading}
+            >
               Delete
             </Button>
           </DialogActions>

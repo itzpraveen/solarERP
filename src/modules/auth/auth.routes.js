@@ -28,14 +28,22 @@ router.post('/login', authValidation.login, authController.login);
  * @desc    Forgot password
  * @access  Public
  */
-router.post('/forgotPassword', authValidation.forgotPassword, authController.forgotPassword);
+router.post(
+  '/forgotPassword',
+  authValidation.forgotPassword,
+  authController.forgotPassword
+);
 
 /**
  * @route   PATCH /api/auth/resetPassword/:token
  * @desc    Reset password
  * @access  Public
  */
-router.patch('/resetPassword/:token', authValidation.resetPassword, authController.resetPassword);
+router.patch(
+  '/resetPassword/:token',
+  authValidation.resetPassword,
+  authController.resetPassword
+);
 
 /**
  * @route   POST /api/auth/demo
@@ -59,6 +67,10 @@ router.get('/me', authController.getMe);
  * @desc    Update password
  * @access  Private
  */
-router.patch('/updatePassword', authValidation.updatePassword, authController.updatePassword);
+router.patch(
+  '/updatePassword',
+  authValidation.updatePassword,
+  authController.updatePassword
+);
 
 module.exports = router;

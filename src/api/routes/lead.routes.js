@@ -1,7 +1,8 @@
 const express = require('express');
+const { check } = require('express-validator');
 const leadController = require('../controllers/lead.controller');
 const authController = require('../controllers/auth.controller');
-const { check } = require('express-validator');
+
 const router = express.Router();
 
 // Protect all routes
@@ -24,29 +25,57 @@ const validateLead = [
     'cold_call',
     'event',
     'social_media',
-    'other'
-  ])
+    'other',
+  ]),
 ];
 
 // Lead statistics
-router.get('/stats', authController.restrictTo('admin', 'manager'), leadController.getLeadStats);
+router.get(
+  '/stats',
+  authController.restrictTo('admin', 'manager'),
+  leadController.getLeadStats
+);
 
 // Lead routes
-router.route('/')
-  .get(authController.restrictTo('admin', 'manager', 'sales'), leadController.getAllLeads)
-  .post(authController.restrictTo('admin', 'manager', 'sales'), validateLead, leadController.createLead);
+router
+  .route('/')
+  .get(
+    authController.restrictTo('admin', 'manager', 'sales'),
+    leadController.getAllLeads
+  )
+  .post(
+    authController.restrictTo('admin', 'manager', 'sales'),
+    validateLead,
+    leadController.createLead
+  );
 
-router.route('/:id')
-  .get(authController.restrictTo('admin', 'manager', 'sales'), leadController.getLead)
-  .patch(authController.restrictTo('admin', 'manager', 'sales'), leadController.updateLead)
-  .delete(authController.restrictTo('admin', 'manager'), leadController.deleteLead);
+router
+  .route('/:id')
+  .get(
+    authController.restrictTo('admin', 'manager', 'sales'),
+    leadController.getLead
+  )
+  .patch(
+    authController.restrictTo('admin', 'manager', 'sales'),
+    leadController.updateLead
+  )
+  .delete(
+    authController.restrictTo('admin', 'manager'),
+    leadController.deleteLead
+  );
 
 // Lead notes
-router.route('/:id/notes')
-  .post(authController.restrictTo('admin', 'manager', 'sales'), check('text', 'Note text is required').not().isEmpty(), leadController.addLeadNote);
+router
+  .route('/:id/notes')
+  .post(
+    authController.restrictTo('admin', 'manager', 'sales'),
+    check('text', 'Note text is required').not().isEmpty(),
+    leadController.addLeadNote
+  );
 
 // Lead interactions
-router.route('/:id/interactions')
+router
+  .route('/:id/interactions')
   .post(
     [
       check('type', 'Interaction type is required').isIn([
@@ -56,16 +85,17 @@ router.route('/:id/interactions')
         'site_visit',
         'proposal',
         'follow_up',
-        'other'
+        'other',
       ]),
-      check('summary', 'Interaction summary is required').not().isEmpty()
+      check('summary', 'Interaction summary is required').not().isEmpty(),
     ],
     authController.restrictTo('admin', 'manager', 'sales'),
     leadController.addLeadInteraction
   );
 
 // Lead assignment
-router.route('/:id/assign')
+router
+  .route('/:id/assign')
   .patch(
     check('userId', 'User ID is required').isMongoId(),
     authController.restrictTo('admin', 'manager'),
@@ -73,7 +103,8 @@ router.route('/:id/assign')
   );
 
 // Lead status update
-router.route('/:id/status')
+router
+  .route('/:id/status')
   .patch(
     check('status', 'Valid status is required').isIn([
       'new',
@@ -82,7 +113,7 @@ router.route('/:id/status')
       'proposal',
       'won',
       'lost',
-      'inactive'
+      'inactive',
     ]),
     authController.restrictTo('admin', 'manager', 'sales'),
     leadController.updateLeadStatus

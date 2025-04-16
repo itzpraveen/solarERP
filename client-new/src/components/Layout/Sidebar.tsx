@@ -1,5 +1,4 @@
 import { useContext, useState, useEffect } from 'react';
-import logoSvg from '../../logo.svg';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -41,6 +40,7 @@ import {
   ExpandLess,
   ExpandMore,
 } from '@mui/icons-material';
+import logoSvg from '../../logo.svg';
 import { AuthContext } from '../../features/auth/context/AuthContext';
 import { useProjectContext } from '../../context/ProjectContext';
 
@@ -71,25 +71,25 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
   const [anchorElUser, setAnchorElUser] = useState<HTMLElement | null>(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  
+
   // Group menu items by category
   const mainMenuItems = menuItems.slice(0, 5); // Dashboard, Leads, Customers, Proposals, Projects
   const resourceMenuItems = menuItems.slice(5); // Equipment, Service Requests, Documents, Reports
-  
+
   // State for collapsible sections
   const [resourcesOpen, setResourcesOpen] = useState(true);
-  
+
   // Check if any resource item is active to auto-expand the section
   useEffect(() => {
-    const isAnyResourceActive = resourceMenuItems.some(item =>
+    const isAnyResourceActive = resourceMenuItems.some((item) =>
       location.pathname.startsWith(item.path)
     );
-    
+
     if (isAnyResourceActive && !resourcesOpen) {
       setResourcesOpen(true);
     }
   }, [location.pathname, resourceMenuItems, resourcesOpen]);
-  
+
   const toggleResources = () => {
     setResourcesOpen(!resourcesOpen);
   };
@@ -134,9 +134,10 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
             left: 0,
             right: 0,
             bottom: 0,
-            background: 'radial-gradient(circle at top right, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 70%)',
+            background:
+              'radial-gradient(circle at top right, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 70%)',
             pointerEvents: 'none',
-          }
+          },
         }}
       >
         <Box
@@ -157,7 +158,7 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
               style={{
                 height: '36px',
                 marginRight: '10px',
-                filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.2))'
+                filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.2))',
               }}
             />
             <Typography
@@ -180,7 +181,7 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
               color: theme.palette.primary.main, // Changed icon color for contrast
               '&:hover': {
                 backgroundColor: 'rgba(255,255,255,0.1)',
-              }
+              },
             }}
           >
             <ChevronLeftIcon />
@@ -220,7 +221,9 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
                     },
                     transition: 'all 0.2s ease-in-out',
                     py: 1.2,
-                    boxShadow: isActive ? `0 2px 8px ${alpha(theme.palette.primary.main, 0.15)}` : 'none',
+                    boxShadow: isActive
+                      ? `0 2px 8px ${alpha(theme.palette.primary.main, 0.15)}`
+                      : 'none',
                   }}
                 >
                   <ListItemIcon>{item.icon}</ListItemIcon>
@@ -243,7 +246,7 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
                             fontSize: '0.75rem',
                             minWidth: '20px',
                             height: '20px',
-                          }
+                          },
                         }}
                       />
                     )}
@@ -252,9 +255,9 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
             );
           })}
         </List>
-        
+
         <Divider sx={{ my: 2, mx: 2 }} />
-        
+
         {/* Resources section with collapsible header */}
         <List sx={{ px: 2 }}>
           <ListItem disablePadding sx={{ mb: 0.5 }}>
@@ -281,13 +284,17 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
               {resourcesOpen ? <ExpandLess /> : <ExpandMore />}
             </ListItemButton>
           </ListItem>
-          
+
           <Collapse in={resourcesOpen} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
               {resourceMenuItems.map((item) => {
                 const isActive = location.pathname.startsWith(item.path);
                 return (
-                  <ListItem key={item.text} disablePadding sx={{ mb: 0.75, pl: 1 }}>
+                  <ListItem
+                    key={item.text}
+                    disablePadding
+                    sx={{ mb: 0.75, pl: 1 }}
+                  >
                     <ListItemButton
                       component={Link}
                       to={item.path}
@@ -332,7 +339,7 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
         </List>
 
         <Divider sx={{ my: 2, mx: 2 }} />
-        
+
         {/* Settings and Profile */}
         <List sx={{ px: 2 }}>
           <ListItem disablePadding sx={{ mb: 0.75 }}>
@@ -344,18 +351,21 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
                 borderRadius: 2,
                 '& .MuiListItemIcon-root': {
                   minWidth: 40,
-                  color: location.pathname === '/profile'
-                    ? theme.palette.primary.main
-                    : theme.palette.text.secondary,
+                  color:
+                    location.pathname === '/profile'
+                      ? theme.palette.primary.main
+                      : theme.palette.text.secondary,
                 },
                 py: 1.2,
-                backgroundColor: location.pathname === '/profile'
-                  ? alpha(theme.palette.primary.main, 0.1)
-                  : 'transparent',
+                backgroundColor:
+                  location.pathname === '/profile'
+                    ? alpha(theme.palette.primary.main, 0.1)
+                    : 'transparent',
                 '&:hover': {
-                  backgroundColor: location.pathname === '/profile'
-                    ? alpha(theme.palette.primary.main, 0.15)
-                    : alpha(theme.palette.primary.main, 0.05),
+                  backgroundColor:
+                    location.pathname === '/profile'
+                      ? alpha(theme.palette.primary.main, 0.15)
+                      : alpha(theme.palette.primary.main, 0.05),
                 },
               }}
             >
@@ -380,18 +390,21 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
                 borderRadius: 2,
                 '& .MuiListItemIcon-root': {
                   minWidth: 40,
-                  color: location.pathname === '/settings'
-                    ? theme.palette.primary.main
-                    : theme.palette.text.secondary,
+                  color:
+                    location.pathname === '/settings'
+                      ? theme.palette.primary.main
+                      : theme.palette.text.secondary,
                 },
                 py: 1.2,
-                backgroundColor: location.pathname === '/settings'
-                  ? alpha(theme.palette.primary.main, 0.1)
-                  : 'transparent',
+                backgroundColor:
+                  location.pathname === '/settings'
+                    ? alpha(theme.palette.primary.main, 0.1)
+                    : 'transparent',
                 '&:hover': {
-                  backgroundColor: location.pathname === '/settings'
-                    ? alpha(theme.palette.primary.main, 0.15)
-                    : alpha(theme.palette.primary.main, 0.05),
+                  backgroundColor:
+                    location.pathname === '/settings'
+                      ? alpha(theme.palette.primary.main, 0.15)
+                      : alpha(theme.palette.primary.main, 0.05),
                 },
               }}
             >
@@ -460,7 +473,7 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
                   color: theme.palette.primary.main,
                   fontWeight: 500,
                   display: 'block',
-                  marginTop: '-2px'
+                  marginTop: '-2px',
                 }}
               >
                 Administrator
@@ -518,7 +531,7 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
               mx: 0.5,
               '&:hover': {
                 backgroundColor: alpha(theme.palette.primary.main, 0.08),
-              }
+              },
             }}
           >
             <PersonIcon
@@ -535,14 +548,16 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
               mx: 0.5,
               '&:hover': {
                 backgroundColor: alpha(theme.palette.error.main, 0.08),
-              }
+              },
             }}
           >
             <LogoutIcon
               fontSize="small"
               sx={{ mr: 1.5, color: theme.palette.error.main }}
             />
-            <Typography fontWeight={500} color="error.main">Logout</Typography>
+            <Typography fontWeight={500} color="error.main">
+              Logout
+            </Typography>
           </MenuItem>
         </Menu>
       </Box>

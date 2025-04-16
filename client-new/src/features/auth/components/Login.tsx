@@ -1,6 +1,5 @@
 import { useState, useContext, FormEvent, ChangeEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-export {};
 import {
   Box,
   Container,
@@ -13,6 +12,8 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { AuthContext } from '../context/AuthContext';
+
+export {};
 
 interface FormData {
   email: string;

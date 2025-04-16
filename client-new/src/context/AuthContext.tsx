@@ -113,9 +113,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // Set auth token header for all requests
   const setAuthToken = (token: string | null) => {
     if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      axios.defaults.headers.common.Authorization = `Bearer ${token}`;
     } else {
-      delete axios.defaults.headers.common['Authorization'];
+      delete axios.defaults.headers.common.Authorization;
     }
   };
 
@@ -173,39 +173,37 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           }
 
           return { success: true };
-        } else {
-          setError(result.error || 'Invalid credentials');
-          return {
-            success: false,
-            error: result.error || 'Invalid credentials',
-          };
         }
-      } else {
-        // Use real API
-        const res = await axios.post('/api/auth/login', { email, password });
-
-        localStorage.setItem('token', res.data.token);
-        setAuthToken(res.data.token);
-
-        // Get user data
-        const userRes = await axios.get('/api/auth/me');
-
-        // Adapt backend response to FrontendUserContext structure
-        const backendUserLogin = userRes.data.data;
-        const adaptedUserLogin: User = {
-          id: backendUserLogin._id,
-          name: `${backendUserLogin.firstName} ${backendUserLogin.lastName}`,
-          email: backendUserLogin.email,
-          role: backendUserLogin.role,
-          avatar: backendUserLogin.avatar,
+        setError(result.error || 'Invalid credentials');
+        return {
+          success: false,
+          error: result.error || 'Invalid credentials',
         };
-        setUser(adaptedUserLogin);
-        setIsAuthenticated(true);
-        setLoading(false);
-        setError(null);
-
-        return { success: true };
       }
+      // Use real API
+      const res = await axios.post('/api/auth/login', { email, password });
+
+      localStorage.setItem('token', res.data.token);
+      setAuthToken(res.data.token);
+
+      // Get user data
+      const userRes = await axios.get('/api/auth/me');
+
+      // Adapt backend response to FrontendUserContext structure
+      const backendUserLogin = userRes.data.data;
+      const adaptedUserLogin: User = {
+        id: backendUserLogin._id,
+        name: `${backendUserLogin.firstName} ${backendUserLogin.lastName}`,
+        email: backendUserLogin.email,
+        role: backendUserLogin.role,
+        avatar: backendUserLogin.avatar,
+      };
+      setUser(adaptedUserLogin);
+      setIsAuthenticated(true);
+      setLoading(false);
+      setError(null);
+
+      return { success: true };
     } catch (err: any) {
       setError(err.response?.data?.message || 'Invalid credentials');
       return {

@@ -1,8 +1,9 @@
 import React, { useContext, ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
-export {};
 import { CircularProgress, Box } from '@mui/material';
 import { AuthContext } from '../context/AuthContext';
+
+export {};
 
 interface PrivateRouteProps {
   children: ReactNode;

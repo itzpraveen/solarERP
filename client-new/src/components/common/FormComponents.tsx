@@ -39,7 +39,7 @@ import {
 // Enhanced TextField with improved styling
 export const FormTextField: React.FC<TextFieldProps> = (props) => {
   const theme = useTheme();
-  
+
   return (
     <TextField
       fullWidth
@@ -88,17 +88,17 @@ export const FormSelect: React.FC<FormSelectProps> = ({
   ...props
 }) => {
   const theme = useTheme();
-  
+
   const handleChange = (event: React.ChangeEvent<{ value: unknown }>) => {
     if (onChange) {
       onChange(event.target.value);
     }
   };
-  
+
   return (
-    <FormControl 
-      fullWidth 
-      error={error} 
+    <FormControl
+      fullWidth
+      error={error}
       required={required}
       sx={{
         '& .MuiOutlinedInput-root': {
@@ -156,7 +156,7 @@ export const FormCheckbox: React.FC<FormCheckboxProps> = ({
   ...props
 }) => {
   const theme = useTheme();
-  
+
   return (
     <Box>
       <FormControlLabel
@@ -191,7 +191,7 @@ export interface FormRadioProps extends RadioProps {
 
 export const FormRadio: React.FC<FormRadioProps> = ({ label, ...props }) => {
   const theme = useTheme();
-  
+
   return (
     <FormControlLabel
       control={
@@ -262,7 +262,7 @@ export const FormSwitch: React.FC<FormSwitchProps> = ({
   ...props
 }) => {
   const theme = useTheme();
-  
+
   return (
     <Box>
       <FormControlLabel
@@ -291,7 +291,6 @@ export const FormSwitch: React.FC<FormSwitchProps> = ({
     </Box>
   );
 };
-
 
 // Form Section with title and optional help text
 export interface FormSectionProps {

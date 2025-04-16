@@ -532,7 +532,11 @@ const ProjectDetails = () => {
             <Tab label="Documents" icon={<FileIcon />} iconPosition="start" />
             <Tab label="Equipment" icon={<ToolIcon />} iconPosition="start" />
             <Tab label="Issues" icon={<WarningIcon />} iconPosition="start" />
-            <Tab label="Timeline" icon={<TimelineIcon />} iconPosition="start" />
+            <Tab
+              label="Timeline"
+              icon={<TimelineIcon />}
+              iconPosition="start"
+            />
             <Tab label="Financials" icon={<MoneyIcon />} iconPosition="start" />
             <Tab label="Notes" icon={<NoteIcon />} iconPosition="start" />
           </Tabs>
@@ -591,7 +595,9 @@ const ProjectDetails = () => {
                       ) : (
                         <Box sx={{ mt: 0.5 }}>
                           <Chip
-                            label={project.status.replace('_', ' ').toUpperCase()}
+                            label={project.status
+                              .replace('_', ' ')
+                              .toUpperCase()}
                             color={statusColors[project.status] || 'default'}
                             size="small"
                           />
@@ -656,7 +662,11 @@ const ProjectDetails = () => {
                       ) : (
                         <Typography
                           variant="body1"
-                          sx={{ mt: 0.5, display: 'flex', alignItems: 'center' }}
+                          sx={{
+                            mt: 0.5,
+                            display: 'flex',
+                            alignItems: 'center',
+                          }}
                         >
                           <HomeIcon fontSize="small" sx={{ mr: 0.5 }} />
                           {project.installAddress?.street || 'Not set'}
@@ -686,10 +696,7 @@ const ProjectDetails = () => {
                           name="systemSize" // Corrected: No systemDetails nesting
                           type="number"
                           inputProps={{ min: 0, step: 0.1 }}
-                          value={
-                            editData.systemSize ??
-                            project.systemSize
-                          }
+                          value={editData.systemSize ?? project.systemSize}
                           onChange={handleNumberChange}
                           sx={{ mt: 1 }}
                         />
@@ -710,10 +717,7 @@ const ProjectDetails = () => {
                           name="panelCount" // Corrected: No systemDetails nesting
                           type="number"
                           inputProps={{ min: 0, step: 1 }}
-                          value={
-                            editData.panelCount ??
-                            project.panelCount
-                          }
+                          value={editData.panelCount ?? project.panelCount}
                           onChange={handleNumberChange}
                           sx={{ mt: 1 }}
                         />
@@ -732,10 +736,7 @@ const ProjectDetails = () => {
                           fullWidth
                           size="small"
                           name="panelType" // Corrected: No systemDetails nesting
-                          value={
-                            editData.panelType ??
-                            project.panelType
-                          }
+                          value={editData.panelType ?? project.panelType}
                           onChange={handleEditChange}
                           sx={{ mt: 1 }}
                         />
@@ -754,10 +755,7 @@ const ProjectDetails = () => {
                           fullWidth
                           size="small"
                           name="inverterType" // Corrected: No systemDetails nesting
-                          value={
-                            editData.inverterType ??
-                            project.inverterType
-                          }
+                          value={editData.inverterType ?? project.inverterType}
                           onChange={handleEditChange}
                           sx={{ mt: 1 }}
                         />
@@ -796,8 +794,7 @@ const ProjectDetails = () => {
                                   label="Battery Type"
                                   name="batteryType" // Corrected: No systemDetails nesting
                                   value={
-                                    editData.batteryType ??
-                                    project.batteryType
+                                    editData.batteryType ?? project.batteryType
                                   }
                                   onChange={handleEditChange}
                                 />
@@ -932,7 +929,8 @@ const ProjectDetails = () => {
                         Installers
                       </Typography>
                       <Typography>
-                        {project.team?.installationTeam?.length || 0} assigned {/* Corrected property name */}
+                        {project.team?.installationTeam?.length || 0} assigned{' '}
+                        {/* Corrected property name */}
                       </Typography>
                     </Grid>
                   </Grid>
@@ -984,7 +982,9 @@ const ProjectDetails = () => {
                               >
                                 <WarningIcon
                                   fontSize="small"
-                                  color={priorityColors[issue.priority] || 'inherit'}
+                                  color={
+                                    priorityColors[issue.priority] || 'inherit'
+                                  }
                                 />
                               </Avatar>
                             </ListItemAvatar>
@@ -1045,7 +1045,8 @@ const ProjectDetails = () => {
                           Name
                         </Typography>
                         <Typography>
-                          {project.customer.firstName} {project.customer.lastName}
+                          {project.customer.firstName}{' '}
+                          {project.customer.lastName}
                         </Typography>
                       </Grid>
                       <Grid item xs={12} sm={6}>
@@ -1070,7 +1071,8 @@ const ProjectDetails = () => {
                           {project.customer.address?.street},{' '}
                           {project.customer.address?.city},{' '}
                           {project.customer.address?.state}{' '}
-                          {project.customer.address?.zipCode} {/* Corrected property name */}
+                          {project.customer.address?.zipCode}{' '}
+                          {/* Corrected property name */}
                         </Typography>
                       </Grid>
                     </Grid>
@@ -1153,14 +1155,22 @@ const ProjectDetails = () => {
                   ) : (
                     <>
                       <Typography variant="body1">
-                        {project.installAddress?.street || 'N/A'} {/* Corrected property name */}
+                        {project.installAddress?.street || 'N/A'}{' '}
+                        {/* Corrected property name */}
                       </Typography>
                       <Typography variant="body1">
-                        {project.installAddress?.city || 'N/A'},{' '} {/* Corrected property name */}
-                        {project.installAddress?.state || 'N/A'}{' '} {/* Corrected property name */}
-                        {project.installAddress?.zipCode || 'N/A'} {/* Corrected property name */}
+                        {project.installAddress?.city || 'N/A'},{' '}
+                        {/* Corrected property name */}
+                        {project.installAddress?.state || 'N/A'}{' '}
+                        {/* Corrected property name */}
+                        {project.installAddress?.zipCode || 'N/A'}{' '}
+                        {/* Corrected property name */}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ mt: 1 }}
+                      >
                         {/* Removed notes display as it doesn't exist on ProjectAddress type */}
                       </Typography>
                     </>
@@ -1380,19 +1390,25 @@ const ProjectDetails = () => {
                           />
                         </Avatar>
                         <Box>
-                          <Typography variant="subtitle1">{issue.title}</Typography>
+                          <Typography variant="subtitle1">
+                            {issue.title}
+                          </Typography>
                           <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
                             <Chip
                               label={issue.status.toUpperCase()}
                               size="small"
                               color={
-                                issue.status === 'resolved' ? 'success' : 'warning'
+                                issue.status === 'resolved'
+                                  ? 'success'
+                                  : 'warning'
                               }
                             />
                             <Chip
                               label={`Priority: ${issue.priority}`}
                               size="small"
-                              color={priorityColors[issue.priority] || 'default'}
+                              color={
+                                priorityColors[issue.priority] || 'default'
+                              }
                             />
                           </Box>
                         </Box>
@@ -1436,9 +1452,10 @@ const ProjectDetails = () => {
                           : 'N/A'}
                       </Typography>
                       {issue.resolvedAt && (
-                      <Typography variant="caption" color="text.secondary">
-                        Resolved: {formatDate(issue.resolvedAt)} {/* Removed resolvedBy */}
-                      </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Resolved: {formatDate(issue.resolvedAt)}{' '}
+                          {/* Removed resolvedBy */}
+                        </Typography>
                       )}
                     </Box>
                   </Paper>
@@ -1490,7 +1507,9 @@ const ProjectDetails = () => {
                   <ListItem>
                     <ListItemText
                       primary="Installation Scheduled"
-                      secondary={formatDate(project.dates?.scheduledInstallation)} // Corrected property name
+                      secondary={formatDate(
+                        project.dates?.scheduledInstallation
+                      )} // Corrected property name
                     />
                   </ListItem>
                   <ListItem>
@@ -1502,7 +1521,9 @@ const ProjectDetails = () => {
                   <ListItem>
                     <ListItemText
                       primary="Installation Completed"
-                      secondary={formatDate(project.dates?.installationCompleted)}
+                      secondary={formatDate(
+                        project.dates?.installationCompleted
+                      )}
                     />
                   </ListItem>
                   <ListItem>
@@ -1609,7 +1630,8 @@ const ProjectDetails = () => {
                       <Typography
                         variant="h6"
                         sx={{ mt: 0.5 }}
-                        color={ // Added check for undefined
+                        color={
+                          // Added check for undefined
                           (project.financials.projectedProfit ?? 0) < 0
                             ? 'error.main'
                             : 'success.main'
@@ -1665,8 +1687,11 @@ const ProjectDetails = () => {
                           {(project.financials.paymentSchedule || []).map(
                             (payment: ProjectPayment, index: number) => (
                               <TableRow key={index} hover>
-                                <TableCell>{payment.name}</TableCell> {/* Corrected property name */}
-                                <TableCell>{formatDate(payment.dueDate)}</TableCell>
+                                <TableCell>{payment.name}</TableCell>{' '}
+                                {/* Corrected property name */}
+                                <TableCell>
+                                  {formatDate(payment.dueDate)}
+                                </TableCell>
                                 <TableCell>
                                   <CurrencyDisplay amount={payment.amount} />
                                 </TableCell>
@@ -1678,8 +1703,8 @@ const ProjectDetails = () => {
                                       payment.status === 'paid'
                                         ? 'success'
                                         : payment.status === 'pending'
-                                        ? 'warning'
-                                        : 'default'
+                                          ? 'warning'
+                                          : 'default'
                                     }
                                   />
                                 </TableCell>
@@ -1734,7 +1759,9 @@ const ProjectDetails = () => {
                               <TableRow key={index} hover>
                                 <TableCell>{expense.description}</TableCell>
                                 <TableCell>{expense.category}</TableCell>
-                                <TableCell>{formatDate(expense.date)}</TableCell>
+                                <TableCell>
+                                  {formatDate(expense.date)}
+                                </TableCell>
                                 <TableCell>
                                   <CurrencyDisplay amount={expense.amount} />
                                 </TableCell>
@@ -1791,7 +1818,8 @@ const ProjectDetails = () => {
                         ))
                     ) : (
                       <Typography color="text.secondary">
-                        No documents have been uploaded yet. {/* Adjusted message */}
+                        No documents have been uploaded yet.{' '}
+                        {/* Adjusted message */}
                       </Typography>
                     )}
                   </List>
@@ -1887,7 +1915,6 @@ const ProjectDetails = () => {
             </List>
           )}
         </TabPanel>
-
       </Paper>
 
       {/* Delete Confirmation Dialog */}

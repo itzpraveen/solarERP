@@ -10,47 +10,65 @@ exports.getSalesPipeline = catchAsync(async (req, res, next) => {
   // Get lead counts by status
   const leads = await Lead.aggregate([
     {
-      $match: { active: true }
+      $match: { active: true },
     },
     {
       $group: {
         _id: '$status',
         count: { $sum: 1 },
-        leads: { $push: { _id: '$_id', firstName: '$firstName', lastName: '$lastName', email: '$email' } }
-      }
+        leads: {
+          $push: {
+            _id: '$_id',
+            firstName: '$firstName',
+            lastName: '$lastName',
+            email: '$email',
+          },
+        },
+      },
     },
     {
-      $sort: { '_id': 1 }
-    }
+      $sort: { _id: 1 },
+    },
   ]);
-  
+
   // Get proposal counts by status
   const proposals = await Proposal.aggregate([
     {
-      $match: { active: true }
+      $match: { active: true },
     },
     {
       $group: {
         _id: '$status',
         count: { $sum: 1 },
-        totalValue: { $sum: '$pricing.grossCost' }
-      }
+        totalValue: { $sum: '$pricing.grossCost' },
+      },
     },
     {
-      $sort: { '_id': 1 }
-    }
+      $sort: { _id: 1 },
+    },
   ]);
-  
+
   // Get conversion rates
   const totalLeads = await Lead.countDocuments({ active: true });
-  const qualifiedLeads = await Lead.countDocuments({ active: true, status: { $in: ['qualified', 'proposal', 'won', 'lost'] } });
-  const proposalsSent = await Proposal.countDocuments({ active: true, status: { $ne: 'draft' } });
-  const proposalsAccepted = await Proposal.countDocuments({ active: true, status: 'accepted' });
-  
+  const qualifiedLeads = await Lead.countDocuments({
+    active: true,
+    status: { $in: ['qualified', 'proposal', 'won', 'lost'] },
+  });
+  const proposalsSent = await Proposal.countDocuments({
+    active: true,
+    status: { $ne: 'draft' },
+  });
+  const proposalsAccepted = await Proposal.countDocuments({
+    active: true,
+    status: 'accepted',
+  });
+
   // Calculate conversion rates
-  const leadQualificationRate = totalLeads > 0 ? (qualifiedLeads / totalLeads) * 100 : 0;
-  const proposalConversionRate = proposalsSent > 0 ? (proposalsAccepted / proposalsSent) * 100 : 0;
-  
+  const leadQualificationRate =
+    totalLeads > 0 ? (qualifiedLeads / totalLeads) * 100 : 0;
+  const proposalConversionRate =
+    proposalsSent > 0 ? (proposalsAccepted / proposalsSent) * 100 : 0;
+
   res.status(200).json({
     status: 'success',
     data: {
@@ -58,15 +76,15 @@ exports.getSalesPipeline = catchAsync(async (req, res, next) => {
       proposals,
       conversionRates: {
         leadQualificationRate: parseFloat(leadQualificationRate.toFixed(2)),
-        proposalConversionRate: parseFloat(proposalConversionRate.toFixed(2))
+        proposalConversionRate: parseFloat(proposalConversionRate.toFixed(2)),
       },
       totals: {
         totalLeads,
         qualifiedLeads,
         proposalsSent,
-        proposalsAccepted
-      }
-    }
+        proposalsAccepted,
+      },
+    },
   });
 });
 
@@ -75,37 +93,37 @@ exports.getProjectStatus = catchAsync(async (req, res, next) => {
   // Get projects by stage
   const projectsByStage = await Project.aggregate([
     {
-      $match: { active: true }
+      $match: { active: true },
     },
     {
       $group: {
         _id: '$stage',
         count: { $sum: 1 },
-        totalContractValue: { $sum: '$financials.totalContractValue' }
-      }
+        totalContractValue: { $sum: '$financials.totalContractValue' },
+      },
     },
     {
-      $sort: { '_id': 1 }
-    }
+      $sort: { _id: 1 },
+    },
   ]);
-  
+
   // Get projects by status
   const projectsByStatus = await Project.aggregate([
     {
-      $match: { active: true }
+      $match: { active: true },
     },
     {
       $group: {
         _id: '$status',
         count: { $sum: 1 },
-        totalContractValue: { $sum: '$financials.totalContractValue' }
-      }
+        totalContractValue: { $sum: '$financials.totalContractValue' },
+      },
     },
     {
-      $sort: { '_id': 1 }
-    }
+      $sort: { _id: 1 },
+    },
   ]);
-  
+
   // Get recent projects
   const recentProjects = await Project.find()
     .sort('-createdAt')
@@ -113,36 +131,36 @@ exports.getProjectStatus = catchAsync(async (req, res, next) => {
     .select('name customer stage status financials.totalContractValue dates')
     .populate({
       path: 'customer',
-      select: 'firstName lastName email'
+      select: 'firstName lastName email',
     });
-  
+
   // Get upcoming installations
   const upcomingInstallations = await Project.find({
-    'dates.scheduledInstallation': { $gte: new Date() }
+    'dates.scheduledInstallation': { $gte: new Date() },
   })
     .sort('dates.scheduledInstallation')
     .limit(5)
     .select('name customer stage dates.scheduledInstallation')
     .populate({
       path: 'customer',
-      select: 'firstName lastName email'
+      select: 'firstName lastName email',
     });
-  
+
   // Get delayed projects
   const today = new Date();
   const delayedProjects = await Project.find({
     status: 'active',
     stage: { $ne: 'completed' },
-    'dates.scheduledInstallation': { $lt: today }
+    'dates.scheduledInstallation': { $lt: today },
   })
     .sort('dates.scheduledInstallation')
     .limit(5)
     .select('name customer stage dates.scheduledInstallation')
     .populate({
       path: 'customer',
-      select: 'firstName lastName email'
+      select: 'firstName lastName email',
     });
-  
+
   res.status(200).json({
     status: 'success',
     data: {
@@ -150,8 +168,8 @@ exports.getProjectStatus = catchAsync(async (req, res, next) => {
       projectsByStatus,
       recentProjects,
       upcomingInstallations,
-      delayedProjects
-    }
+      delayedProjects,
+    },
   });
 });
 
@@ -159,12 +177,13 @@ exports.getProjectStatus = catchAsync(async (req, res, next) => {
 exports.getFinancialReport = catchAsync(async (req, res, next) => {
   // Parse time period from query
   const period = req.query.period || 'all';
-  let startDate, endDate;
-  
+  let startDate;
+  let endDate;
+
   if (period !== 'all') {
     endDate = new Date();
     startDate = new Date();
-    
+
     switch (period) {
       case 'month':
         startDate.setMonth(startDate.getMonth() - 1);
@@ -180,80 +199,81 @@ exports.getFinancialReport = catchAsync(async (req, res, next) => {
         endDate = null;
     }
   }
-  
+
   // Build match condition based on time period
-  const matchCondition = startDate && endDate 
-    ? { 
-        active: true,
-        createdAt: { $gte: startDate, $lte: endDate }
-      }
-    : { active: true };
-  
+  const matchCondition =
+    startDate && endDate
+      ? {
+          active: true,
+          createdAt: { $gte: startDate, $lte: endDate },
+        }
+      : { active: true };
+
   // Calculate contract value by project stage
   const contractValueByStage = await Project.aggregate([
     {
-      $match: matchCondition
+      $match: matchCondition,
     },
     {
       $group: {
         _id: '$stage',
         totalContractValue: { $sum: '$financials.totalContractValue' },
-        count: { $sum: 1 }
-      }
+        count: { $sum: 1 },
+      },
     },
     {
-      $sort: { '_id': 1 }
-    }
+      $sort: { _id: 1 },
+    },
   ]);
-  
+
   // Calculate proposal value by status
   const proposalValueByStatus = await Proposal.aggregate([
     {
-      $match: matchCondition
+      $match: matchCondition,
     },
     {
       $group: {
         _id: '$status',
         totalValue: { $sum: '$pricing.grossCost' },
-        count: { $sum: 1 }
-      }
+        count: { $sum: 1 },
+      },
     },
     {
-      $sort: { '_id': 1 }
-    }
+      $sort: { _id: 1 },
+    },
   ]);
-  
+
   // Calculate monthly revenue
   const monthlyRevenue = await Project.aggregate([
     {
-      $match: { active: true, status: 'completed' }
+      $match: { active: true, status: 'completed' },
     },
     {
       $project: {
         year: { $year: '$dates.projectClosed' },
         month: { $month: '$dates.projectClosed' },
-        totalContractValue: '$financials.totalContractValue'
-      }
+        totalContractValue: '$financials.totalContractValue',
+      },
     },
     {
       $group: {
         _id: { year: '$year', month: '$month' },
         totalRevenue: { $sum: '$totalContractValue' },
-        count: { $sum: 1 }
-      }
+        count: { $sum: 1 },
+      },
     },
     {
-      $sort: { '_id.year': -1, '_id.month': -1 }
+      $sort: { '_id.year': -1, '_id.month': -1 },
     },
     {
-      $limit: 12
-    }
+      $limit: 12,
+    },
   ]);
-  
+
   // Calculate total statistics
   const totalStats = await Project.aggregate([
     {
-      $match: matchCondition
+      $match: matchCondition,
     },
     {
       $group: {
@@ -262,11 +282,11 @@ exports.getFinancialReport = catchAsync(async (req, res, next) => {
         avgContractValue: { $avg: '$financials.totalContractValue' },
         totalProjects: { $sum: 1 },
         maxContractValue: { $max: '$financials.totalContractValue' },
-        minContractValue: { $min: '$financials.totalContractValue' }
-      }
-    }
+        minContractValue: { $min: '$financials.totalContractValue' },
+      },
+    },
   ]);
-  
+
   res.status(200).json({
     status: 'success',
     data: {
@@ -279,9 +299,9 @@ exports.getFinancialReport = catchAsync(async (req, res, next) => {
         avgContractValue: 0,
         totalProjects: 0,
         maxContractValue: 0,
-        minContractValue: 0
-      }
-    }
+        minContractValue: 0,
+      },
+    },
   });
 });
 
@@ -290,74 +310,74 @@ exports.getCustomerReport = catchAsync(async (req, res, next) => {
   // Get customer acquisition by month
   const customersByMonth = await Customer.aggregate([
     {
-      $match: { active: true }
+      $match: { active: true },
     },
     {
       $project: {
         year: { $year: '$customerSince' },
-        month: { $month: '$customerSince' }
-      }
+        month: { $month: '$customerSince' },
+      },
     },
     {
       $group: {
         _id: { year: '$year', month: '$month' },
-        count: { $sum: 1 }
-      }
+        count: { $sum: 1 },
+      },
     },
     {
-      $sort: { '_id.year': -1, '_id.month': -1 }
+      $sort: { '_id.year': -1, '_id.month': -1 },
     },
     {
-      $limit: 12
-    }
+      $limit: 12,
+    },
   ]);
-  
+
   // Get customer distribution by location
   const customersByLocation = await Customer.aggregate([
     {
-      $match: { active: true }
+      $match: { active: true },
     },
     {
       $group: {
         _id: {
           state: '$address.state',
-          city: '$address.city'
+          city: '$address.city',
         },
-        count: { $sum: 1 }
-      }
+        count: { $sum: 1 },
+      },
     },
     {
-      $sort: { count: -1 }
+      $sort: { count: -1 },
     },
     {
-      $limit: 10
-    }
+      $limit: 10,
+    },
   ]);
-  
+
   // Get top customers by revenue
   const topCustomers = await Customer.aggregate([
     {
-      $match: { active: true }
+      $match: { active: true },
     },
     {
       $lookup: {
         from: 'projects',
         localField: '_id',
         foreignField: 'customer',
-        as: 'projects'
-      }
+        as: 'projects',
+      },
     },
     {
       $addFields: {
         totalRevenue: { $sum: '$projects.financials.totalContractValue' },
-        projectCount: { $size: '$projects' }
-      }
+        projectCount: { $size: '$projects' },
+      },
     },
     {
-      $sort: { totalRevenue: -1 }
+      $sort: { totalRevenue: -1 },
     },
     {
-      $limit: 10
+      $limit: 10,
     },
     {
       $project: {
@@ -367,36 +387,38 @@ exports.getCustomerReport = catchAsync(async (req, res, next) => {
         email: 1,
         phone: 1,
         totalRevenue: 1,
-        projectCount: 1
-      }
-    }
+        projectCount: 1,
+      },
+    },
   ]);
-  
+
   // Get customer retention rate
   const totalCustomers = await Customer.countDocuments({ active: true });
   const repeatCustomers = await Customer.aggregate([
     {
-      $match: { active: true }
+      $match: { active: true },
     },
     {
       $lookup: {
         from: 'projects',
         localField: '_id',
         foreignField: 'customer',
-        as: 'projects'
-      }
+        as: 'projects',
+      },
     },
     {
-      $match: { 'projects.1': { $exists: true } } // At least 2 projects
+      $match: { 'projects.1': { $exists: true } }, // At least 2 projects
     },
     {
-      $count: 'count'
-    }
+      $count: 'count',
+    },
   ]);
-  
-  const repeatCustomerCount = repeatCustomers.length > 0 ? repeatCustomers[0].count : 0;
-  const retentionRate = totalCustomers > 0 ? (repeatCustomerCount / totalCustomers) * 100 : 0;
-  
+
+  const repeatCustomerCount =
+    repeatCustomers.length > 0 ? repeatCustomers[0].count : 0;
+  const retentionRate =
+    totalCustomers > 0 ? (repeatCustomerCount / totalCustomers) * 100 : 0;
+
   res.status(200).json({
     status: 'success',
     data: {
@@ -406,9 +428,9 @@ exports.getCustomerReport = catchAsync(async (req, res, next) => {
       retention: {
         totalCustomers,
         repeatCustomers: repeatCustomerCount,
-        retentionRate: parseFloat(retentionRate.toFixed(2))
-      }
-    }
+        retentionRate: parseFloat(retentionRate.toFixed(2)),
+      },
+    },
   });
 });
 
@@ -417,7 +439,7 @@ exports.getUserPerformance = catchAsync(async (req, res, next) => {
   // Get sales performance by user
   const salesPerformance = await Proposal.aggregate([
     {
-      $match: { active: true }
+      $match: { active: true },
     },
     {
       $group: {
@@ -425,23 +447,23 @@ exports.getUserPerformance = catchAsync(async (req, res, next) => {
         proposalsCreated: { $sum: 1 },
         proposalsAccepted: {
           $sum: {
-            $cond: [{ $eq: ['$status', 'accepted'] }, 1, 0]
-          }
+            $cond: [{ $eq: ['$status', 'accepted'] }, 1, 0],
+          },
         },
         totalValue: { $sum: '$pricing.grossCost' },
-        averageValue: { $avg: '$pricing.grossCost' }
-      }
+        averageValue: { $avg: '$pricing.grossCost' },
+      },
     },
     {
       $lookup: {
         from: 'users',
         localField: '_id',
         foreignField: '_id',
-        as: 'user'
-      }
+        as: 'user',
+      },
     },
     {
-      $unwind: '$user'
+      $unwind: '$user',
     },
     {
       $project: {
@@ -456,20 +478,25 @@ exports.getUserPerformance = catchAsync(async (req, res, next) => {
           $cond: [
             { $eq: ['$proposalsCreated', 0] },
             0,
-            { $multiply: [{ $divide: ['$proposalsAccepted', '$proposalsCreated'] }, 100] }
-          ]
-        }
-      }
+            {
+              $multiply: [
+                { $divide: ['$proposalsAccepted', '$proposalsCreated'] },
+                100,
+              ],
+            },
+          ],
+        },
+      },
     },
     {
-      $sort: { totalValue: -1 }
-    }
+      $sort: { totalValue: -1 },
+    },
   ]);
-  
+
   // Get project management performance by user
   const projectPerformance = await Project.aggregate([
     {
-      $match: { active: true }
+      $match: { active: true },
     },
     {
       $group: {
@@ -477,25 +504,25 @@ exports.getUserPerformance = catchAsync(async (req, res, next) => {
         projectsManaged: { $sum: 1 },
         projectsCompleted: {
           $sum: {
-            $cond: [{ $eq: ['$status', 'completed'] }, 1, 0]
-          }
+            $cond: [{ $eq: ['$status', 'completed'] }, 1, 0],
+          },
         },
-        totalValue: { $sum: '$financials.totalContractValue' }
-      }
+        totalValue: { $sum: '$financials.totalContractValue' },
+      },
     },
     {
       $lookup: {
         from: 'users',
         localField: '_id',
         foreignField: '_id',
-        as: 'manager'
-      }
+        as: 'manager',
+      },
     },
     {
       $unwind: {
         path: '$manager',
-        preserveNullAndEmptyArrays: true
-      }
+        preserveNullAndEmptyArrays: true,
+      },
     },
     {
       $project: {
@@ -509,27 +536,32 @@ exports.getUserPerformance = catchAsync(async (req, res, next) => {
           $cond: [
             { $eq: ['$projectsManaged', 0] },
             0,
-            { $divide: ['$totalValue', '$projectsManaged'] }
-          ]
+            { $divide: ['$totalValue', '$projectsManaged'] },
+          ],
         },
         completionRate: {
           $cond: [
             { $eq: ['$projectsManaged', 0] },
             0,
-            { $multiply: [{ $divide: ['$projectsCompleted', '$projectsManaged'] }, 100] }
-          ]
-        }
-      }
+            {
+              $multiply: [
+                { $divide: ['$projectsCompleted', '$projectsManaged'] },
+                100,
+              ],
+            },
+          ],
+        },
+      },
     },
     {
-      $sort: { projectsManaged: -1 }
-    }
+      $sort: { projectsManaged: -1 },
+    },
   ]);
-  
+
   // Get lead conversion performance by user
   const leadPerformance = await Lead.aggregate([
     {
-      $match: { active: true }
+      $match: { active: true },
     },
     {
       $group: {
@@ -537,29 +569,33 @@ exports.getUserPerformance = catchAsync(async (req, res, next) => {
         leadsAssigned: { $sum: 1 },
         leadsQualified: {
           $sum: {
-            $cond: [{ $in: ['$status', ['qualified', 'proposal', 'won']] }, 1, 0]
-          }
+            $cond: [
+              { $in: ['$status', ['qualified', 'proposal', 'won']] },
+              1,
+              0,
+            ],
+          },
         },
         leadsWon: {
           $sum: {
-            $cond: [{ $eq: ['$status', 'won'] }, 1, 0]
-          }
-        }
-      }
+            $cond: [{ $eq: ['$status', 'won'] }, 1, 0],
+          },
+        },
+      },
     },
     {
       $lookup: {
         from: 'users',
         localField: '_id',
         foreignField: '_id',
-        as: 'user'
-      }
+        as: 'user',
+      },
     },
     {
       $unwind: {
         path: '$user',
-        preserveNullAndEmptyArrays: true
-      }
+        preserveNullAndEmptyArrays: true,
+      },
     },
     {
       $project: {
@@ -573,29 +609,34 @@ exports.getUserPerformance = catchAsync(async (req, res, next) => {
           $cond: [
             { $eq: ['$leadsAssigned', 0] },
             0,
-            { $multiply: [{ $divide: ['$leadsQualified', '$leadsAssigned'] }, 100] }
-          ]
+            {
+              $multiply: [
+                { $divide: ['$leadsQualified', '$leadsAssigned'] },
+                100,
+              ],
+            },
+          ],
         },
         winRate: {
           $cond: [
             { $eq: ['$leadsAssigned', 0] },
             0,
-            { $multiply: [{ $divide: ['$leadsWon', '$leadsAssigned'] }, 100] }
-          ]
-        }
-      }
+            { $multiply: [{ $divide: ['$leadsWon', '$leadsAssigned'] }, 100] },
+          ],
+        },
+      },
     },
     {
-      $sort: { leadsAssigned: -1 }
-    }
+      $sort: { leadsAssigned: -1 },
+    },
   ]);
-  
+
   res.status(200).json({
     status: 'success',
     data: {
       salesPerformance,
       projectPerformance,
-      leadPerformance
-    }
+      leadPerformance,
+    },
   });
 });

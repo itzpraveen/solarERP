@@ -10,11 +10,13 @@ const router = express.Router();
 router.use(authController.protect);
 
 // Routes for managing users (typically admin/manager roles)
-router.route('/')
+router
+  .route('/')
   .get(authorize(PERMISSIONS.VIEW_USERS), userController.getAllUsers)
   .post(authorize(PERMISSIONS.MANAGE_USERS), userController.createUser); // Only those with MANAGE_USERS can create
 
-router.route('/:id')
+router
+  .route('/:id')
   .get(authorize(PERMISSIONS.VIEW_USERS), userController.getUser) // Or maybe MANAGE_USERS if viewing specific details is sensitive
   .patch(authorize(PERMISSIONS.MANAGE_USERS), userController.updateUser) // Only MANAGE_USERS can update others
   .delete(authorize(PERMISSIONS.MANAGE_USERS), userController.deleteUser); // Only MANAGE_USERS can delete

@@ -107,9 +107,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // Set auth token header for all requests
   const setAuthToken = (token: string | null) => {
     if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      axios.defaults.headers.common.Authorization = `Bearer ${token}`;
     } else {
-      delete axios.defaults.headers.common['Authorization'];
+      delete axios.defaults.headers.common.Authorization;
     }
   };
 
@@ -157,28 +157,26 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           }
 
           return { success: true };
-        } else {
-          setError(result.error || 'Invalid credentials');
-          return {
-            success: false,
-            error: result.error || 'Invalid credentials',
-          };
         }
-      } else {
-        // Use real API
-        const res = await axios.post('/api/auth/login', { email, password });
-
-        localStorage.setItem('token', res.data.token);
-        setAuthToken(res.data.token);
-
-        // Use user data directly from login response
-        setUser(res.data.data.user);
-        setIsAuthenticated(true);
-        setLoading(false);
-        setError(null);
-
-        return { success: true };
+        setError(result.error || 'Invalid credentials');
+        return {
+          success: false,
+          error: result.error || 'Invalid credentials',
+        };
       }
+      // Use real API
+      const res = await axios.post('/api/auth/login', { email, password });
+
+      localStorage.setItem('token', res.data.token);
+      setAuthToken(res.data.token);
+
+      // Use user data directly from login response
+      setUser(res.data.data.user);
+      setIsAuthenticated(true);
+      setLoading(false);
+      setError(null);
+
+      return { success: true };
     } catch (err: any) {
       setError(err.response?.data?.message || 'Invalid credentials');
       return {

@@ -1,5 +1,9 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "solarerp/*": ["../common/*"]
+    },
     "target": "es5",
     "lib": [
       "dom",
@@ -21,6 +25,7 @@
     "jsx": "react-jsx"
   },
   "include": [
-    "src"
+    "src",
+    "../common/types"
   ]
 }

@@ -1,6 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
-import { Box, CssBaseline, Toolbar, useTheme, useMediaQuery, Fade } from '@mui/material';
+import {
+  Box,
+  CssBaseline,
+  Toolbar,
+  useTheme,
+  useMediaQuery,
+  Fade,
+} from '@mui/material';
 import Header from './Header';
 import Sidebar from './Sidebar';
 

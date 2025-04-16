@@ -1,4 +1,4 @@
-import { FrontendUserContext } from '../../../common/types/user.types';
+import { FrontendUserContext } from 'solarerp/types/user.types';
 
 /**
  * Re-exporting the FrontendUserContext from the shared types module

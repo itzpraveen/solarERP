@@ -13,26 +13,36 @@ exports.getAllCustomers = catchAsync(async (req, res, next) => {
   const standardFilters = { ...req.query };
   // Exclude fields handled separately (pagination, sorting, etc.)
   const excludedFields = ['page', 'sort', 'limit', 'fields', '_cb']; // Added _cb just in case
-  excludedFields.forEach(el => delete standardFilters[el]);
+  excludedFields.forEach((el) => delete standardFilters[el]);
 
-  Object.keys(standardFilters).forEach(key => {
-    if (standardFilters[key] !== '' && standardFilters[key] !== undefined && standardFilters[key] !== null) {
+  Object.keys(standardFilters).forEach((key) => {
+    if (
+      standardFilters[key] !== '' &&
+      standardFilters[key] !== undefined &&
+      standardFilters[key] !== null
+    ) {
       // Basic equality check for most fields
       filterConditions[key] = standardFilters[key];
       // Add logic here if range filters (gte, lte) or search are needed
     }
   });
-  console.log('getAllCustomers - Standard filters applied:', JSON.stringify(filterConditions));
+  console.log(
+    'getAllCustomers - Standard filters applied:',
+    JSON.stringify(filterConditions)
+  );
 
   // Note: Unlike leads, there's no 'includeConverted' concept here.
   // The 'active' filter is handled by the pre-find middleware in the model.
 
-  console.log('getAllCustomers - Final filter conditions before find:', JSON.stringify(filterConditions));
+  console.log(
+    'getAllCustomers - Final filter conditions before find:',
+    JSON.stringify(filterConditions)
+  );
 
   // BUILD QUERY (Find + Sort + Paginate)
   // Apply all calculated filters at once. The 'active' filter is added by pre-find middleware.
   let query = Customer.find(filterConditions);
-  
+
   // 3) Sorting
   if (req.query.sort) {
     const sortBy = req.query.sort.split(',').join(' ');
@@ -40,7 +50,7 @@ exports.getAllCustomers = catchAsync(async (req, res, next) => {
   } else {
     query = query.sort('-customerSince');
   }
-  
+
   // 4) Field limiting
   if (req.query.fields) {
     const fields = req.query.fields.split(',').join(' ');
@@ -48,24 +58,24 @@ exports.getAllCustomers = catchAsync(async (req, res, next) => {
   } else {
     query = query.select('-__v');
   }
-  
+
   // 5) Pagination
   const page = req.query.page * 1 || 1;
   const limit = req.query.limit * 1 || 100;
   const skip = (page - 1) * limit;
-  
+
   query = query.skip(skip).limit(limit);
-  
+
   // EXECUTE QUERY
   const customers = await query;
-  
+
   // SEND RESPONSE
   res.status(200).json({
     status: 'success',
     results: customers.length,
     data: {
-      customers
-    }
+      customers,
+    },
   });
 });
 
@@ -74,30 +84,30 @@ exports.getCustomer = catchAsync(async (req, res, next) => {
   const customer = await Customer.findById(req.params.id)
     .populate({
       path: 'originalLead',
-      select: 'status source category'
+      select: 'status source category',
     })
     .populate({
       path: 'acceptedProposal',
-      select: 'name systemSize panelCount panelType'
+      select: 'name systemSize panelCount panelType',
     })
     .populate({
       path: 'projects',
-      select: 'name status stage'
+      select: 'name status stage',
     })
     .populate({
       path: 'notes.createdBy',
-      select: 'firstName lastName email'
+      select: 'firstName lastName email',
     });
-  
+
   if (!customer) {
     return next(new AppError('No customer found with that ID', 404));
   }
-  
+
   res.status(200).json({
     status: 'success',
     data: {
-      customer
-    }
+      customer,
+    },
   });
 });
 
@@ -105,7 +115,7 @@ exports.getCustomer = catchAsync(async (req, res, next) => {
 exports.createCustomer = catchAsync(async (req, res, next) => {
   // Set the creator to the current user
   req.body.createdBy = req.user.id;
-  
+
   // Verify that the lead exists if provided
   if (req.body.originalLead) {
     const lead = await Lead.findById(req.body.originalLead);
@@ -113,7 +123,7 @@ exports.createCustomer = catchAsync(async (req, res, next) => {
       return next(new AppError('No lead found with that ID', 404));
     }
   }
-  
+
   // Verify that the proposal exists if provided
   if (req.body.acceptedProposal) {
     const proposal = await Proposal.findById(req.body.acceptedProposal);
@@ -121,14 +131,14 @@ exports.createCustomer = catchAsync(async (req, res, next) => {
       return next(new AppError('No proposal found with that ID', 404));
     }
   }
-  
+
   const newCustomer = await Customer.create(req.body);
-  
+
   res.status(201).json({
     status: 'success',
     data: {
-      customer: newCustomer
-    }
+      customer: newCustomer,
+    },
   });
 });
 
@@ -136,32 +146,34 @@ exports.createCustomer = catchAsync(async (req, res, next) => {
 exports.updateCustomer = catchAsync(async (req, res, next) => {
   const customer = await Customer.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
-    runValidators: true
+    runValidators: true,
   });
-  
+
   if (!customer) {
     return next(new AppError('No customer found with that ID', 404));
   }
-  
+
   res.status(200).json({
     status: 'success',
     data: {
-      customer
-    }
+      customer,
+    },
   });
 });
 
 // Delete customer (soft delete)
 exports.deleteCustomer = catchAsync(async (req, res, next) => {
-  const customer = await Customer.findByIdAndUpdate(req.params.id, { active: false });
-  
+  const customer = await Customer.findByIdAndUpdate(req.params.id, {
+    active: false,
+  });
+
   if (!customer) {
     return next(new AppError('No customer found with that ID', 404));
   }
-  
+
   res.status(204).json({
     status: 'success',
-    data: null
+    data: null,
   });
 });
 
@@ -169,22 +181,22 @@ exports.deleteCustomer = catchAsync(async (req, res, next) => {
 exports.addCustomerNote = catchAsync(async (req, res, next) => {
   // Set the creator to the current user
   req.body.createdBy = req.user.id;
-  
+
   const customer = await Customer.findByIdAndUpdate(
     req.params.id,
     { $push: { notes: req.body } },
     { new: true, runValidators: true }
   );
-  
+
   if (!customer) {
     return next(new AppError('No customer found with that ID', 404));
   }
-  
+
   res.status(200).json({
     status: 'success',
     data: {
-      customer
-    }
+      customer,
+    },
   });
 });
 
@@ -195,7 +207,7 @@ exports.convertLeadToCustomer = catchAsync(async (req, res, next) => {
   if (!lead) {
     return next(new AppError('No lead found with that ID', 404));
   }
-  
+
   // Check if proposal exists if provided
   let proposal;
   if (req.body.proposalId) {
@@ -203,18 +215,18 @@ exports.convertLeadToCustomer = catchAsync(async (req, res, next) => {
     if (!proposal) {
       return next(new AppError('No proposal found with that ID', 404));
     }
-    
+
     // Check if proposal belongs to the lead
     if (proposal.lead.toString() !== lead._id.toString()) {
       return next(new AppError('Proposal does not belong to this lead', 400));
     }
-    
+
     // Update proposal status to accepted if not already
     if (proposal.status !== 'accepted') {
       await Proposal.findByIdAndUpdate(proposal._id, { status: 'accepted' });
     }
   }
-  
+
   // Create new customer from lead data
   const customerData = {
     firstName: lead.firstName,
@@ -224,21 +236,21 @@ exports.convertLeadToCustomer = catchAsync(async (req, res, next) => {
     address: lead.address,
     originalLead: lead._id,
     acceptedProposal: proposal ? proposal._id : undefined,
-    createdBy: req.user.id
+    createdBy: req.user.id,
   };
-  
+
   const newCustomer = await Customer.create(customerData);
-  
+
   // Update lead status to won and mark as converted
   await Lead.findByIdAndUpdate(lead._id, {
     status: 'won',
-    converted: true
+    converted: true,
   });
-  
+
   res.status(201).json({
     status: 'success',
     data: {
-      customer: newCustomer
-    }
+      customer: newCustomer,
+    },
   });
 });

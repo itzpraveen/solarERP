@@ -1,4 +1,6 @@
 # SolarERP - Solar Business Management System
+[![CI](https://github.com/itzpraveen/solarERP/actions/workflows/ci.yml/badge.svg)](https://github.com/itzpraveen/solarERP/actions/workflows/ci.yml)
+
 
 A comprehensive ERP system designed specifically for solar installation companies to manage leads, proposals, customers, projects, equipment, and documents.
 
@@ -132,6 +134,13 @@ API endpoints are organized by resource:
 - **Equipment**: `/api/equipment` - Equipment and inventory management
 - **Documents**: `/api/documents` - Document storage and sharing
 - **Reports**: `/api/reports` - Analytics and reporting
+
+## Contributing
+
+- Fork the repository and create a feature branch
+- Ensure linting and tests pass (`npm run lint && npm run test`)
+- Commit your changes and open a pull request
+
 
 ## License
 

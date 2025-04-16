@@ -1,6 +1,7 @@
 const express = require('express');
 const reportController = require('../controllers/report.controller');
 const authController = require('../controllers/auth.controller');
+
 const router = express.Router();
 
 // All report routes require authentication

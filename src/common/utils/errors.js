@@ -122,5 +122,5 @@ module.exports = {
   AuthorizationError,
   NotFoundError,
   ConflictError,
-  ServerError
+  ServerError,
 };

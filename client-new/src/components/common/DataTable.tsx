@@ -18,13 +18,13 @@ import {
   IconButton,
   Tooltip,
   Chip,
-  Skeleton
+  Skeleton,
 } from '@mui/material';
 import {
   Refresh as RefreshIcon,
   FilterList as FilterIcon,
   Search as SearchIcon,
-  MoreVert as MoreVertIcon
+  MoreVert as MoreVertIcon,
 } from '@mui/icons-material';
 
 // Define column interface
@@ -96,15 +96,17 @@ function DataTable<T extends Record<string, any>>({
   dense = false,
   showHeader = true,
   headerComponent,
-  footerComponent
+  footerComponent,
 }: DataTableProps<T>) {
   const theme = useTheme();
-  
+
   // Internal state for controlled/uncontrolled modes
   const [page, setPage] = useState(externalPage || 0);
   const [rowsPerPage, setRowsPerPage] = useState(defaultRowsPerPage);
   const [sortBy, setSortBy] = useState<string | undefined>(defaultSortBy);
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>(defaultSortDirection);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>(
+    defaultSortDirection
+  );
   const [selected, setSelected] = useState<T[]>([]);
 
   // Handle pagination
@@ -115,7 +117,9 @@ function DataTable<T extends Record<string, any>>({
     }
   };
 
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const newRowsPerPage = parseInt(event.target.value, 10);
     setRowsPerPage(newRowsPerPage);
     setPage(0);
@@ -150,9 +154,12 @@ function DataTable<T extends Record<string, any>>({
     }
   };
 
-  const handleSelectClick = (event: React.MouseEvent<HTMLButtonElement>, row: T) => {
+  const handleSelectClick = (
+    event: React.MouseEvent<HTMLButtonElement>,
+    row: T
+  ) => {
     event.stopPropagation();
-    
+
     const selectedIndex = selected.findIndex(
       (item) => item[keyField] === row[keyField]
     );
@@ -170,23 +177,23 @@ function DataTable<T extends Record<string, any>>({
     }
   };
 
-  const isSelected = (row: T) => 
+  const isSelected = (row: T) =>
     selected.findIndex((item) => item[keyField] === row[keyField]) !== -1;
 
   // Render loading state
   const renderLoading = () => (
     <TableRow>
-      <TableCell 
+      <TableCell
         colSpan={selectable ? columns.length + 1 : columns.length}
-        sx={{ 
-          height: 300, 
+        sx={{
+          height: 300,
           textAlign: 'center',
           border: 'none',
         }}
       >
-        <Box 
-          sx={{ 
-            display: 'flex', 
+        <Box
+          sx={{
+            display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
@@ -211,11 +218,16 @@ function DataTable<T extends Record<string, any>>({
             <Skeleton variant="circular" width={24} height={24} />
           </TableCell>
         )}
-        {columns.filter(col => !col.hidden).map((column, colIndex) => (
-          <TableCell key={`skeleton-cell-${colIndex}`} align={column.align || 'left'}>
-            <Skeleton variant="text" width={colIndex === 0 ? '60%' : '40%'} />
-          </TableCell>
-        ))}
+        {columns
+          .filter((col) => !col.hidden)
+          .map((column, colIndex) => (
+            <TableCell
+              key={`skeleton-cell-${colIndex}`}
+              align={column.align || 'left'}
+            >
+              <Skeleton variant="text" width={colIndex === 0 ? '60%' : '40%'} />
+            </TableCell>
+          ))}
         {rowActions && (
           <TableCell align="right" padding="none">
             <Skeleton variant="circular" width={32} height={32} />
@@ -228,17 +240,17 @@ function DataTable<T extends Record<string, any>>({
   // Render empty state
   const renderEmptyState = () => (
     <TableRow>
-      <TableCell 
+      <TableCell
         colSpan={selectable ? columns.length + 1 : columns.length}
-        sx={{ 
-          height: 300, 
+        sx={{
+          height: 300,
           textAlign: 'center',
           border: 'none',
         }}
       >
-        <Box 
-          sx={{ 
-            display: 'flex', 
+        <Box
+          sx={{
+            display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
@@ -246,21 +258,21 @@ function DataTable<T extends Record<string, any>>({
             p: 3,
           }}
         >
-          <SearchIcon 
-            sx={{ 
-              fontSize: 48, 
+          <SearchIcon
+            sx={{
+              fontSize: 48,
               color: theme.palette.grey[300],
               mb: 1,
-            }} 
+            }}
           />
           <Typography variant="h6" color="text.secondary">
             {emptyMessage}
           </Typography>
           {onRefresh && (
             <Tooltip title="Refresh">
-              <IconButton 
+              <IconButton
                 onClick={onRefresh}
-                sx={{ 
+                sx={{
                   mt: 1,
                   color: theme.palette.primary.main,
                 }}
@@ -275,12 +287,13 @@ function DataTable<T extends Record<string, any>>({
   );
 
   // Determine which rows to display based on pagination
-  const displayedRows = pagination && !onPageChange
-    ? data.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-    : data;
+  const displayedRows =
+    pagination && !onPageChange
+      ? data.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+      : data;
 
   return (
-    <Paper 
+    <Paper
       elevation={0}
       sx={{
         width: '100%',
@@ -298,13 +311,13 @@ function DataTable<T extends Record<string, any>>({
       )}
 
       {/* Table */}
-      <TableContainer 
-        sx={{ 
+      <TableContainer
+        sx={{
           maxHeight: stickyHeader ? maxHeight : undefined,
           overflow: 'auto',
         }}
       >
-        <Table 
+        <Table
           stickyHeader={stickyHeader}
           size={dense ? 'small' : 'medium'}
           aria-label="data table"
@@ -315,8 +328,12 @@ function DataTable<T extends Record<string, any>>({
                 {selectable && (
                   <TableCell padding="checkbox">
                     <Checkbox
-                      indeterminate={selected.length > 0 && selected.length < data.length}
-                      checked={data.length > 0 && selected.length === data.length}
+                      indeterminate={
+                        selected.length > 0 && selected.length < data.length
+                      }
+                      checked={
+                        data.length > 0 && selected.length === data.length
+                      }
                       onChange={handleSelectAllClick}
                       inputProps={{ 'aria-label': 'select all' }}
                       sx={{
@@ -328,31 +345,37 @@ function DataTable<T extends Record<string, any>>({
                     />
                   </TableCell>
                 )}
-                {columns.filter(col => !col.hidden).map((column) => (
-                  <TableCell
-                    key={column.id}
-                    align={column.align || 'left'}
-                    style={{ 
-                      minWidth: column.minWidth,
-                      maxWidth: column.maxWidth,
-                      fontWeight: 600,
-                      whiteSpace: 'nowrap',
-                    }}
-                    sortDirection={sortBy === column.id ? sortDirection : false}
-                  >
-                    {sortable && column.sortable !== false ? (
-                      <TableSortLabel
-                        active={sortBy === column.id}
-                        direction={sortBy === column.id ? sortDirection : 'asc'}
-                        onClick={() => handleSort(column.id)}
-                      >
-                        {column.label}
-                      </TableSortLabel>
-                    ) : (
-                      column.label
-                    )}
-                  </TableCell>
-                ))}
+                {columns
+                  .filter((col) => !col.hidden)
+                  .map((column) => (
+                    <TableCell
+                      key={column.id}
+                      align={column.align || 'left'}
+                      style={{
+                        minWidth: column.minWidth,
+                        maxWidth: column.maxWidth,
+                        fontWeight: 600,
+                        whiteSpace: 'nowrap',
+                      }}
+                      sortDirection={
+                        sortBy === column.id ? sortDirection : false
+                      }
+                    >
+                      {sortable && column.sortable !== false ? (
+                        <TableSortLabel
+                          active={sortBy === column.id}
+                          direction={
+                            sortBy === column.id ? sortDirection : 'asc'
+                          }
+                          onClick={() => handleSort(column.id)}
+                        >
+                          {column.label}
+                        </TableSortLabel>
+                      ) : (
+                        column.label
+                      )}
+                    </TableCell>
+                  ))}
                 {rowActions && (
                   <TableCell align="right" padding="none" style={{ width: 48 }}>
                     <Box sx={{ pr: 1 }}>
@@ -364,75 +387,83 @@ function DataTable<T extends Record<string, any>>({
             </TableHead>
           )}
           <TableBody>
-            {loading ? (
-              renderSkeleton()
-            ) : displayedRows.length > 0 ? (
-              displayedRows.map((row, index) => {
-                const isItemSelected = selectable ? isSelected(row) : false;
-                const labelId = `table-checkbox-${index}`;
+            {loading
+              ? renderSkeleton()
+              : displayedRows.length > 0
+                ? displayedRows.map((row, index) => {
+                    const isItemSelected = selectable ? isSelected(row) : false;
+                    const labelId = `table-checkbox-${index}`;
 
-                return (
-                  <TableRow
-                    hover
-                    onClick={onRowClick ? () => onRowClick(row) : undefined}
-                    role={onRowClick ? 'button' : undefined}
-                    aria-checked={isItemSelected}
-                    tabIndex={-1}
-                    key={row[keyField] || index}
-                    selected={isItemSelected}
-                    sx={{
-                      cursor: onRowClick ? 'pointer' : 'default',
-                      '&.Mui-selected': {
-                        backgroundColor: alpha(theme.palette.primary.main, 0.08),
-                      },
-                      '&.Mui-selected:hover': {
-                        backgroundColor: alpha(theme.palette.primary.main, 0.12),
-                      },
-                    }}
-                  >
-                    {selectable && (
-                      <TableCell padding="checkbox">
-                        <Checkbox
-                          checked={isItemSelected}
-                          inputProps={{ 'aria-labelledby': labelId }}
-                          onClick={(event) => handleSelectClick(event, row)}
-                          sx={{
-                            color: theme.palette.primary.main,
-                            '&.Mui-checked': {
-                              color: theme.palette.primary.main,
-                            },
-                          }}
-                        />
-                      </TableCell>
-                    )}
-                    {columns.filter(col => !col.hidden).map((column) => {
-                      const value = row[column.id];
-                      return (
-                        <TableCell 
-                          key={column.id} 
-                          align={column.align || 'left'}
-                          sx={{
-                            maxWidth: column.maxWidth,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          {column.format ? column.format(value, row) : value}
-                        </TableCell>
-                      );
-                    })}
-                    {rowActions && (
-                      <TableCell align="right" padding="none">
-                        {rowActions}
-                      </TableCell>
-                    )}
-                  </TableRow>
-                );
-              })
-            ) : (
-              renderEmptyState()
-            )}
+                    return (
+                      <TableRow
+                        hover
+                        onClick={onRowClick ? () => onRowClick(row) : undefined}
+                        role={onRowClick ? 'button' : undefined}
+                        aria-checked={isItemSelected}
+                        tabIndex={-1}
+                        key={row[keyField] || index}
+                        selected={isItemSelected}
+                        sx={{
+                          cursor: onRowClick ? 'pointer' : 'default',
+                          '&.Mui-selected': {
+                            backgroundColor: alpha(
+                              theme.palette.primary.main,
+                              0.08
+                            ),
+                          },
+                          '&.Mui-selected:hover': {
+                            backgroundColor: alpha(
+                              theme.palette.primary.main,
+                              0.12
+                            ),
+                          },
+                        }}
+                      >
+                        {selectable && (
+                          <TableCell padding="checkbox">
+                            <Checkbox
+                              checked={isItemSelected}
+                              inputProps={{ 'aria-labelledby': labelId }}
+                              onClick={(event) => handleSelectClick(event, row)}
+                              sx={{
+                                color: theme.palette.primary.main,
+                                '&.Mui-checked': {
+                                  color: theme.palette.primary.main,
+                                },
+                              }}
+                            />
+                          </TableCell>
+                        )}
+                        {columns
+                          .filter((col) => !col.hidden)
+                          .map((column) => {
+                            const value = row[column.id];
+                            return (
+                              <TableCell
+                                key={column.id}
+                                align={column.align || 'left'}
+                                sx={{
+                                  maxWidth: column.maxWidth,
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                {column.format
+                                  ? column.format(value, row)
+                                  : value}
+                              </TableCell>
+                            );
+                          })}
+                        {rowActions && (
+                          <TableCell align="right" padding="none">
+                            {rowActions}
+                          </TableCell>
+                        )}
+                      </TableRow>
+                    );
+                  })
+                : renderEmptyState()}
           </TableBody>
         </Table>
       </TableContainer>
@@ -449,9 +480,10 @@ function DataTable<T extends Record<string, any>>({
           onRowsPerPageChange={handleChangeRowsPerPage}
           sx={{
             borderTop: `1px solid ${theme.palette.divider}`,
-            '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows': {
-              fontSize: '0.875rem',
-            },
+            '.MuiTablePagination-selectLabel, .MuiTablePagination-displayedRows':
+              {
+                fontSize: '0.875rem',
+              },
           }}
         />
       )}

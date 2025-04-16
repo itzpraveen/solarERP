@@ -2,7 +2,7 @@ import React from 'react';
 import { Chip, ChipProps, useTheme, alpha, Tooltip } from '@mui/material';
 
 // Status types with their corresponding colors
-export type StatusType = 
+export type StatusType =
   | 'draft'
   | 'pending'
   | 'active'
@@ -45,119 +45,124 @@ const StatusChip: React.FC<StatusChipProps> = ({
 
   // Get color based on status
   const getStatusColor = (status: string) => {
-    const statusMap: Record<string, { color: string; bgColor: string; borderColor: string }> = {
+    const statusMap: Record<
+      string,
+      { color: string; bgColor: string; borderColor: string }
+    > = {
       // Standard statuses
-      'draft': { 
-        color: theme.palette.grey[700], 
-        bgColor: theme.palette.grey[100], 
-        borderColor: theme.palette.grey[300] 
+      draft: {
+        color: theme.palette.grey[700],
+        bgColor: theme.palette.grey[100],
+        borderColor: theme.palette.grey[300],
       },
-      'pending': { 
-        color: theme.palette.warning.dark, 
-        bgColor: alpha(theme.palette.warning.main, 0.12), 
-        borderColor: alpha(theme.palette.warning.main, 0.3) 
+      pending: {
+        color: theme.palette.warning.dark,
+        bgColor: alpha(theme.palette.warning.main, 0.12),
+        borderColor: alpha(theme.palette.warning.main, 0.3),
       },
-      'active': { 
-        color: theme.palette.success.dark, 
-        bgColor: alpha(theme.palette.success.main, 0.12), 
-        borderColor: alpha(theme.palette.success.main, 0.3) 
+      active: {
+        color: theme.palette.success.dark,
+        bgColor: alpha(theme.palette.success.main, 0.12),
+        borderColor: alpha(theme.palette.success.main, 0.3),
       },
-      'inactive': { 
-        color: theme.palette.grey[600], 
-        bgColor: theme.palette.grey[100], 
-        borderColor: theme.palette.grey[300] 
+      inactive: {
+        color: theme.palette.grey[600],
+        bgColor: theme.palette.grey[100],
+        borderColor: theme.palette.grey[300],
       },
-      'approved': { 
-        color: theme.palette.success.dark, 
-        bgColor: alpha(theme.palette.success.main, 0.12), 
-        borderColor: alpha(theme.palette.success.main, 0.3) 
+      approved: {
+        color: theme.palette.success.dark,
+        bgColor: alpha(theme.palette.success.main, 0.12),
+        borderColor: alpha(theme.palette.success.main, 0.3),
       },
-      'rejected': { 
-        color: theme.palette.error.dark, 
-        bgColor: alpha(theme.palette.error.main, 0.12), 
-        borderColor: alpha(theme.palette.error.main, 0.3) 
+      rejected: {
+        color: theme.palette.error.dark,
+        bgColor: alpha(theme.palette.error.main, 0.12),
+        borderColor: alpha(theme.palette.error.main, 0.3),
       },
-      'completed': { 
-        color: theme.palette.success.dark, 
-        bgColor: alpha(theme.palette.success.main, 0.12), 
-        borderColor: alpha(theme.palette.success.main, 0.3) 
+      completed: {
+        color: theme.palette.success.dark,
+        bgColor: alpha(theme.palette.success.main, 0.12),
+        borderColor: alpha(theme.palette.success.main, 0.3),
       },
-      'cancelled': { 
-        color: theme.palette.error.dark, 
-        bgColor: alpha(theme.palette.error.main, 0.12), 
-        borderColor: alpha(theme.palette.error.main, 0.3) 
+      cancelled: {
+        color: theme.palette.error.dark,
+        bgColor: alpha(theme.palette.error.main, 0.12),
+        borderColor: alpha(theme.palette.error.main, 0.3),
       },
-      'in-progress': { 
-        color: theme.palette.info.dark, 
-        bgColor: alpha(theme.palette.info.main, 0.12), 
-        borderColor: alpha(theme.palette.info.main, 0.3) 
+      'in-progress': {
+        color: theme.palette.info.dark,
+        bgColor: alpha(theme.palette.info.main, 0.12),
+        borderColor: alpha(theme.palette.info.main, 0.3),
       },
-      'on-hold': { 
-        color: theme.palette.warning.dark, 
-        bgColor: alpha(theme.palette.warning.main, 0.12), 
-        borderColor: alpha(theme.palette.warning.main, 0.3) 
+      'on-hold': {
+        color: theme.palette.warning.dark,
+        bgColor: alpha(theme.palette.warning.main, 0.12),
+        borderColor: alpha(theme.palette.warning.main, 0.3),
       },
-      'scheduled': { 
-        color: theme.palette.info.dark, 
-        bgColor: alpha(theme.palette.info.main, 0.12), 
-        borderColor: alpha(theme.palette.info.main, 0.3) 
+      scheduled: {
+        color: theme.palette.info.dark,
+        bgColor: alpha(theme.palette.info.main, 0.12),
+        borderColor: alpha(theme.palette.info.main, 0.3),
       },
-      'paid': { 
-        color: theme.palette.success.dark, 
-        bgColor: alpha(theme.palette.success.main, 0.12), 
-        borderColor: alpha(theme.palette.success.main, 0.3) 
+      paid: {
+        color: theme.palette.success.dark,
+        bgColor: alpha(theme.palette.success.main, 0.12),
+        borderColor: alpha(theme.palette.success.main, 0.3),
       },
-      'unpaid': { 
-        color: theme.palette.warning.dark, 
-        bgColor: alpha(theme.palette.warning.main, 0.12), 
-        borderColor: alpha(theme.palette.warning.main, 0.3) 
+      unpaid: {
+        color: theme.palette.warning.dark,
+        bgColor: alpha(theme.palette.warning.main, 0.12),
+        borderColor: alpha(theme.palette.warning.main, 0.3),
       },
-      'overdue': { 
-        color: theme.palette.error.dark, 
-        bgColor: alpha(theme.palette.error.main, 0.12), 
-        borderColor: alpha(theme.palette.error.main, 0.3) 
+      overdue: {
+        color: theme.palette.error.dark,
+        bgColor: alpha(theme.palette.error.main, 0.12),
+        borderColor: alpha(theme.palette.error.main, 0.3),
       },
-      
+
       // Semantic statuses
-      'success': { 
-        color: theme.palette.success.dark, 
-        bgColor: alpha(theme.palette.success.main, 0.12), 
-        borderColor: alpha(theme.palette.success.main, 0.3) 
+      success: {
+        color: theme.palette.success.dark,
+        bgColor: alpha(theme.palette.success.main, 0.12),
+        borderColor: alpha(theme.palette.success.main, 0.3),
       },
-      'error': { 
-        color: theme.palette.error.dark, 
-        bgColor: alpha(theme.palette.error.main, 0.12), 
-        borderColor: alpha(theme.palette.error.main, 0.3) 
+      error: {
+        color: theme.palette.error.dark,
+        bgColor: alpha(theme.palette.error.main, 0.12),
+        borderColor: alpha(theme.palette.error.main, 0.3),
       },
-      'warning': { 
-        color: theme.palette.warning.dark, 
-        bgColor: alpha(theme.palette.warning.main, 0.12), 
-        borderColor: alpha(theme.palette.warning.main, 0.3) 
+      warning: {
+        color: theme.palette.warning.dark,
+        bgColor: alpha(theme.palette.warning.main, 0.12),
+        borderColor: alpha(theme.palette.warning.main, 0.3),
       },
-      'info': { 
-        color: theme.palette.info.dark, 
-        bgColor: alpha(theme.palette.info.main, 0.12), 
-        borderColor: alpha(theme.palette.info.main, 0.3) 
+      info: {
+        color: theme.palette.info.dark,
+        bgColor: alpha(theme.palette.info.main, 0.12),
+        borderColor: alpha(theme.palette.info.main, 0.3),
       },
-      
+
       // Default
-      'default': { 
-        color: theme.palette.grey[700], 
-        bgColor: theme.palette.grey[100], 
-        borderColor: theme.palette.grey[300] 
+      default: {
+        color: theme.palette.grey[700],
+        bgColor: theme.palette.grey[100],
+        borderColor: theme.palette.grey[300],
       },
     };
 
     // Convert status to lowercase and handle special cases
     const normalizedStatus = status.toLowerCase().replace(/\s+/g, '-');
-    
+
     return statusMap[normalizedStatus] || statusMap.default;
   };
 
   const { color, bgColor, borderColor } = getStatusColor(status);
-  
+
   // Determine label text
-  const displayLabel = label || status.charAt(0).toUpperCase() + status.slice(1).replace(/-/g, ' ');
+  const displayLabel =
+    label ||
+    status.charAt(0).toUpperCase() + status.slice(1).replace(/-/g, ' ');
 
   const chip = (
     <Chip
@@ -165,7 +170,7 @@ const StatusChip: React.FC<StatusChipProps> = ({
       size={size}
       variant={variant}
       sx={{
-        color: color,
+        color,
         backgroundColor: variant === 'filled' ? bgColor : 'transparent',
         borderColor: variant === 'outlined' ? borderColor : 'transparent',
         fontWeight: 600,
@@ -175,15 +180,17 @@ const StatusChip: React.FC<StatusChipProps> = ({
           px: withDot ? 1.5 : 2,
           pl: withDot ? 2 : undefined,
         },
-        '&::before': withDot ? {
-          content: '""',
-          display: 'block',
-          width: 8,
-          height: 8,
-          borderRadius: '50%',
-          backgroundColor: color,
-          marginRight: 1,
-        } : undefined,
+        '&::before': withDot
+          ? {
+              content: '""',
+              display: 'block',
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              backgroundColor: color,
+              marginRight: 1,
+            }
+          : undefined,
         ...chipProps.sx,
       }}
       {...chipProps}

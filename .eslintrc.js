@@ -1,42 +1,52 @@
 // .eslintrc.js
 module.exports = {
+  root: true,
   env: {
     commonjs: true,
     es2021: true,
     node: true,
-    jest: true, // Added because Jest is a dev dependency
+    jest: true,
   },
   extends: [
     'airbnb-base',
-    'plugin:prettier/recommended', // Integrates Prettier with ESLint
+    'plugin:prettier/recommended',
   ],
   parserOptions: {
     ecmaVersion: 12,
+    sourceType: 'module',
   },
-  plugins: [
-    'prettier',
-  ],
+  plugins: ['prettier'],
   rules: {
-    'prettier/prettier': ['error', { "endOfLine": "auto" }], // Report Prettier rule violations as ESLint errors, handle line endings automatically
-    'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off', // Allow console logs in development
-    'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }], // Warn about unused vars, allow underscore prefix
-    'import/prefer-default-export': 'off', // Allow named exports
-    'class-methods-use-this': 'off', // Allow class methods that don't use 'this'
-    // Add any other project-specific rule overrides here
+    'prettier/prettier': ['error', { endOfLine: 'auto' }],
+    'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
+    'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+    'import/prefer-default-export': 'off',
+    'class-methods-use-this': 'off',
+    'import/extensions': [
+      'error',
+      'ignorePackages',
+      {
+        js: 'never',
+        jsx: 'never',
+        ts: 'never',
+        tsx: 'never',
+      },
+    ],
   },
   ignorePatterns: [
     'node_modules/',
+    'client-new/**',
     'build/',
     'dist/',
     'coverage/',
-    'client-new/', // Ignore the frontend directory
-    'uploads/', // Ignore uploads directory
-    '*.html', // Ignore html files in root
-    '*.md', // Ignore markdown files
+    'client-new/build/',
+    'uploads/',
+    '*.html',
+    '*.md',
     'Dockerfile',
     'docker-compose.yml',
     'Procfile',
     '.env',
-    'fix-linting.sh', // Ignore shell script
+    'fix-linting.sh',
   ],
 };

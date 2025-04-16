@@ -1,5 +1,6 @@
 import * as axiosModule from 'axios';
 import { AxiosRequestConfig } from 'axios';
+
 const axios = axiosModule.default || axiosModule;
 
 // Define AxiosProgressEvent type if it doesn't exist in axios 0.27.2
@@ -32,10 +33,12 @@ axios.interceptors.request.use(
     if (token) {
       // Ensure headers object exists
       if (!config.headers) {
+        // eslint-disable-next-line no-param-reassign
         config.headers = {};
       }
       // Add the Authorization header
-      config.headers['Authorization'] = `Bearer ${token}`;
+      // eslint-disable-next-line no-param-reassign
+      config.headers.Authorization = `Bearer ${token}`;
       console.log('Interceptor added Auth token to headers');
     } else {
       console.log('Interceptor: No auth token found');
@@ -49,7 +52,6 @@ axios.interceptors.request.use(
   }
 );
 // --- End Interceptor ---
-
 
 // Create reusable API service with common methods
 const apiService = {
@@ -73,6 +75,7 @@ const apiService = {
   // Generic POST request
   post: async (
     endpoint: string,
+    // eslint-disable-next-line default-param-last
     data: any = {},
     config?: AxiosRequestConfig
   ) => {

@@ -62,12 +62,13 @@ let theme = createTheme({
       800: '#424242',
       900: '#212121',
     },
-  text: {
-    primary: '#212121', // Updated primary text color from image
-    secondary: '#424242', // Darker gray for better contrast on light background
-  }, // End of text object
-}, // End of palette object
-typography: { // Move typography to top level
+    text: {
+      primary: '#212121', // Updated primary text color from image
+      secondary: '#424242', // Darker gray for better contrast on light background
+    }, // End of text object
+  }, // End of palette object
+  typography: {
+    // Move typography to top level
     fontFamily: [
       'Inter',
       'Roboto',

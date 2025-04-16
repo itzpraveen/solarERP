@@ -32,7 +32,6 @@ import {
   TableRow,
   Checkbox, // Import Checkbox
 } from '@mui/material';
-import { formatCurrencySync } from '../../utils/formatters';
 // import CurrencyDisplay from '../../components/common/CurrencyDisplay'; // Unused
 import {
   BarChart as BarChartIcon,
@@ -67,6 +66,7 @@ import {
   Tooltip,
   Legend,
 } from 'recharts';
+import { formatCurrencySync } from '../../utils/formatters';
 
 // Import necessary services and types
 import reportService, { Report } from '../../api/reportService';

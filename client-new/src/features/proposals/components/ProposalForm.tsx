@@ -106,7 +106,7 @@ const ProposalForm = ({
         if (initialLeadId) {
           console.log('Fetching specific lead for form:', initialLeadId);
           const response = await leadService.getLead(initialLeadId);
-          const lead = response.data.lead;
+          const { lead } = response.data;
           if (lead) {
             setLeads([lead]);
             setFormData((prev) => ({

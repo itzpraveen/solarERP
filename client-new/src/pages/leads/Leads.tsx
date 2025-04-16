@@ -135,7 +135,7 @@ const LeadForm = ({
     // Prepare data for submission
     // Create a new object excluding monthlyElectricBill initially
     const { monthlyElectricBill, ...restData } = formData;
-    let processedData: any = { ...restData }; // Use 'any' for flexibility here
+    const processedData: any = { ...restData }; // Use 'any' for flexibility here
 
     const billAmountString = monthlyElectricBill.amount;
 
@@ -207,7 +207,9 @@ const LeadForm = ({
                 onChange={handleChange}
               />
             </Grid>
-            <Grid item xs={12} md={3}> {/* Adjusted md size */}
+            <Grid item xs={12} md={3}>
+              {' '}
+              {/* Adjusted md size */}
               <TextField
                 fullWidth
                 required
@@ -228,7 +230,9 @@ const LeadForm = ({
                 onChange={handleChange}
               />
             </Grid>
-            <Grid item xs={12} md={3}> {/* Adjusted md size */}
+            <Grid item xs={12} md={3}>
+              {' '}
+              {/* Adjusted md size */}
               <TextField
                 fullWidth
                 required
@@ -238,7 +242,9 @@ const LeadForm = ({
                 onChange={handleChange}
               />
             </Grid>
-            <Grid item xs={12} md={3}> {/* Adjusted md size */}
+            <Grid item xs={12} md={3}>
+              {' '}
+              {/* Adjusted md size */}
               <TextField
                 fullWidth
                 required

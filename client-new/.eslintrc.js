@@ -1,15 +1,7 @@
-// client-new/.eslintrc.js
 module.exports = {
+  root: true,
   extends: [
     'react-app',
-    'react-app/jest',
-    'eslint-config-prettier', // Disables ESLint rules that conflict with Prettier
-  ],
-  plugins: [
-    'prettier', // Explicitly enable prettier plugin
-  ],
-  rules: {
-    'prettier/prettier': 'off', // Temporarily disable prettier rule to allow build
-    // Add any other client-specific rules here if needed
-  },
+    'react-app/jest'
+  ]
 };

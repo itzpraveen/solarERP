@@ -130,7 +130,7 @@ const customerService = {
   convertLeadToCustomer: async (leadId: string, proposalId?: string) => {
     try {
       return await apiService.post(`/api/customers/convert-lead/${leadId}`, {
-        proposalId: proposalId,
+        proposalId,
       });
     } catch (error) {
       throw error;

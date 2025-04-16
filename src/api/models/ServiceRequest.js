@@ -3,78 +3,88 @@ const mongoose = require('mongoose');
 const noteSchema = new mongoose.Schema({
   text: {
     type: String,
-    required: true
+    required: true,
   },
   createdBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: true,
   },
   createdAt: {
     type: Date,
-    default: Date.now
-  }
+    default: Date.now,
+  },
 });
 
-const serviceRequestSchema = new mongoose.Schema({
-  title: {
-    type: String,
-    required: true,
-    trim: true
+const serviceRequestSchema = new mongoose.Schema(
+  {
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    description: {
+      type: String,
+      required: true,
+    },
+    requestType: {
+      type: String,
+      required: true,
+      enum: ['maintenance', 'repair', 'installation', 'inspection', 'other'],
+    },
+    priority: {
+      type: String,
+      required: true,
+      enum: ['low', 'medium', 'high', 'urgent'],
+      default: 'medium',
+    },
+    status: {
+      type: String,
+      required: true,
+      enum: [
+        'new',
+        'assigned',
+        'in_progress',
+        'on_hold',
+        'completed',
+        'cancelled',
+      ],
+      default: 'new',
+    },
+    customer: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Customer',
+      required: true,
+    },
+    project: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Project',
+    },
+    assignedTechnician: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    scheduledDate: {
+      type: Date,
+    },
+    completionDate: {
+      type: Date,
+    },
+    notes: [noteSchema],
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    updatedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
   },
-  description: {
-    type: String,
-    required: true
-  },
-  requestType: {
-    type: String,
-    required: true,
-    enum: ['maintenance', 'repair', 'installation', 'inspection', 'other']
-  },
-  priority: {
-    type: String,
-    required: true,
-    enum: ['low', 'medium', 'high', 'urgent'],
-    default: 'medium'
-  },
-  status: {
-    type: String,
-    required: true,
-    enum: ['new', 'assigned', 'in_progress', 'on_hold', 'completed', 'cancelled'],
-    default: 'new'
-  },
-  customer: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Customer',
-    required: true
-  },
-  project: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Project'
-  },
-  assignedTechnician: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  },
-  scheduledDate: {
-    type: Date
-  },
-  completionDate: {
-    type: Date
-  },
-  notes: [noteSchema],
-  createdBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  updatedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
+  {
+    timestamps: true,
   }
-}, {
-  timestamps: true
-});
+);
 
 // Add indexes for common queries
 serviceRequestSchema.index({ customer: 1 });

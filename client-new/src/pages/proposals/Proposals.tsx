@@ -75,13 +75,13 @@ const ProposalForm = ({
     pricing: {
       grossCost: 0,
       centralSubsidy: 0, // Renamed
-      stateSubsidy: 0,   // Renamed
-      gstRate: 12,       // Added (example default)
-      gstAmount: 0,      // Added
+      stateSubsidy: 0, // Renamed
+      gstRate: 12, // Added (example default)
+      gstAmount: 0, // Added
       utilityRebate: 0,
       otherIncentives: 0,
       netCost: 0,
-      currency: 'INR',   // Added currency
+      currency: 'INR', // Added currency
     },
     notes: '',
   });
@@ -98,7 +98,7 @@ const ProposalForm = ({
           // Fetch only the specific lead if initialLeadId is provided
           console.log('Fetching specific lead for form:', initialLeadId);
           const response = await leadService.getLead(initialLeadId);
-          const lead = response.data.lead;
+          const { lead } = response.data;
           if (lead) {
             setLeads([lead]); // Set only this lead in the options
             setFormData((prev) => ({
@@ -178,7 +178,8 @@ const ProposalForm = ({
         netCost: calculatedNetCost > 0 ? calculatedNetCost : 0,
       },
     }));
-  }, [ // Update dependencies
+  }, [
+    // Update dependencies
     formData.pricing.grossCost,
     formData.pricing.centralSubsidy,
     formData.pricing.stateSubsidy,
@@ -505,30 +506,30 @@ const ProposalForm = ({
             </Grid>
             {/* Added GST Rate Field */}
             <Grid item xs={12} md={4}>
-               <TextField
-                 fullWidth
-                 required
-                 label={`GST Rate (%)`}
-                 name="pricing.gstRate"
-                 type="number"
-                 inputProps={{ min: 0, step: 0.1 }}
-                 value={formData.pricing.gstRate}
-                 onChange={handleNumberChange}
-               />
+              <TextField
+                fullWidth
+                required
+                label={`GST Rate (%)`}
+                name="pricing.gstRate"
+                type="number"
+                inputProps={{ min: 0, step: 0.1 }}
+                value={formData.pricing.gstRate}
+                onChange={handleNumberChange}
+              />
             </Grid>
             {/* Added GST Amount Field (Read Only) */}
-             <Grid item xs={12} md={4}>
-               <TextField
-                 fullWidth
-                 required
-                 label={`GST Amount (₹)`}
-                 name="pricing.gstAmount"
-                 type="number"
-                 value={formData.pricing.gstAmount}
-                 InputProps={{
-                   readOnly: true, // GST Amount is calculated
-                 }}
-               />
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                required
+                label={`GST Amount (₹)`}
+                name="pricing.gstAmount"
+                type="number"
+                value={formData.pricing.gstAmount}
+                InputProps={{
+                  readOnly: true, // GST Amount is calculated
+                }}
+              />
             </Grid>
             <Grid item xs={12}>
               <TextField

@@ -28,11 +28,11 @@ class AuthRepository {
    */
   async findUserById(id) {
     const user = await User.findById(id);
-    
+
     if (!user) {
       throw new NotFoundError('User not found');
     }
-    
+
     return user;
   }
 
@@ -44,11 +44,11 @@ class AuthRepository {
    */
   async findUserByIdWithPassword(id) {
     const user = await User.findById(id).select('+password');
-    
+
     if (!user) {
       throw new NotFoundError('User not found');
     }
-    
+
     return user;
   }
 
@@ -70,7 +70,7 @@ class AuthRepository {
   async findUserByResetToken(hashedToken, expiryDate) {
     return User.findOne({
       passwordResetToken: hashedToken,
-      passwordResetExpires: { $gt: expiryDate }
+      passwordResetExpires: { $gt: expiryDate },
     });
   }
 
@@ -84,7 +84,7 @@ class AuthRepository {
     user.password = newPassword;
     user.passwordResetToken = undefined;
     user.passwordResetExpires = undefined;
-    
+
     return user.save();
   }
 

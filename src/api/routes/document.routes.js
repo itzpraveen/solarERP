@@ -1,8 +1,9 @@
 const express = require('express');
+const { check } = require('express-validator');
 const documentController = require('../controllers/document.controller');
 const authController = require('../controllers/auth.controller');
 const upload = require('../../utils/fileUpload');
-const { check } = require('express-validator');
+
 const router = express.Router();
 
 // Public route for accessing shared documents
@@ -26,7 +27,7 @@ const validateDocument = [
     'customer',
     'marketing',
     'legal',
-    'other'
+    'other',
   ]),
   check('relatedTo.entityType', 'Valid entity type is required').isIn([
     'project',
@@ -35,32 +36,65 @@ const validateDocument = [
     'proposal',
     'equipment',
     'user',
-    'other'
+    'other',
   ]),
-  check('relatedTo.entityId', 'Valid entity ID is required').isMongoId()
+  check('relatedTo.entityId', 'Valid entity ID is required').isMongoId(),
 ];
 
 // Search documents
-router.get('/search', authController.restrictTo('admin', 'manager', 'sales'), documentController.searchDocuments);
+router.get(
+  '/search',
+  authController.restrictTo('admin', 'manager', 'sales'),
+  documentController.searchDocuments
+);
 
 // Main document routes
-router.route('/')
-  .get(authController.restrictTo('admin', 'manager', 'sales'), documentController.getAllDocuments)
-  .post(authController.restrictTo('admin', 'manager', 'sales'), upload.single('file'), validateDocument, documentController.createDocument);
+router
+  .route('/')
+  .get(
+    authController.restrictTo('admin', 'manager', 'sales'),
+    documentController.getAllDocuments
+  )
+  .post(
+    authController.restrictTo('admin', 'manager', 'sales'),
+    upload.single('file'),
+    validateDocument,
+    documentController.createDocument
+  );
 
-router.route('/:id')
-  .get(authController.restrictTo('admin', 'manager', 'sales'), documentController.getDocument)
-  .patch(authController.restrictTo('admin', 'manager'), upload.single('file'), documentController.updateDocument)
-  .delete(authController.restrictTo('admin', 'manager'), documentController.deleteDocument);
+router
+  .route('/:id')
+  .get(
+    authController.restrictTo('admin', 'manager', 'sales'),
+    documentController.getDocument
+  )
+  .patch(
+    authController.restrictTo('admin', 'manager'),
+    upload.single('file'),
+    documentController.updateDocument
+  )
+  .delete(
+    authController.restrictTo('admin', 'manager'),
+    documentController.deleteDocument
+  );
 
 // Download document
-router.get('/:id/download', authController.restrictTo('admin', 'manager', 'sales'), documentController.downloadDocument);
+router.get(
+  '/:id/download',
+  authController.restrictTo('admin', 'manager', 'sales'),
+  documentController.downloadDocument
+);
 
 // Share document
-router.post('/:id/share', authController.restrictTo('admin', 'manager', 'sales'), documentController.shareDocument);
+router.post(
+  '/:id/share',
+  authController.restrictTo('admin', 'manager', 'sales'),
+  documentController.shareDocument
+);
 
 // Sign document
-router.post('/:id/sign', 
+router.post(
+  '/:id/sign',
   check('signatureData', 'Signature data is required').not().isEmpty(),
   authController.restrictTo('admin', 'manager', 'sales'), // Restricting internal signing for now
   documentController.signDocument

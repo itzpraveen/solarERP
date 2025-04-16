@@ -1,15 +1,15 @@
 import React from 'react';
-import { 
-  Box, 
-  Typography, 
-  Breadcrumbs, 
-  Link, 
-  Button, 
-  useTheme, 
+import {
+  Box,
+  Typography,
+  Breadcrumbs,
+  Link,
+  Button,
+  useTheme,
   alpha,
   Paper,
   Divider,
-  useMediaQuery
+  useMediaQuery,
 } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
@@ -36,14 +36,14 @@ const PageHeader: React.FC<PageHeaderProps> = ({
   backLink,
   backLabel = 'Back',
   action,
-  children
+  children,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.down('md'));
 
   return (
-    <Paper 
+    <Paper
       elevation={0}
       sx={{
         mb: 3,
@@ -54,33 +54,33 @@ const PageHeader: React.FC<PageHeaderProps> = ({
         border: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
       }}
     >
-      <Box 
-        sx={{ 
+      <Box
+        sx={{
           // Padding moved to inner Box
           background: `linear-gradient(to right, ${alpha(theme.palette.primary.main, 0.03)}, ${alpha(theme.palette.background.paper, 0.5)})`,
         }}
       >
         {/* Breadcrumbs */}
         {breadcrumbs && breadcrumbs.length > 0 && (
-          <Breadcrumbs 
-            aria-label="breadcrumb" 
-            sx={{ 
+          <Breadcrumbs
+            aria-label="breadcrumb"
+            sx={{
               mb: 1.5,
               '& .MuiBreadcrumbs-ol': {
                 flexWrap: 'wrap',
               },
               '& .MuiBreadcrumbs-li': {
                 fontSize: '0.85rem',
-              }
+              },
             }}
           >
             {breadcrumbs.map((crumb, index) => {
               const isLast = index === breadcrumbs.length - 1;
               return isLast ? (
-                <Typography 
-                  key={index} 
-                  color="text.primary" 
-                  sx={{ 
+                <Typography
+                  key={index}
+                  color="text.primary"
+                  sx={{
                     fontSize: '0.85rem',
                     fontWeight: 500,
                   }}
@@ -93,11 +93,11 @@ const PageHeader: React.FC<PageHeaderProps> = ({
                   component={RouterLink}
                   to={crumb.link || '#'}
                   color="text.secondary"
-                  sx={{ 
+                  sx={{
                     fontSize: '0.85rem',
                     '&:hover': {
                       color: theme.palette.primary.main,
-                    }
+                    },
                   }}
                 >
                   {crumb.label}
@@ -113,12 +113,12 @@ const PageHeader: React.FC<PageHeaderProps> = ({
             component={RouterLink}
             to={backLink}
             startIcon={<ArrowBackIcon />}
-            sx={{ 
+            sx={{
               mb: 2,
               color: theme.palette.text.secondary,
               '&:hover': {
                 backgroundColor: alpha(theme.palette.primary.main, 0.05),
-              }
+              },
             }}
           >
             {backLabel}
@@ -137,44 +137,46 @@ const PageHeader: React.FC<PageHeaderProps> = ({
           }}
         >
           {/* Removed inner Box wrapper */}
+          <Typography
+            variant={isMobile ? 'h5' : 'h4'}
+            component="h1"
+            sx={{
+              fontWeight: 700,
+              color: theme.palette.text.primary,
+              lineHeight: 'normal', // Let browser handle title line height
+              mb: 1, // Add explicit bottom margin to title
+            }}
+          >
+            {title}
+          </Typography>
+          {subtitle && (
             <Typography
-              variant={isMobile ? 'h5' : 'h4'}
-              component="h1"
-              sx={{ 
-                fontWeight: 700,
-                color: theme.palette.text.primary,
-                lineHeight: 'normal', // Let browser handle title line height
-                mb: 1, // Add explicit bottom margin to title
+              variant="body1"
+              color="text.secondary"
+              sx={{
+                mt: 0, // Revert negative margin
+                maxWidth: '800px',
+                lineHeight: 'normal', // Let browser calculate line height
+                // pt: 0.2,
               }}
             >
-              {title}
+              {subtitle}
             </Typography>
-            {subtitle && (
-              <Typography 
-                variant="body1" 
-                color="text.secondary"
-                sx={{ 
-                  mt: 0, // Revert negative margin
-                  maxWidth: '800px',
-                  lineHeight: 'normal', // Let browser calculate line height
-                  // pt: 0.2,
-                }}
-              >
-                {subtitle}
-              </Typography>
-            )}
+          )}
           {/* Removed inner Box wrapper */}
 
           {/* Action Button */}
           {action && (
-            <Box sx={{
-              mt: { xs: 1, md: 0 },
-              display: 'flex',
-              flexDirection: { xs: 'column', sm: 'row' },
-              gap: 1, // Keep gap for row layout
-              alignItems: { xs: 'stretch', sm: 'center' },
-              // Reverted specific margin for stacked buttons
-            }}>
+            <Box
+              sx={{
+                mt: { xs: 1, md: 0 },
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' },
+                gap: 1, // Keep gap for row layout
+                alignItems: { xs: 'stretch', sm: 'center' },
+                // Reverted specific margin for stacked buttons
+              }}
+            >
               {action}
             </Box>
           )}
@@ -185,9 +187,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
       {children && (
         <>
           <Divider />
-          <Box sx={{ p: { xs: 2, sm: 3 } }}>
-            {children}
-          </Box>
+          <Box sx={{ p: { xs: 2, sm: 3 } }}>{children}</Box>
         </>
       )}
     </Paper>

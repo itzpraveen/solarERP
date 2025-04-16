@@ -1,19 +1,19 @@
 import React from 'react';
-import { 
-  Box, 
-  Paper, 
-  Typography, 
-  Divider, 
-  useTheme, 
+import {
+  Box,
+  Paper,
+  Typography,
+  Divider,
+  useTheme,
   alpha,
   IconButton,
   Collapse,
-  Tooltip
+  Tooltip,
 } from '@mui/material';
-import { 
+import {
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
-  Refresh as RefreshIcon
+  Refresh as RefreshIcon,
 } from '@mui/icons-material';
 
 interface ContentCardProps {
@@ -41,7 +41,7 @@ const ContentCard: React.FC<ContentCardProps> = ({
   noPadding = false,
   elevation = 0,
   headerBg = 'default',
-  children
+  children,
 }) => {
   const theme = useTheme();
   const [expanded, setExpanded] = React.useState(defaultExpanded);
@@ -82,8 +82,12 @@ const ContentCard: React.FC<ContentCardProps> = ({
         borderRadius: theme.shape.borderRadius * 1.5,
         overflow: 'hidden',
         backgroundColor: theme.palette.background.paper,
-        boxShadow: elevation === 0 ? '0 4px 20px rgba(0, 0, 0, 0.03)' : undefined,
-        border: elevation === 0 ? `1px solid ${alpha(theme.palette.divider, 0.5)}` : 'none',
+        boxShadow:
+          elevation === 0 ? '0 4px 20px rgba(0, 0, 0, 0.03)' : undefined,
+        border:
+          elevation === 0
+            ? `1px solid ${alpha(theme.palette.divider, 0.5)}`
+            : 'none',
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
@@ -108,11 +112,12 @@ const ContentCard: React.FC<ContentCardProps> = ({
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
               {icon && (
-                <Box 
-                  sx={{ 
-                    color: headerBg === 'default' || headerBg === 'transparent' 
-                      ? theme.palette.primary.main 
-                      : 'inherit',
+                <Box
+                  sx={{
+                    color:
+                      headerBg === 'default' || headerBg === 'transparent'
+                        ? theme.palette.primary.main
+                        : 'inherit',
                     display: 'flex',
                     alignItems: 'center',
                   }}
@@ -122,10 +127,10 @@ const ContentCard: React.FC<ContentCardProps> = ({
               )}
               <Box>
                 {title && (
-                  <Typography 
-                    variant="h6" 
+                  <Typography
+                    variant="h6"
                     component="h2"
-                    sx={{ 
+                    sx={{
                       fontWeight: 600,
                       fontSize: '1.1rem',
                       lineHeight: 1.3,
@@ -135,12 +140,19 @@ const ContentCard: React.FC<ContentCardProps> = ({
                   </Typography>
                 )}
                 {subtitle && (
-                  <Typography 
-                    variant="body2" 
-                    color={headerBg === 'default' || headerBg === 'transparent' ? 'text.secondary' : 'inherit'}
-                    sx={{ 
+                  <Typography
+                    variant="body2"
+                    color={
+                      headerBg === 'default' || headerBg === 'transparent'
+                        ? 'text.secondary'
+                        : 'inherit'
+                    }
+                    sx={{
                       mt: 0.5,
-                      opacity: headerBg === 'default' || headerBg === 'transparent' ? 1 : 0.8,
+                      opacity:
+                        headerBg === 'default' || headerBg === 'transparent'
+                          ? 1
+                          : 0.8,
                     }}
                   >
                     {subtitle}
@@ -151,36 +163,42 @@ const ContentCard: React.FC<ContentCardProps> = ({
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
               {action}
-              
+
               {onRefresh && (
                 <Tooltip title="Refresh">
-                  <IconButton 
+                  <IconButton
                     onClick={onRefresh}
                     size="small"
-                    sx={{ 
-                      color: headerBg === 'default' || headerBg === 'transparent' 
-                        ? theme.palette.text.secondary 
-                        : 'inherit',
+                    sx={{
+                      color:
+                        headerBg === 'default' || headerBg === 'transparent'
+                          ? theme.palette.text.secondary
+                          : 'inherit',
                     }}
                   >
                     <RefreshIcon fontSize="small" />
                   </IconButton>
                 </Tooltip>
               )}
-              
+
               {collapsible && (
-                <Tooltip title={expanded ? "Collapse" : "Expand"}>
-                  <IconButton 
+                <Tooltip title={expanded ? 'Collapse' : 'Expand'}>
+                  <IconButton
                     onClick={toggleExpanded}
                     size="small"
-                    sx={{ 
-                      color: headerBg === 'default' || headerBg === 'transparent' 
-                        ? theme.palette.text.secondary 
-                        : 'inherit',
+                    sx={{
+                      color:
+                        headerBg === 'default' || headerBg === 'transparent'
+                          ? theme.palette.text.secondary
+                          : 'inherit',
                       transition: 'transform 0.2s',
                     }}
                   >
-                    {expanded ? <ExpandLessIcon fontSize="small" /> : <ExpandMoreIcon fontSize="small" />}
+                    {expanded ? (
+                      <ExpandLessIcon fontSize="small" />
+                    ) : (
+                      <ExpandMoreIcon fontSize="small" />
+                    )}
                   </IconButton>
                 </Tooltip>
               )}
@@ -191,9 +209,13 @@ const ContentCard: React.FC<ContentCardProps> = ({
       )}
 
       {/* Card Content */}
-      <Collapse in={!collapsible || expanded} timeout="auto" sx={{ flexGrow: 1 }}>
-        <Box 
-          sx={{ 
+      <Collapse
+        in={!collapsible || expanded}
+        timeout="auto"
+        sx={{ flexGrow: 1 }}
+      >
+        <Box
+          sx={{
             p: noPadding ? 0 : 2,
             height: '100%',
           }}

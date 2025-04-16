@@ -491,12 +491,14 @@ const Dashboard = () => {
             Welcome back, {user?.name || 'User'}! Here's what's happening today.
           </Typography>
         </Box>
-        <Box sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row' }, // Stack on mobile, side-by-side on larger screens
-          alignItems: { xs: 'stretch', sm: 'center' }, // Full width on mobile, centered on larger screens
-          gap: 2,
-        }}>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' }, // Stack on mobile, side-by-side on larger screens
+            alignItems: { xs: 'stretch', sm: 'center' }, // Full width on mobile, centered on larger screens
+            gap: 2,
+          }}
+        >
           <Button
             variant="outlined"
             onClick={handleRefresh}
@@ -1252,12 +1254,14 @@ const Dashboard = () => {
             Start by creating customers, leads, or projects to see statistics
             here.
           </Typography>
-          <Box sx={{
-            display: 'flex',
-            gap: 2,
-            flexDirection: { xs: 'column', sm: 'row' }, // Stack vertically on mobile
-            alignItems: { xs: 'stretch', sm: 'center' } // Stretch buttons on mobile
-          }}>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 2,
+              flexDirection: { xs: 'column', sm: 'row' }, // Stack vertically on mobile
+              alignItems: { xs: 'stretch', sm: 'center' }, // Stretch buttons on mobile
+            }}
+          >
             <Button
               component={Link}
               to="/customers/new"

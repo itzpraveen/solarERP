@@ -1538,11 +1538,12 @@ const LeadDetails = () => {
 
               const dataToSubmit = {
                 ...proposalData,
-                pricing: { // Merge default pricing with form data
+                pricing: {
+                  // Merge default pricing with form data
                   ...defaultPricing,
                   ...(proposalData.pricing || {}),
                 },
-                lead: lead, // Pass the full lead object from state
+                lead, // Pass the full lead object from state
                 status: 'draft' as
                   | 'draft'
                   | 'sent'

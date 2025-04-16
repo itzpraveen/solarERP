@@ -20,3 +20,5 @@ export {
 // Export types
 export type { StatusType } from './StatusChip';
 export type { Column } from './DataTable';
+export { default as Dialog } from './ResponsiveDialog';
+export { DialogTitle, DialogContent, DialogActions } from '@mui/material';

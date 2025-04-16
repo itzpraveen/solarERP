@@ -15,10 +15,16 @@ const authorize = (...requiredPermissions) => {
     }
 
     // --- Add Logging ---
-    console.log(`[Authorize] User ID: ${req.user.id}, Email: ${req.user.email}`);
+    console.log(
+      `[Authorize] User ID: ${req.user.id}, Email: ${req.user.email}`
+    );
     console.log(`[Authorize] User Role: ${req.user.role}`);
-    console.log(`[Authorize] User Permissions: ${JSON.stringify(req.user.permissions)}`);
-    console.log(`[Authorize] Required Permissions: ${JSON.stringify(requiredPermissions)}`);
+    console.log(
+      `[Authorize] User Permissions: ${JSON.stringify(req.user.permissions)}`
+    );
+    console.log(
+      `[Authorize] Required Permissions: ${JSON.stringify(requiredPermissions)}`
+    );
     // --- End Logging ---
 
     // Ensure user has a permissions array
@@ -30,13 +36,18 @@ const authorize = (...requiredPermissions) => {
     );
 
     // Admins might have all permissions implicitly (optional, adjust as needed)
-    if (req.user.role === 'admin') { // Check if role is exactly 'admin' (lowercase)
-      console.log('[Authorize] Admin user detected, bypassing specific permission check.');
+    if (req.user.role === 'admin') {
+      // Check if role is exactly 'admin' (lowercase)
+      console.log(
+        '[Authorize] Admin user detected, bypassing specific permission check.'
+      );
       return next(); // Admins bypass specific permission checks
     }
 
     if (!hasRequiredPermissions) {
-      console.log(`Authorization failed for user ${req.user.id} (${req.user.email}). Required: ${requiredPermissions.join(', ')}. Has: ${userPermissions.join(', ')}`);
+      console.log(
+        `Authorization failed for user ${req.user.id} (${req.user.email}). Required: ${requiredPermissions.join(', ')}. Has: ${userPermissions.join(', ')}`
+      );
       return next(
         new AppError('You do not have permission to perform this action.', 403)
       );
