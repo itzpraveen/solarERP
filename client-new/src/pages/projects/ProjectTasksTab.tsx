@@ -112,13 +112,22 @@ interface TaskCardProps {
   onEdit: (task: ProjectTask) => void;
   onDelete: (task: ProjectTask) => void;
   isOverlay?: boolean; // Optional prop for drag overlay styling
+  dragActive?: boolean; // For defensive overlay check
 }
 
-const TaskCard: React.FC<TaskCardProps> = ({ task, users, onEdit, onDelete, isOverlay }) => {
+const TaskCard: React.FC<TaskCardProps> = ({ task, users, onEdit, onDelete, isOverlay, dragActive }) => {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task._id || 'new-task', // Provide a fallback id if needed
     data: { task }, // Pass task data for context
   });
+
+  useEffect(() => {
+    if (isOverlay && !dragActive) {
+      // Defensive warning if overlay is rendered outside of drag event
+      // eslint-disable-next-line no-console
+      console.warn('Overlay TaskCard rendered outside of drag event!');
+    }
+  }, [isOverlay, dragActive]);
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -147,7 +156,6 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, users, onEdit, onDelete, isOv
     return name || user?.name || 'Unknown';
   };
 
-
   const assigneeName = getUserFullName(task.assignedTo);
   const dueDate = formatDate(task.dueDate);
 
@@ -158,11 +166,28 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, users, onEdit, onDelete, isOv
       elevation={isDragging ? 4 : 1} // More elevation when dragging
       sx={{ p: 1.5, '&:hover .task-actions': { opacity: 1 } }}
       {...attributes}
-      {...listeners}
     >
-      <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-        {task.description}
-      </Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
+          {task.description}
+        </Typography>
+        {/* Drag handle: only this area is draggable */}
+        <Box
+          sx={{ cursor: isOverlay ? 'grabbing' : 'grab', ml: 1, display: 'flex', alignItems: 'center' }}
+          {...listeners}
+          tabIndex={0}
+          aria-label="Drag task"
+        >
+          <svg width="18" height="18" viewBox="0 0 18 18" style={{ opacity: 0.5 }}>
+            <circle cx="5" cy="5" r="1.5" />
+            <circle cx="5" cy="9" r="1.5" />
+            <circle cx="5" cy="13" r="1.5" />
+            <circle cx="13" cy="5" r="1.5" />
+            <circle cx="13" cy="9" r="1.5" />
+            <circle cx="13" cy="13" r="1.5" />
+          </svg>
+        </Box>
+      </Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 1 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           {task.assignedTo && assigneeName !== 'Unassigned' && (
@@ -179,12 +204,24 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, users, onEdit, onDelete, isOv
         {!isOverlay && ( // Don't show actions on the overlay
           <Box className="task-actions" sx={{ opacity: { xs: 1, sm: 0 }, transition: 'opacity 0.2s' }}>
             <Tooltip title="Edit Task">
-              <IconButton size="small" onClick={() => onEdit(task)}>
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(task);
+                }}
+              >
                 <EditIcon fontSize="inherit" />
               </IconButton>
             </Tooltip>
             <Tooltip title="Delete Task">
-              <IconButton size="small" onClick={() => onDelete(task)}>
+              <IconButton
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(task);
+                }}
+              >
                 <DeleteIcon fontSize="inherit" />
               </IconButton>
             </Tooltip>
@@ -306,6 +343,7 @@ const ProjectTasksTab: React.FC<ProjectTasksTabProps> = ({ projectId }) => {
   }, [fetchTasks, fetchUsers]);
 
   const handleOpenDialog = (task?: ProjectTask) => {
+    console.log('handleOpenDialog called', task);
     if (task) {
       setIsEditing(true);
       setCurrentTask({
@@ -513,7 +551,14 @@ const ProjectTasksTab: React.FC<ProjectTasksTabProps> = ({ projectId }) => {
         {/* Drag Overlay */}
         <DragOverlay>
           {activeTask ? (
-            <TaskCard task={activeTask} users={users} onEdit={() => {}} onDelete={() => {}} isOverlay />
+            <TaskCard
+              task={activeTask}
+              users={users}
+              onEdit={() => {}}
+              onDelete={() => {}}
+              isOverlay
+              dragActive={!!activeTask}
+            />
           ) : null}
         </DragOverlay>
 
