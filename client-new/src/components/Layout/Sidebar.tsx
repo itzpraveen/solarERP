@@ -39,6 +39,7 @@ import {
   Person as PersonIcon,
   ExpandLess,
   ExpandMore,
+  Inventory2 as InventoryIcon, // Import Inventory Icon
 } from '@mui/icons-material';
 import logoSvg from '../../logo.svg';
 import { AuthContext } from '../../features/auth/context/AuthContext';
@@ -58,6 +59,7 @@ const menuItems = [
   { text: 'Customers', icon: <CustomerIcon />, path: '/customers' }, // Moved Customers down
   { text: 'Projects', icon: <ProjectIcon />, path: '/projects' },
   { text: 'Equipment', icon: <EquipmentIcon />, path: '/equipment' },
+  { text: 'Inventory', icon: <InventoryIcon />, path: '/inventory' }, // Add Inventory menu item
   { text: 'Service Requests', icon: <ServiceIcon />, path: '/services' },
   { text: 'Documents', icon: <DocumentIcon />, path: '/documents' },
   { text: 'Reports', icon: <ReportIcon />, path: '/reports' },
@@ -70,7 +72,7 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
   const { totalProjects, loadingCount } = useProjectContext();
   const [anchorElUser, setAnchorElUser] = useState<HTMLElement | null>(null);
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  // const isMobile = useMediaQuery(theme.breakpoints.down('sm')); // Removed unused variable
 
   // Group menu items by category
   const mainMenuItems = menuItems.slice(0, 5); // Dashboard, Leads, Customers, Proposals, Projects

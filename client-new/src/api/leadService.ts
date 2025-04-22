@@ -34,7 +34,11 @@ export interface Lead {
     conductedBy: string;
   }>;
   estimatedSystemSize?: number;
-  monthlyElectricBill?: number;
+  monthlyElectricBill?: {
+    // Changed to object
+    amount: number;
+    currency: string;
+  };
   propertyType?: string;
   roofType?: string;
   roofAge?: number;

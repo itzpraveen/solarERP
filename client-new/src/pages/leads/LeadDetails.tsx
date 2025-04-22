@@ -48,7 +48,8 @@ import {
   Description as DescriptionIcon, // Added for Proposal button
 } from '@mui/icons-material';
 import leadService, { Lead } from '../../api/leadService';
-import proposalService from '../../api/proposalService'; // Import proposal service
+// Import Proposal type along with the service
+import proposalService from '../../api/proposalService'; // Removed unused Proposal type import
 import ProposalForm from '../../features/proposals/components/ProposalForm'; // Import the new form component
 // Tab panel component
 interface TabPanelProps {
@@ -204,7 +205,7 @@ const LeadDetails = () => {
   // Initial data fetch
   useEffect(() => {
     fetchLead();
-  }, [id]);
+  }, [id, fetchLead]); // Added fetchLead to dependency array
 
   // Handle tab change
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
@@ -217,20 +218,40 @@ const LeadDetails = () => {
   ) => {
     const { name, value } = e.target;
 
-    if (name.includes('.')) {
+    if (name === 'monthlyElectricBill.amount') {
+      const numericValue = value ? parseFloat(value) : NaN; // Use NaN for invalid/empty
+
+      setEditData((prevData) => {
+        if (!isNaN(numericValue)) {
+          // Valid number: update or create the object
+          return {
+            ...prevData,
+            monthlyElectricBill: {
+              // Use existing currency if available, else default
+              currency: prevData.monthlyElectricBill?.currency || 'INR',
+              amount: numericValue,
+            },
+          };
+        } else {
+          // Invalid or empty number: remove the monthlyElectricBill object
+          const { monthlyElectricBill, ...rest } = prevData;
+          return { ...rest, monthlyElectricBill: undefined };
+        }
+      });
+    } else if (name.includes('.')) {
       const [parent, child] = name.split('.');
-      setEditData({
-        ...editData,
+      setEditData((prevData) => ({
+        ...prevData,
         [parent]: {
-          ...(editData[parent as keyof typeof editData] as any),
+          ...(prevData[parent as keyof typeof prevData] as any),
           [child]: value,
         },
-      });
+      }));
     } else {
-      setEditData({
-        ...editData,
+      setEditData((prevData) => ({
+        ...prevData,
         [name]: value,
-      });
+      }));
     }
   };
 
@@ -658,9 +679,13 @@ const LeadDetails = () => {
                         <TextField
                           fullWidth
                           size="small"
-                          name="monthlyElectricBill"
+                          name="monthlyElectricBill.amount"
                           type="number"
-                          value={editData.monthlyElectricBill || ''}
+                          // Display the amount from editData, converting back to string for input
+                          value={
+                            editData.monthlyElectricBill?.amount?.toString() ||
+                            ''
+                          }
                           onChange={handleEditChange}
                           label="Amount"
                           InputProps={{
@@ -672,8 +697,8 @@ const LeadDetails = () => {
                         />
                       ) : (
                         <Typography variant="body1" sx={{ mt: 1 }}>
-                          {lead.monthlyElectricBill
-                            ? `₹${lead.monthlyElectricBill.toLocaleString()}`
+                          {lead.monthlyElectricBill?.amount // Access amount property
+                            ? `₹${lead.monthlyElectricBill.amount.toLocaleString()}` // Format the amount
                             : 'Not specified'}
                         </Typography>
                       )}
@@ -1186,9 +1211,13 @@ const LeadDetails = () => {
                         <TextField
                           fullWidth
                           size="small"
-                          name="monthlyElectricBill"
+                          name="monthlyElectricBill.amount"
                           type="number"
-                          value={editData.monthlyElectricBill || ''}
+                          // Display the amount from editData, converting back to string for input
+                          value={
+                            editData.monthlyElectricBill?.amount?.toString() ||
+                            ''
+                          }
                           onChange={handleEditChange}
                           label="Amount"
                           InputProps={{
@@ -1200,8 +1229,8 @@ const LeadDetails = () => {
                         />
                       ) : (
                         <Typography variant="body1" sx={{ mt: 1 }}>
-                          {lead.monthlyElectricBill
-                            ? `₹${lead.monthlyElectricBill.toLocaleString()}`
+                          {lead.monthlyElectricBill?.amount // Access amount property
+                            ? `₹${lead.monthlyElectricBill.amount.toLocaleString()}` // Format the amount
                             : 'Not specified'}
                         </Typography>
                       )}
@@ -1521,8 +1550,6 @@ const LeadDetails = () => {
               const validUntilDate = new Date();
               validUntilDate.setDate(validUntilDate.getDate() + 30); // Set valid for 30 days
 
-              // Ensure the full lead object is passed, along with defaults
-
               // Ensure pricing object has required fields for the type
               const defaultPricing = {
                 grossCost: 0,
@@ -1536,24 +1563,39 @@ const LeadDetails = () => {
                 currency: 'INR',
               };
 
+              // Construct the payload matching the service expectation
               const dataToSubmit = {
-                ...proposalData,
+                ...proposalData, // Includes name, systemSize, panelCount, etc.
+                // Explicitly map equipment to match the service expectation
+                equipment: proposalData.equipment.map(
+                  ({ item, quantity, unitPrice }) => ({
+                    item,
+                    quantity,
+                    unitPrice,
+                  })
+                ),
                 pricing: {
                   // Merge default pricing with form data
                   ...defaultPricing,
-                  ...(proposalData.pricing || {}),
+                  // ...(proposalData.pricing || {}), // Removed old pricing merge
                 },
-                lead, // Pass the full lead object from state
-                status: 'draft' as
-                  | 'draft'
-                  | 'sent'
-                  | 'viewed'
-                  | 'accepted'
-                  | 'rejected'
-                  | 'expired',
+                // Map new fields from proposalData (assuming ProposalForm provides them)
+                projectCostExcludingStructure:
+                  proposalData.projectCostExcludingStructure || 0,
+                structureCost: proposalData.structureCost || 0,
+                subsidyAmount: proposalData.subsidyAmount || 0,
+                additionalCosts: proposalData.additionalCosts || 0,
+                currency: proposalData.currency || 'INR',
+                // Pass only the lead ID string
+                lead: lead._id,
+                // Equipment array should already be in the correct { item: string, quantity: number, unitPrice?: number } format from ProposalForm's handleSubmit
+                // Add other fields required by the backend model but not directly in the form
+                status: 'draft' as const, // Use const assertion for literal type
                 validUntil: validUntilDate.toISOString(),
                 active: true,
+                // financingOptions and designImages can be added later if needed
               };
+
               const createdProposal =
                 await proposalService.createProposal(dataToSubmit);
               console.log('Proposal created successfully:', createdProposal);

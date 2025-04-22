@@ -27,6 +27,9 @@ const validateLead = [
     'social_media',
     'other',
   ]),
+  check('assignedTo', 'Assigned user ID must be a valid MongoId')
+    .optional()
+    .isMongoId(),
 ];
 
 // Lead statistics

@@ -1,7 +1,10 @@
 import React from 'react';
 import { Dialog, DialogProps, useMediaQuery, useTheme } from '@mui/material';
 
-const ResponsiveDialog: React.FC<DialogProps> = ({ children, ...dialogProps }) => {
+const ResponsiveDialog: React.FC<DialogProps> = ({
+  children,
+  ...dialogProps
+}) => {
   const theme = useTheme();
   const isFullScreen = useMediaQuery(theme.breakpoints.down('sm'));
 

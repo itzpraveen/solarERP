@@ -26,6 +26,7 @@ const documentRoutes = require('./api/routes/document.routes');
 const reportRoutes = require('./api/routes/report.routes');
 const serviceRequestRoutes = require('./api/routes/service-request.routes');
 const userRoutes = require('./api/routes/user.routes'); // Import user routes
+const inventoryRoutes = require('./api/routes/inventory.routes'); // Import inventory routes
 
 // Create Express app
 const app = express();
@@ -67,6 +68,7 @@ app.use(
     origin: '*', // In production you might want to restrict this
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     credentials: true,
+    exposedHeaders: ['Content-Disposition'], // Expose header for filename access
   })
 );
 
@@ -90,6 +92,7 @@ app.use('/api/documents', documentRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/service-requests', serviceRequestRoutes);
 app.use('/api/users', userRoutes); // Mount user routes
+app.use('/api/inventory', inventoryRoutes); // Mount inventory routes
 
 // Serve static assets in production
 if (process.env.NODE_ENV === 'production') {
@@ -119,8 +122,8 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-// Global error handler
-app.use(errorHandler);
+// Global error handler - Use the correct function from the imported object
+app.use(errorHandler.globalErrorHandler);
 
 // Database connection
 mongoose

@@ -28,22 +28,24 @@ const signToken = (id) => {
 
 // Send token to client
 const createSendToken = (user, statusCode, res) => {
-  const token = signToken(user._id);
+  const token = signToken(user.id); // Use virtual 'id' getter
 
-  // Remove password from output
-  user.password = undefined;
+  // Create a plain object and remove password from output
+  const userObj = user.toObject();
+  delete userObj.password;
 
   res.status(statusCode).json({
     status: 'success',
     token,
     data: {
-      user,
+      user: userObj, // Send the modified plain object
     },
   });
 };
 
 // Register new user
-exports.signup = catchAsync(async (req, res, next) => {
+exports.signup = catchAsync(async (req, res, _next) => {
+  // Rename next to _next
   const userRole = req.body.role || 'user';
   const defaultPermissions = getDefaultPermissions(userRole);
 
@@ -61,18 +63,19 @@ exports.signup = catchAsync(async (req, res, next) => {
 
 // Login user
 exports.login = catchAsync(async (req, res, next) => {
+  // Keep next here as it's used
   const { email, password } = req.body;
 
   // 1) Check if email and password exist
   if (!email || !password) {
-    return next(new AppError('Please provide email and password!', 400));
+    return next(new AppError('Please provide email and password!', 400)); // Added return
   }
 
   // 2) Check if user exists && password is correct
   const user = await User.findOne({ email }).select('+password');
 
   if (!user || !(await user.correctPassword(password, user.password))) {
-    return next(new AppError('Incorrect email or password', 401));
+    return next(new AppError('Incorrect email or password', 401)); // Added return
   }
 
   // 3) If everything ok, send token to client
@@ -81,20 +84,26 @@ exports.login = catchAsync(async (req, res, next) => {
 
 // Protect routes
 exports.protect = catchAsync(async (req, res, next) => {
+  console.log(`Protect middleware triggered for: ${req.originalUrl}`); // <-- Add logging
+
   // 1) Getting token and check if it's there
   let token;
+  console.log('Authorization Header:', req.headers.authorization); // <-- Add logging
   if (
     req.headers.authorization &&
     req.headers.authorization.startsWith('Bearer')
   ) {
-    token = req.headers.authorization.split(' ')[1];
+    // Use array destructuring
+    [, token] = req.headers.authorization.split(' ');
   }
 
   if (!token) {
     return next(
+      // Added return
       new AppError('You are not logged in! Please log in to get access.', 401)
     );
   }
+  // Removed incorrect log placement here
 
   // 2) Verification token
   const jwtSecret =
@@ -103,9 +112,10 @@ exports.protect = catchAsync(async (req, res, next) => {
   const decoded = await promisify(jwt.verify)(token, jwtSecret);
 
   // 3) Check if user still exists
-  const currentUser = await User.findById(decoded.id);
+  const currentUser = await User.findById(decoded.id); // Keep decoded.id (not a Mongoose object)
   if (!currentUser) {
     return next(
+      // Added return
       new AppError(
         'The user belonging to this token does no longer exist.',
         401
@@ -116,6 +126,7 @@ exports.protect = catchAsync(async (req, res, next) => {
   // 4) Check if user changed password after the token was issued
   if (currentUser.changedPasswordAfter(decoded.iat)) {
     return next(
+      // Added return
       new AppError('User recently changed password! Please log in again.', 401)
     );
   }
@@ -131,6 +142,7 @@ exports.restrictTo = (...roles) => {
     // roles ['admin', 'manager']
     if (!roles.includes(req.user.role)) {
       return next(
+        // Added return
         new AppError('You do not have permission to perform this action', 403)
       );
     }
@@ -144,7 +156,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   // 1) Get user based on POSTed email
   const user = await User.findOne({ email: req.body.email });
   if (!user) {
-    return next(new AppError('There is no user with that email address.', 404));
+    return next(new AppError('There is no user with that email address.', 404)); // Added return
   }
 
   // 2) Generate the random reset token
@@ -175,6 +187,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
     await user.save({ validateBeforeSave: false });
 
     return next(
+      // Added return
       new AppError('There was an error sending the email. Try again later!'),
       500
     );
@@ -196,7 +209,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
 
   // 2) If token has not expired, and there is user, set the new password
   if (!user) {
-    return next(new AppError('Token is invalid or has expired', 400));
+    return next(new AppError('Token is invalid or has expired', 400)); // Added return
   }
   user.password = req.body.password;
   user.passwordResetToken = undefined;
@@ -217,7 +230,7 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
 
   // 2) Check if POSTed current password is correct
   if (!(await user.correctPassword(req.body.currentPassword, user.password))) {
-    return next(new AppError('Your current password is wrong.', 401));
+    return next(new AppError('Your current password is wrong.', 401)); // Added return
   }
 
   // 3) If so, update password
@@ -229,7 +242,8 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
 });
 
 // Get current user
-exports.getMe = catchAsync(async (req, res, next) => {
+exports.getMe = catchAsync(async (req, res, _next) => {
+  // Rename next to _next
   res.status(200).json({
     status: 'success',
     data: req.user,
@@ -237,7 +251,8 @@ exports.getMe = catchAsync(async (req, res, next) => {
 });
 
 // Create demo user (only for development)
-exports.createDemoUser = catchAsync(async (req, res, next) => {
+exports.createDemoUser = catchAsync(async (req, res, _next) => {
+  // Rename next to _next
   // Check if demo user already exists
   const existingUser = await User.findOne({ email: 'demo@example.com' });
 
@@ -255,8 +270,8 @@ exports.createDemoUser = catchAsync(async (req, res, next) => {
   // Get default permissions for admin role
   const adminPermissions = getDefaultPermissions('admin');
 
-  // Create a new demo user with permissions
-  const demoUser = await User.create({
+  // Create a new demo user with permissions (remove unused assignment)
+  await User.create({
     firstName: 'Demo',
     lastName: 'User',
     email: 'demo@example.com',

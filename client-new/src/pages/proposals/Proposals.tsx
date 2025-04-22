@@ -40,539 +40,15 @@ import proposalService, {
   Proposal,
   ProposalFilter,
 } from '../../api/proposalService';
-import leadService from '../../api/leadService';
+// import leadService from '../../api/leadService'; // Removed unused import
 import CurrencyDisplay from '../../components/common/CurrencyDisplay';
+// Import the corrected ProposalForm component
+import ProposalForm from '../../features/proposals/components/ProposalForm';
+// Import the correct data type for the form submission
+import { ProposalFormData } from '../../features/proposals/components/ProposalForm';
 
-// Proposal form component for creating new proposals
-const ProposalForm = ({
-  open,
-  onClose,
-  onSubmit,
-  loading,
-  initialLeadId, // Add initialLeadId prop
-}: {
-  open: boolean;
-  onClose: () => void;
-  onSubmit: (proposalData: any) => void;
-  loading: boolean;
-  initialLeadId?: string | null; // Make it optional
-}) => {
-  const [formData, setFormData] = useState({
-    lead: '',
-    name: '',
-    systemSize: 0,
-    panelCount: 0,
-    panelType: '',
-    inverterType: '',
-    includesBattery: false,
-    batteryType: '',
-    batteryCount: 0,
-    yearlyProductionEstimate: 0,
-    estimatedSavings: {
-      firstYear: 0,
-      twentyFiveYear: 0,
-    },
-    pricing: {
-      grossCost: 0,
-      centralSubsidy: 0, // Renamed
-      stateSubsidy: 0, // Renamed
-      gstRate: 12, // Added (example default)
-      gstAmount: 0, // Added
-      utilityRebate: 0,
-      otherIncentives: 0,
-      netCost: 0,
-      currency: 'INR', // Added currency
-    },
-    notes: '',
-  });
-
-  const [leads, setLeads] = useState<any[]>([]);
-  const [leadsLoading, setLeadsLoading] = useState(false);
-
-  // Fetch leads for dropdown or pre-select based on initialLeadId
-  useEffect(() => {
-    const fetchData = async () => {
-      setLeadsLoading(true);
-      try {
-        if (initialLeadId) {
-          // Fetch only the specific lead if initialLeadId is provided
-          console.log('Fetching specific lead for form:', initialLeadId);
-          const response = await leadService.getLead(initialLeadId);
-          const { lead } = response.data;
-          if (lead) {
-            setLeads([lead]); // Set only this lead in the options
-            setFormData((prev) => ({
-              ...prev,
-              lead: lead._id,
-              name: `Solar Proposal for ${lead.firstName} ${lead.lastName}`,
-            }));
-            console.log('Pre-selected lead:', lead._id);
-          } else {
-            console.error('Initial lead not found:', initialLeadId);
-            // Fallback to fetching all leads if specific one not found? Or show error?
-            // For now, just log error and fetch all
-            const response = await leadService.getLeads({ limit: 100 });
-            setLeads(response.data.leads || []);
-          }
-        } else {
-          // Fetch all leads if no initialLeadId
-          console.log('Fetching all leads for form');
-          const response = await leadService.getLeads({ limit: 100 });
-          const fetchedLeads = response.data.leads || [];
-          setLeads(fetchedLeads);
-          // Set the first lead as default if available
-          if (fetchedLeads.length > 0) {
-            setFormData((prev) => ({
-              ...prev,
-              lead: fetchedLeads[0]._id,
-              name: `Solar Proposal for ${fetchedLeads[0].firstName} ${fetchedLeads[0].lastName}`,
-            }));
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch lead data for form', error);
-        setLeads([]); // Clear leads on error
-      } finally {
-        setLeadsLoading(false);
-      }
-    };
-
-    if (open) {
-      fetchData();
-    } else {
-      // Reset form when dialog closes? Optional.
-      // setFormData({ ...initial empty state ... });
-      // setLeads([]);
-    }
-    // Add initialLeadId to dependency array
-  }, [open, initialLeadId]);
-
-  // Calculate gstAmount and netCost whenever relevant pricing values change
-  useEffect(() => {
-    const {
-      grossCost,
-      centralSubsidy,
-      stateSubsidy,
-      gstRate,
-      utilityRebate,
-      otherIncentives,
-    } = formData.pricing;
-
-    // Calculate GST Amount
-    const calculatedGstAmount = (grossCost * gstRate) / 100;
-
-    // Calculate Net Cost (Gross + GST - Subsidies/Rebates)
-    const calculatedNetCost =
-      grossCost +
-      calculatedGstAmount -
-      centralSubsidy -
-      stateSubsidy -
-      utilityRebate -
-      otherIncentives;
-
-    setFormData((prev) => ({
-      ...prev,
-      pricing: {
-        ...prev.pricing,
-        gstAmount: calculatedGstAmount > 0 ? calculatedGstAmount : 0,
-        netCost: calculatedNetCost > 0 ? calculatedNetCost : 0,
-      },
-    }));
-  }, [
-    // Update dependencies
-    formData.pricing.grossCost,
-    formData.pricing.centralSubsidy,
-    formData.pricing.stateSubsidy,
-    formData.pricing.gstRate,
-    formData.pricing.utilityRebate,
-    formData.pricing.otherIncentives,
-  ]);
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-
-    if (name.includes('.')) {
-      const [parent, child] = name.split('.');
-      setFormData({
-        ...formData,
-        [parent]: {
-          ...(formData[parent as keyof typeof formData] as any),
-          [child]: value,
-        },
-      });
-    } else {
-      setFormData({
-        ...formData,
-        [name]: value,
-      });
-    }
-  };
-
-  const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-
-    if (name.includes('.')) {
-      const [parent, child] = name.split('.');
-      setFormData({
-        ...formData,
-        [parent]: {
-          ...(formData[parent as keyof typeof formData] as any),
-          [child]: parseFloat(value) || 0,
-        },
-      });
-    } else {
-      setFormData({
-        ...formData,
-        [name]: parseFloat(value) || 0,
-      });
-    }
-  };
-
-  const handleSelectChange = (e: any) => {
-    const { name, value } = e.target;
-
-    // If lead changes, update proposal name
-    if (name === 'lead') {
-      const selectedLead = leads.find((lead) => lead._id === value);
-      if (selectedLead) {
-        setFormData({
-          ...formData,
-          lead: value,
-          name: `Solar Proposal for ${selectedLead.firstName} ${selectedLead.lastName}`,
-        });
-        return;
-      }
-    }
-
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
-  };
-
-  const handleBooleanChange = (e: any) => {
-    const { name, checked } = e.target;
-    setFormData({
-      ...formData,
-      [name]: checked,
-    });
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit(formData);
-  };
-
-  return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <form onSubmit={handleSubmit}>
-        <DialogTitle>Create New Proposal</DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12}>
-              <FormControl fullWidth required>
-                <InputLabel>Select Lead</InputLabel>
-                <Select
-                  name="lead"
-                  value={formData.lead}
-                  label="Select Lead"
-                  onChange={handleSelectChange}
-                  disabled={leadsLoading}
-                >
-                  {leadsLoading ? (
-                    <MenuItem value="">Loading leads...</MenuItem>
-                  ) : (
-                    leads.map((lead) => (
-                      <MenuItem key={lead._id} value={lead._id}>
-                        {lead.firstName} {lead.lastName} - {lead.email}
-                      </MenuItem>
-                    ))
-                  )}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                required
-                label="Proposal Name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                System Specifications
-              </Typography>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                required
-                label="System Size (kW)"
-                name="systemSize"
-                type="number"
-                inputProps={{ min: 0, step: 0.1 }}
-                value={formData.systemSize}
-                onChange={handleNumberChange}
-              />
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                required
-                label="Panel Count"
-                name="panelCount"
-                type="number"
-                inputProps={{ min: 0 }}
-                value={formData.panelCount}
-                onChange={handleNumberChange}
-              />
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                required
-                label="Panel Type"
-                name="panelType"
-                value={formData.panelType}
-                onChange={handleChange}
-              />
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                required
-                label="Inverter Type"
-                name="inverterType"
-                value={formData.inverterType}
-                onChange={handleChange}
-              />
-            </Grid>
-            <Grid item xs={12} md={8}>
-              <FormControl fullWidth>
-                <InputLabel>Includes Battery</InputLabel>
-                <Select
-                  name="includesBattery"
-                  value={formData.includesBattery ? 'true' : 'false'}
-                  label="Includes Battery"
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      includesBattery: e.target.value === 'true',
-                    })
-                  }
-                >
-                  <MenuItem value="true">Yes</MenuItem>
-                  <MenuItem value="false">No</MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-
-            {formData.includesBattery && (
-              <>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Battery Type"
-                    name="batteryType"
-                    value={formData.batteryType}
-                    onChange={handleChange}
-                  />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Battery Count"
-                    name="batteryCount"
-                    type="number"
-                    inputProps={{ min: 0 }}
-                    value={formData.batteryCount}
-                    onChange={handleNumberChange}
-                  />
-                </Grid>
-              </>
-            )}
-
-            <Grid item xs={12}>
-              <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                Production & Savings Estimates
-              </Typography>
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                required
-                label="Yearly Production (kWh)"
-                name="yearlyProductionEstimate"
-                type="number"
-                inputProps={{ min: 0 }}
-                value={formData.yearlyProductionEstimate}
-                onChange={handleNumberChange}
-              />
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                required
-                label={`First Year Savings (₹)`}
-                name="estimatedSavings.firstYear"
-                type="number"
-                inputProps={{ min: 0, step: 0.01 }}
-                value={formData.estimatedSavings.firstYear}
-                onChange={handleNumberChange}
-              />
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                required
-                label={`25-Year Savings (₹)`}
-                name="estimatedSavings.twentyFiveYear"
-                type="number"
-                inputProps={{ min: 0, step: 0.01 }}
-                value={formData.estimatedSavings.twentyFiveYear}
-                onChange={handleNumberChange}
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                Pricing & Incentives
-              </Typography>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                required
-                label={`Gross Cost (₹)`}
-                name="pricing.grossCost"
-                type="number"
-                inputProps={{ min: 0, step: 0.01 }}
-                value={formData.pricing.grossCost}
-                onChange={handleNumberChange}
-              />
-            </Grid>
-            {/* Using Central Subsidy */}
-            <Grid item xs={12} md={6}>
-              <TextField
-                fullWidth
-                required
-                label={`Central Subsidy (₹)`}
-                name="pricing.centralSubsidy"
-                type="number"
-                inputProps={{ min: 0, step: 0.01 }}
-                value={formData.pricing.centralSubsidy}
-                onChange={handleNumberChange}
-              />
-            </Grid>
-            {/* Using State Subsidy */}
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                label={`State Subsidy (₹)`}
-                name="pricing.stateSubsidy"
-                type="number"
-                inputProps={{ min: 0, step: 0.01 }}
-                value={formData.pricing.stateSubsidy}
-                onChange={handleNumberChange}
-              />
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                label={`Utility Rebate (₹)`}
-                name="pricing.utilityRebate"
-                type="number"
-                inputProps={{ min: 0, step: 0.01 }}
-                value={formData.pricing.utilityRebate}
-                onChange={handleNumberChange}
-              />
-            </Grid>
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                label={`Other Incentives (₹)`}
-                name="pricing.otherIncentives"
-                type="number"
-                inputProps={{ min: 0, step: 0.01 }}
-                value={formData.pricing.otherIncentives}
-                onChange={handleNumberChange}
-              />
-            </Grid>
-            {/* Added GST Rate Field */}
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                required
-                label={`GST Rate (%)`}
-                name="pricing.gstRate"
-                type="number"
-                inputProps={{ min: 0, step: 0.1 }}
-                value={formData.pricing.gstRate}
-                onChange={handleNumberChange}
-              />
-            </Grid>
-            {/* Added GST Amount Field (Read Only) */}
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                required
-                label={`GST Amount (₹)`}
-                name="pricing.gstAmount"
-                type="number"
-                value={formData.pricing.gstAmount}
-                InputProps={{
-                  readOnly: true, // GST Amount is calculated
-                }}
-              />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                required
-                label={`Net Cost After Incentives (₹)`}
-                name="pricing.netCost"
-                type="number"
-                value={formData.pricing.netCost}
-                InputProps={{
-                  readOnly: true,
-                }}
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label="Notes"
-                name="notes"
-                multiline
-                rows={4}
-                value={formData.notes}
-                onChange={handleChange}
-              />
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={onClose}>Cancel</Button>
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={loading}
-            startIcon={loading ? <CircularProgress size={20} /> : null}
-          >
-            Create Proposal
-          </Button>
-        </DialogActions>
-      </form>
-    </Dialog>
-  );
-};
+// The inline form definition has been removed.
+// The correct ProposalForm component is imported from '../../features/proposals/components/ProposalForm'.
 
 const Proposals = () => {
   const navigate = useNavigate();
@@ -639,7 +115,7 @@ const Proposals = () => {
   // Initial data fetch
   useEffect(() => {
     fetchProposals();
-  }, [page, rowsPerPage, filters]);
+  }, [page, rowsPerPage, filters, fetchProposals]); // Added fetchProposals to dependency array
 
   // Handle page change
   const handleChangePage = (_: unknown, newPage: number) => {
@@ -670,16 +146,40 @@ const Proposals = () => {
     fetchProposals();
   };
 
-  // Handle proposal creation
-  const handleCreateProposal = async (proposalData: any) => {
+  // Handle proposal creation - Update type signature to use ProposalFormData
+  const handleCreateProposal = async (proposalData: ProposalFormData) => {
     try {
       setFormLoading(true);
+      // The proposalData received here should now be correctly structured
+      // by the imported ProposalForm component's handleSubmit function.
       await proposalService.createProposal(proposalData);
       setFormOpen(false);
       setFormLoading(false);
-      fetchProposals();
+      fetchProposals(); // Refresh list on success
+      setError(null); // Clear previous errors on success
     } catch (err: any) {
-      setError(err?.message || 'Failed to create proposal');
+      console.error('Proposal creation failed:', err.response?.data || err); // Log the full error
+      let errorMessage = 'Failed to create proposal. Please try again.';
+      // Check if it's a validation error from our backend
+      if (
+        err.response?.data?.errors &&
+        Array.isArray(err.response.data.errors)
+      ) {
+        // Format the validation errors
+        errorMessage = `Validation failed: ${err.response.data.errors
+          .map(
+            (e: { message: string; field: string }) =>
+              `${e.message} (field: ${e.field})`
+          )
+          .join(', ')}`;
+      } else if (err.response?.data?.message) {
+        // Use message from backend response if available
+        errorMessage = err.response.data.message;
+      } else if (err.message) {
+        // Fallback to generic error message
+        errorMessage = err.message;
+      }
+      setError(errorMessage);
       setFormLoading(false);
     }
   };
@@ -881,7 +381,11 @@ const Proposals = () => {
                     {proposal.systemSize} kW ({proposal.panelCount} panels)
                   </TableCell>
                   <TableCell>
-                    <CurrencyDisplay amount={proposal.pricing.grossCost} />
+                    {/* Use finalProjectCost which is calculated on the backend, provide default value and correct prop name */}
+                    <CurrencyDisplay
+                      amount={proposal.finalProjectCost ?? 0}
+                      currencyCode={proposal.currency}
+                    />
                   </TableCell>
                   <TableCell>
                     {new Date(proposal.createdAt).toLocaleDateString()}

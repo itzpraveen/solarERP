@@ -38,7 +38,7 @@ class ErrorBoundary extends React.Component<Props, State> {
             alignItems: 'center',
             justifyContent: 'center',
             height: '100vh',
-            p: 2
+            p: 2,
           }}
         >
           <Typography variant="h4" color="error" gutterBottom>
@@ -47,7 +47,11 @@ class ErrorBoundary extends React.Component<Props, State> {
           <Typography variant="body1" gutterBottom>
             {this.state.error?.message || 'An unexpected error occurred.'}
           </Typography>
-          <Button variant="contained" color="primary" onClick={this.handleReload}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={this.handleReload}
+          >
             Reload
           </Button>
         </Box>

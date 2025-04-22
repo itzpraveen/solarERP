@@ -1,5 +1,17 @@
 import apiService from './apiService';
 
+// Define the structure for financing options in the frontend interfaces
+export interface FinancingOption {
+  _id?: string; // Optional ID if it's an existing subdocument
+  type: 'cash' | 'loan' | 'lease' | 'ppa';
+  provider?: string;
+  termYears?: number;
+  interestRate?: number;
+  downPayment?: number;
+  monthlyPayment?: number;
+  notes?: string;
+}
+
 export interface ProposalFinancingOption {
   type: 'cash' | 'loan' | 'lease' | 'ppa';
   termYears?: number;
@@ -27,6 +39,20 @@ export interface ProposalEstimatedSavings {
   twentyFiveYear: number;
 }
 
+// Define the structure for equipment items within a proposal
+// Matches the backend model's populated equipment structure
+export interface ProposalEquipmentItem {
+  item: {
+    _id: string;
+    name: string;
+    category: string;
+    unitPrice?: number;
+    modelNumber?: string;
+  };
+  quantity: number;
+  unitPrice?: number; // Price at the time proposal was created
+}
+
 export interface Proposal {
   _id: string;
   lead: {
@@ -44,19 +70,25 @@ export interface Proposal {
     };
   };
   name: string;
+  proposalId?: string; // Added proposalId (optional for now)
   status: 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired';
   systemSize: number;
-  panelCount: number;
-  panelType: string;
-  inverterType: string;
-  includesBattery: boolean;
-  batteryType?: string;
-  batteryCount?: number;
-  yearlyProductionEstimate: number;
-  estimatedSavings: ProposalEstimatedSavings;
-  pricing: ProposalPricing;
-  financingOptions?: ProposalFinancingOption[];
-  designImages?: string[];
+  panelCount: number; // Keep or remove based on final decision
+  // Removed panelType, inverterType, includesBattery, batteryType, batteryCount
+  equipment: ProposalEquipmentItem[]; // Added equipment array
+  energyMeter?: string; // Added energy meter field
+  // yearlyProductionEstimate: number; // Removed
+  // estimatedSavings: ProposalEstimatedSavings; // Removed
+  // pricing: ProposalPricing; // Removed old pricing object
+  projectCostExcludingStructure: number; // Added
+  structureCost?: number; // Added
+  finalProjectCost?: number; // Added (calculated on backend)
+  subsidyAmount: number; // Added
+  netInvestment?: number; // Added (calculated on backend)
+  additionalCosts?: number; // Added
+  currency: string; // Added
+  financingOptions?: FinancingOption[]; // Added
+  // designImages?: string[]; // Removed
   createdBy: {
     _id: string;
     firstName: string;
@@ -72,6 +104,37 @@ export interface Proposal {
   active: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+// Define the explicit payload type for updates
+// Matches the structure needed by the backend API call
+export interface ProposalUpdatePayload {
+  name?: string;
+  status?: 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired';
+  systemSize?: number;
+  panelCount?: number;
+  equipment?: Array<{ item: string; quantity: number; unitPrice?: number }>; // Expects item ID string
+  // yearlyProductionEstimate?: number; // Removed
+  // estimatedSavings?: ProposalEstimatedSavings; // Removed
+  // pricing?: ProposalPricing; // Removed
+  projectCostExcludingStructure?: number; // Added
+  structureCost?: number; // Added
+  // finalProjectCost is calculated, not updated directly
+  subsidyAmount?: number; // Added
+  // netInvestment is calculated, not updated directly
+  additionalCosts?: number; // Added
+  energyMeter?: string; // Added energy meter field
+  currency?: string; // Added
+  financingOptions?: FinancingOption[]; // Added
+  // designImages?: string[]; // Removed
+  validUntil?: string;
+  notes?: string;
+  sentDate?: string;
+  viewedDate?: string;
+  acceptedDate?: string;
+  rejectedDate?: string;
+  active?: boolean;
+  // Excludes _id, createdAt, updatedAt, createdBy, lead
 }
 
 export interface ProposalFilter {
@@ -117,13 +180,35 @@ const proposalService = {
   },
 
   // Create new proposal
+  // Define a specific type for the creation payload
   createProposal: async (
-    proposalData: Omit<
-      Proposal,
-      '_id' | 'createdAt' | 'updatedAt' | 'createdBy'
-    >
+    // Use a simpler type reflecting the actual data sent from the form
+    proposalData: {
+      lead: string; // Lead ID
+      name: string;
+      systemSize: number;
+      panelCount: number; // Or remove if derived solely from equipment
+      equipment: Array<{ item: string; quantity: number; unitPrice?: number }>; // Basic equipment info
+      // yearlyProductionEstimate: number; // Removed
+      // estimatedSavings: ProposalEstimatedSavings; // Removed
+      // pricing: ProposalPricing; // Removed
+      projectCostExcludingStructure: number; // Added
+      structureCost?: number; // Added
+      subsidyAmount: number; // Added
+      additionalCosts?: number; // Added
+      currency?: string; // Added
+      financingOptions?: FinancingOption[]; // Added
+      energyMeter?: string; // Added energy meter field
+      notes?: string;
+      // Add other non-populated fields required by backend if any (e.g., status, validUntil, proposalId)
+      proposalId?: string;
+      status?: string;
+      validUntil?: string;
+      active?: boolean;
+    }
   ) => {
     try {
+      // Add createdBy on the backend, not sent from frontend
       return await apiService.post('/api/proposals', proposalData);
     } catch (error) {
       throw error;
@@ -131,9 +216,11 @@ const proposalService = {
   },
 
   // Update proposal
-  updateProposal: async (id: string, proposalData: Partial<Proposal>) => {
+  // Use the explicit payload type
+  updateProposal: async (id: string, proposalData: ProposalUpdatePayload) => {
     try {
-      return await apiService.put(`/api/proposals/${id}`, proposalData);
+      // Use PATCH for partial updates if backend supports it, otherwise PUT
+      return await apiService.patch(`/api/proposals/${id}`, proposalData);
     } catch (error) {
       throw error;
     }
@@ -165,6 +252,48 @@ const proposalService = {
     try {
       return await apiService.post(`/api/proposals/${id}/send`);
     } catch (error) {
+      throw error;
+    }
+  },
+
+  // Download proposal PDF
+  downloadProposalPdf: async (id: string) => {
+    try {
+      // apiService.get now returns the full AxiosResponse when responseType is 'blob'
+      const response: any = await apiService.get(
+        `/api/proposals/${id}/download`,
+        {
+          responseType: 'blob', // Important: Expect a blob response
+        }
+      );
+
+      // Access headers from the response object
+      const contentDisposition = response.headers?.['content-disposition']; // Use optional chaining
+      let filename = `proposal-${id}.pdf`; // Default filename
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/i);
+        if (filenameMatch && filenameMatch.length > 1) {
+          filename = filenameMatch[1];
+        }
+      }
+
+      // Access data (the blob) from the response object
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+
+      // Clean up the URL object
+      window.URL.revokeObjectURL(url);
+      link.remove();
+
+      // Return success or potentially the filename
+      return { success: true, filename };
+    } catch (error) {
+      console.error('Error downloading proposal PDF:', error);
+      // Re-throw the error so the component can handle it
       throw error;
     }
   },

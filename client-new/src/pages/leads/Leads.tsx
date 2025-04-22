@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react'; // Added useCallback
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -35,6 +35,8 @@ import {
   Refresh as RefreshIcon,
 } from '@mui/icons-material';
 import leadService, { Lead, LeadFilter } from '../../api/leadService';
+import userService from '../../api/userService'; // Import userService
+import { User } from '../../features/auth/types/User'; // Import User type
 
 // Lead status colors
 const statusColors = {
@@ -68,6 +70,7 @@ interface LeadFormData {
     amount: string; // Keep as string to match input
     currency: string;
   };
+  assignedTo: string; // Add assignedTo field
 }
 
 const LeadForm = ({
@@ -81,7 +84,9 @@ const LeadForm = ({
   onSubmit: (leadData: any) => void;
   loading: boolean;
 }) => {
-  const [formData, setFormData] = useState({
+  const [users, setUsers] = useState<User[]>([]); // State for users list
+  const [formData, setFormData] = useState<LeadFormData>({
+    // Explicitly type formData
     firstName: '',
     lastName: '',
     email: '',
@@ -98,7 +103,25 @@ const LeadForm = ({
     status: 'new',
     category: 'warm',
     monthlyElectricBill: { amount: '', currency: 'INR' }, // Revert amount to empty string
+    assignedTo: '', // Initialize assignedTo
   });
+
+  // Fetch users when the dialog opens
+  useEffect(() => {
+    const fetchUsers = async () => {
+      if (open) {
+        try {
+          // Fetch all users - adjust limit if needed or if API supports fetching all
+          const response = await userService.getUsers({ limit: 1000 });
+          setUsers(response.data.users);
+        } catch (error) {
+          console.error('Failed to fetch users:', error);
+          // Optionally set an error state to display in the form
+        }
+      }
+    };
+    fetchUsers();
+  }, [open]); // Re-fetch if the dialog opens again
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -298,6 +321,27 @@ const LeadForm = ({
                 onChange={handleChange}
               />
             </Grid>
+            {/* Assigned To Dropdown */}
+            <Grid item xs={12} md={4}>
+              <FormControl fullWidth>
+                <InputLabel>Assign To</InputLabel>
+                <Select
+                  name="assignedTo"
+                  value={formData.assignedTo}
+                  label="Assign To"
+                  onChange={handleSelectChange}
+                >
+                  <MenuItem value="">
+                    <em>Unassigned</em>
+                  </MenuItem>
+                  {users.map((user) => (
+                    <MenuItem key={user.id} value={user.id}>
+                      {user.name} ({user.email})
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
           </Grid>
         </DialogContent>
         <DialogActions>
@@ -351,8 +395,8 @@ const Leads = () => {
     leadName: '',
   });
 
-  // Fetch leads data
-  const fetchLeads = async () => {
+  // Fetch leads data (wrapped in useCallback)
+  const fetchLeads = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -373,12 +417,12 @@ const Leads = () => {
       setError(err?.message || 'Failed to fetch leads');
       setLoading(false);
     }
-  };
+  }, [page, rowsPerPage, filters]); // Dependencies for useCallback
 
-  // Initial data fetch
+  // Initial data fetch and re-fetch on dependency change
   useEffect(() => {
     fetchLeads();
-  }, [page, rowsPerPage, filters]);
+  }, [fetchLeads]); // Now depends on the memoized fetchLeads function
 
   // Handle page change
   const handleChangePage = (_: unknown, newPage: number) => {

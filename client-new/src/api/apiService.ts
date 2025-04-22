@@ -63,12 +63,20 @@ const apiService = {
       const separator = endpoint.includes('?') ? '&' : '?';
       const url = `${endpoint}${separator}${cacheBuster}`;
 
-      console.log('Making GET request to:', url);
+      console.log('Making GET request to:', url, 'with config:', config);
       const response = await axios.get(url, config);
       console.log('GET response status:', response.status);
+      // If responseType is blob, return the full response object for header access
+      if (config?.responseType === 'blob') {
+        console.log('Returning full response object for blob');
+        return response;
+      }
+      // Otherwise, return only the data as before
       return response.data;
     } catch (error: any) {
-      throw error.response ? error.response.data : new Error('Network error');
+      console.error('API GET error:', error);
+      // Try to return more specific error info if available
+      throw error.response || error;
     }
   },
 

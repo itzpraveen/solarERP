@@ -3,7 +3,8 @@ const AppError = require('../../utils/appError');
 const catchAsync = require('../../utils/catchAsync');
 
 // Get all leads with filtering, sorting, and pagination
-exports.getAllLeads = catchAsync(async (req, res, next) => {
+exports.getAllLeads = catchAsync(async (req, res, _next) => {
+  // Rename next to _next
   // BUILD QUERY
   // BUILD FILTER CONDITIONS
   const filterConditions = {};
@@ -117,7 +118,7 @@ exports.getLead = catchAsync(async (req, res, next) => {
     .populate('proposals');
 
   if (!lead) {
-    return next(new AppError('No lead found with that ID', 404));
+    return next(new AppError('No lead found with that ID', 404)); // Added return
   }
 
   res.status(200).json({
@@ -129,13 +130,14 @@ exports.getLead = catchAsync(async (req, res, next) => {
 });
 
 // Create new lead
-exports.createLead = catchAsync(async (req, res, next) => {
+exports.createLead = catchAsync(async (req, res, _next) => {
+  // Rename next to _next
   // Set the creator to the current user
   req.body.createdBy = req.user.id;
+  // assignedTo is already part of req.body if provided, no need for self-assignment
 
   // --- Handle Referral Fields ---
-  const { source, referringDealer, referringCustomer, referringUser } =
-    req.body;
+  const { source } = req.body; // Only need source for the logic
 
   // Clear irrelevant referral fields based on source
   if (source === 'dealer_referral') {
@@ -168,10 +170,9 @@ exports.createLead = catchAsync(async (req, res, next) => {
 // Update lead
 exports.updateLead = catchAsync(async (req, res, next) => {
   // Exclude fields that shouldn't be updated via this generic route
-  // Allow 'source' and referral fields to be updated here, but handle them carefully
+  // Allow 'source', 'assignedTo', and referral fields to be updated here, but handle them carefully
   const excludedFields = [
     'createdBy',
-    'assignedTo',
     'status',
     'converted',
     'active',
@@ -179,14 +180,14 @@ exports.updateLead = catchAsync(async (req, res, next) => {
     'interactions',
     'proposals',
   ]; // Keep basic exclusions
+  // assignedTo is already part of req.body if provided
   const updateData = { ...req.body };
   excludedFields.forEach((el) => delete updateData[el]);
 
   // --- Handle Referral Fields on Update ---
   if (updateData.source) {
     // Only apply logic if source is being updated
-    const { source, referringDealer, referringCustomer, referringUser } =
-      updateData;
+    const { source } = updateData; // Only need source for the logic
 
     // Clear irrelevant referral fields based on the NEW source
     if (source === 'dealer_referral') {
@@ -219,7 +220,7 @@ exports.updateLead = catchAsync(async (req, res, next) => {
   });
 
   if (!lead) {
-    return next(new AppError('No lead found with that ID', 404));
+    return next(new AppError('No lead found with that ID', 404)); // Added return
   }
 
   res.status(200).json({
@@ -235,7 +236,7 @@ exports.deleteLead = catchAsync(async (req, res, next) => {
   const lead = await Lead.findByIdAndUpdate(req.params.id, { active: false });
 
   if (!lead) {
-    return next(new AppError('No lead found with that ID', 404));
+    return next(new AppError('No lead found with that ID', 404)); // Added return
   }
 
   res.status(204).json({
@@ -256,7 +257,7 @@ exports.addLeadNote = catchAsync(async (req, res, next) => {
   );
 
   if (!lead) {
-    return next(new AppError('No lead found with that ID', 404));
+    return next(new AppError('No lead found with that ID', 404)); // Added return
   }
 
   res.status(200).json({
@@ -279,7 +280,7 @@ exports.addLeadInteraction = catchAsync(async (req, res, next) => {
   );
 
   if (!lead) {
-    return next(new AppError('No lead found with that ID', 404));
+    return next(new AppError('No lead found with that ID', 404)); // Added return
   }
 
   res.status(200).json({
@@ -299,7 +300,7 @@ exports.assignLead = catchAsync(async (req, res, next) => {
   );
 
   if (!lead) {
-    return next(new AppError('No lead found with that ID', 404));
+    return next(new AppError('No lead found with that ID', 404)); // Added return
   }
 
   res.status(200).json({
@@ -319,7 +320,7 @@ exports.updateLeadStatus = catchAsync(async (req, res, next) => {
   );
 
   if (!lead) {
-    return next(new AppError('No lead found with that ID', 404));
+    return next(new AppError('No lead found with that ID', 404)); // Added return
   }
 
   res.status(200).json({
@@ -331,7 +332,8 @@ exports.updateLeadStatus = catchAsync(async (req, res, next) => {
 });
 
 // Get lead stats
-exports.getLeadStats = catchAsync(async (req, res, next) => {
+exports.getLeadStats = catchAsync(async (req, res, _next) => {
+  // Rename next to _next
   const stats = await Lead.aggregate([
     {
       $match: { active: true },

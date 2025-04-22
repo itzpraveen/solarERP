@@ -12,6 +12,14 @@ const proposalSchema = new mongoose.Schema(
       required: [true, 'Proposal name is required'],
       trim: true,
     },
+    // Add Proposal ID field
+    proposalId: {
+      type: String,
+      unique: true, // Assuming proposal IDs should be unique
+      // Consider adding auto-generation logic if needed
+      // required: [true, 'Proposal ID is required'],
+      trim: true,
+    },
     status: {
       type: String,
       enum: ['draft', 'sent', 'viewed', 'accepted', 'rejected', 'expired'],
@@ -27,143 +35,87 @@ const proposalSchema = new mongoose.Schema(
       required: [true, 'Number of panels is required'],
       min: 0,
     },
-    panelType: {
+    // Equipment array to store inventory items used (Keep for internal use/details)
+    equipment: [
+      {
+        item: {
+          type: mongoose.Schema.ObjectId,
+          ref: 'Inventory',
+          required: true,
+        },
+        quantity: {
+          type: Number,
+          required: true,
+          min: 1,
+        },
+        // Optional: Store unit price at the time of proposal creation
+        unitPrice: Number,
+      },
+    ],
+    energyMeter: {
+      // Added field based on image
       type: String,
-      required: [true, 'Panel type is required'],
       trim: true,
     },
-    inverterType: {
-      type: String,
-      required: [true, 'Inverter type is required'],
-      trim: true,
-    },
-    includesBattery: {
-      type: Boolean,
-      default: false,
-    },
-    batteryType: String,
-    batteryCount: {
+    // Removed yearlyProductionEstimate, estimatedSavings
+    // Restructured pricing to match PDF
+    projectCostExcludingStructure: {
+      // Renamed from grossCost
       type: Number,
-      default: 0,
-    },
-    yearlyProductionEstimate: {
-      type: Number,
-      required: [true, 'Yearly production estimate in kWh is required'],
+      required: [true, 'Project cost (excluding structure) is required'],
       min: 0,
     },
-    estimatedSavings: {
-      firstYear: {
-        type: Number,
-        required: [true, 'First year savings estimate is required'],
-        min: 0,
-      },
-      twentyFiveYear: {
-        type: Number,
-        required: [true, 'Twenty-five year savings estimate is required'],
-        min: 0,
-      },
+    structureCost: {
+      // Added structure cost
+      type: Number,
+      default: 0,
+      min: 0,
     },
-    pricing: {
-      grossCost: {
-        type: Number,
-        required: [true, 'Gross system cost is required'],
-        min: 0,
-      },
-      centralSubsidy: {
-        // Renamed from federalTaxCredit
-        type: Number,
-        required: [true, 'Central subsidy amount is required'],
-        min: 0,
-      },
-      stateSubsidy: {
-        // Renamed from stateTaxCredit
-        type: Number,
-        default: 0,
-        min: 0,
-      },
-      gstRate: {
-        // Added GST Rate
-        type: Number,
-        default: 12, // Example default GST rate for solar in India
-        min: 0,
-      },
-      gstAmount: {
-        // Added GST Amount
-        type: Number,
-        default: 0,
-        min: 0,
-      },
-      utilityRebate: {
-        type: Number,
-        default: 0,
-        min: 0,
-      },
-      otherIncentives: {
-        type: Number,
-        default: 0,
-        min: 0,
-      },
-      netCost: {
-        type: Number,
-        required: [true, 'Net system cost after incentives is required'],
-        min: 0,
-      },
-      currency: {
-        type: String,
-        default: 'INR',
-        required: true,
-      },
+    finalProjectCost: {
+      // Added calculated field
+      type: Number,
+      min: 0,
     },
+    subsidyAmount: {
+      // Renamed from centralSubsidy
+      type: Number,
+      required: [true, 'Subsidy amount is required'],
+      min: 0,
+    },
+    netInvestment: {
+      // Added calculated field
+      type: Number,
+      min: 0,
+    },
+    additionalCosts: {
+      // Added additional costs field
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    currency: {
+      // Moved currency to top level
+      type: String,
+      default: 'INR',
+      required: true,
+    },
+    // Re-add financing options
     financingOptions: [
       {
         type: {
           type: String,
-          required: [true, 'Financing type is required'],
-          enum: ['cash', 'loan', 'lease', 'ppa'],
-        },
-        termYears: {
-          type: Number,
-          min: 0,
-        },
-        downPayment: {
-          type: Number,
-          default: 0,
-          min: 0,
-        },
-        downPaymentCurrency: {
-          type: String,
-          default: 'INR',
+          enum: ['cash', 'loan', 'lease', 'ppa'], // Example types
           required: true,
         },
-        apr: {
-          type: Number,
-          min: 0,
-        },
-        monthlyPayment: {
-          type: Number,
-          min: 0,
-        },
-        monthlyPaymentCurrency: {
-          type: String,
-          default: 'INR',
-          required: true,
-        },
-        totalCost: {
-          type: Number,
-          min: 0,
-        },
-        totalCostCurrency: {
-          type: String,
-          default: 'INR',
-          required: true,
-        },
-        selected: {
-          type: Boolean,
-          default: false,
-        },
+        provider: String, // e.g., Bank Name
+        termYears: Number,
+        interestRate: Number, // APR
+        downPayment: Number,
+        monthlyPayment: Number,
+        notes: String,
       },
     ],
-    designImages: [String],
+    // Removed designImages
     createdBy: {
       type: mongoose.Schema.ObjectId,
       ref: 'User',
@@ -208,7 +160,8 @@ proposalSchema.index({ createdBy: 1 });
 proposalSchema.index({ createdAt: -1 });
 
 // Only query active proposals
-proposalSchema.pre(/^find/, function (next) {
+proposalSchema.pre(/^find/, (next) => {
+  // Convert to arrow function
   // Ensure the active filter is added without overwriting other conditions
   const currentQuery = this.getQuery();
   if (currentQuery.active === undefined) {
@@ -226,49 +179,48 @@ proposalSchema.pre(/^find/, function (next) {
 });
 
 // Populate references
-proposalSchema.pre(/^find/, function (next) {
+proposalSchema.pre(/^find/, (next) => {
+  // Convert to arrow function
   this.populate({
     path: 'lead',
     select: 'firstName lastName email phone address',
-  }).populate({
-    path: 'createdBy',
-    select: 'firstName lastName email',
-  });
+  })
+    .populate({
+      path: 'createdBy',
+      select: 'firstName lastName email',
+    })
+    .populate({
+      // Populate equipment details
+      path: 'equipment.item',
+      select: 'name category unitPrice modelNumber', // Select fields you need
+    });
 
   next();
 });
 
-// Calculate derived values before saving
-proposalSchema.pre('save', function (next) {
-  // Calculate GST amount and Net Cost based on Indian standards
-  if (this.isModified('pricing') || !this.pricing.netCost) {
-    const grossCost = this.pricing.grossCost || 0;
-    const gstRate = this.pricing.gstRate || 0; // Assuming gstRate is stored as percentage, e.g., 12 for 12%
-    const centralSubsidy = this.pricing.centralSubsidy || 0;
-    const stateSubsidy = this.pricing.stateSubsidy || 0;
-    const utilityRebate = this.pricing.utilityRebate || 0;
-    const otherIncentives = this.pricing.otherIncentives || 0;
+// Calculate derived values before saving based on new structure
+proposalSchema.pre('save', (next) => {
+  // Convert to arrow function
+  // Calculate Final Project Cost and Net Investment
+  if (
+    this.isModified('projectCostExcludingStructure') ||
+    this.isModified('structureCost') ||
+    this.isModified('subsidyAmount')
+  ) {
+    const costA = this.projectCostExcludingStructure || 0;
+    const costB = this.structureCost || 0;
+    const subsidy = this.subsidyAmount || 0;
 
-    // Calculate GST Amount (GST applied on gross cost)
-    const gstAmount = (grossCost * gstRate) / 100;
-    this.pricing.gstAmount = gstAmount;
-
-    // Calculate Net Cost (Gross Cost + GST - Subsidies/Rebates)
-    // Verify this calculation aligns with current Indian regulations
-    this.pricing.netCost =
-      grossCost +
-      gstAmount -
-      centralSubsidy -
-      stateSubsidy -
-      utilityRebate -
-      otherIncentives;
+    this.finalProjectCost = costA + costB;
+    this.netInvestment = this.finalProjectCost - subsidy;
   }
 
   next();
 });
 
 // Update status dates automatically
-proposalSchema.pre('save', function (next) {
+proposalSchema.pre('save', (next) => {
+  // Convert to arrow function
   if (this.isModified('status')) {
     switch (this.status) {
       case 'sent':

@@ -11,10 +11,6 @@ import {
   Tabs,
   Tab,
   TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Alert,
   CircularProgress,
   List,
@@ -31,8 +27,6 @@ import {
   Breadcrumbs,
   Link,
   Chip,
-  Switch,
-  FormControlLabel,
 } from '@mui/material';
 import {
   Description as ProposalIcon,
@@ -42,24 +36,21 @@ import {
   Send as SendIcon,
   Cancel as CancelIcon,
   ArrowBack as ArrowBackIcon,
-  Add as AddIcon,
   Email as EmailIcon,
   Phone as PhoneIcon,
   Home as HomeIcon,
-  EventNote as NoteIcon,
   Person as PersonIcon,
   Visibility as ViewIcon,
-  BarChart as ChartIcon,
-  AttachMoney as MoneyIcon,
   Check as CheckIcon,
   Close as CloseIcon,
+  Download as DownloadIcon,
 } from '@mui/icons-material';
 import proposalService, {
   Proposal,
-  ProposalFinancingOption,
+  // ProposalEquipmentItem, // Removed unused import
+  ProposalUpdatePayload,
 } from '../../api/proposalService';
-import CurrencyDisplay from '../../components/common/CurrencyDisplay';
-import { getCurrencySymbol } from '../../api/settingsService';
+import CurrencyDisplay from '../../components/common/CurrencyDisplay'; // Ensure this component handles undefined amount gracefully
 
 // Tab panel component
 interface TabPanelProps {
@@ -70,7 +61,6 @@ interface TabPanelProps {
 
 function TabPanel(props: TabPanelProps) {
   const { children, value, index, ...other } = props;
-
   return (
     <div
       role="tabpanel"
@@ -94,31 +84,16 @@ const statusColors = {
   expired: 'warning',
 } as const;
 
-// Financing type labels
-const financingTypeLabels = {
-  cash: 'Cash Purchase',
-  loan: 'Solar Loan',
-  lease: 'Solar Lease',
-  ppa: 'Power Purchase Agreement (PPA)',
-};
-
 const ProposalDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  // State for proposal data
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // State for edit mode
   const [editMode, setEditMode] = useState(false);
   const [editData, setEditData] = useState<Partial<Proposal>>({});
-
-  // State for tabs
   const [tabValue, setTabValue] = useState(0);
-
-  // State for dialogs
   const [deleteDialog, setDeleteDialog] = useState(false);
   const [sendDialog, setOpenSendDialog] = useState(false);
   const [statusDialog, setStatusDialog] = useState({
@@ -127,30 +102,18 @@ const ProposalDetails = () => {
     title: '',
     message: '',
   });
+  const [downloading, setDownloading] = useState(false); // State for download loading
+  const [downloadError, setDownloadError] = useState<string | null>(null); // State for download error
 
-  // State for new financing option
-  const [financingDialog, setFinancingDialog] = useState(false);
-  const [newFinancing, setNewFinancing] = useState<ProposalFinancingOption>({
-    type: 'cash',
-    termYears: 0,
-    downPayment: 0,
-    apr: 0,
-    monthlyPayment: 0,
-    totalCost: 0,
-    selected: false,
-  });
-
-  // Fetch proposal data
   const fetchProposal = async () => {
     if (!id) return;
-
     try {
       setLoading(true);
       setError(null);
-
       const response = await proposalService.getProposal(id);
-      setProposal(response.data.proposal);
-      setEditData(response.data.proposal);
+      const fetchedProposal = response.data.proposal;
+      setProposal(fetchedProposal);
+      setEditData(fetchedProposal); // Initialize editData
       setLoading(false);
     } catch (err: any) {
       setError(err?.message || 'Failed to fetch proposal');
@@ -158,144 +121,71 @@ const ProposalDetails = () => {
     }
   };
 
-  // Initial data fetch
   useEffect(() => {
     fetchProposal();
-  }, [id]);
+  }, [id, fetchProposal]); // Added fetchProposal to dependency array
 
-  // Handle tab change
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
   };
 
-  // Calculate netCost whenever pricing values change in edit mode
-  useEffect(() => {
-    if (!editMode || !editData.pricing) return;
-
-    const {
-      grossCost,
-      centralSubsidy, // Updated name
-      stateSubsidy, // Updated name
-      gstRate, // Added
-      utilityRebate,
-      otherIncentives,
-    } = editData.pricing;
-
-    if (grossCost !== undefined && gstRate !== undefined) {
-      // Calculate GST Amount
-      const calculatedGstAmount = (grossCost * gstRate) / 100;
-
-      // Calculate Net Cost (Gross + GST - Subsidies/Rebates)
-      const calculatedNetCost =
-        grossCost +
-        calculatedGstAmount -
-        (centralSubsidy || 0) -
-        (stateSubsidy || 0) -
-        (utilityRebate || 0) -
-        (otherIncentives || 0);
-
-      setEditData((prev) => ({
-        ...prev,
-        pricing: {
-          ...prev.pricing!,
-          gstAmount: calculatedGstAmount > 0 ? calculatedGstAmount : 0, // Update gstAmount
-          netCost: calculatedNetCost > 0 ? calculatedNetCost : 0, // Update netCost
-        },
-      }));
-    }
-  }, [
-    // Update dependencies
-    editMode,
-    editData.pricing?.grossCost,
-    editData.pricing?.centralSubsidy,
-    editData.pricing?.stateSubsidy,
-    editData.pricing?.gstRate,
-    editData.pricing?.utilityRebate,
-    editData.pricing?.otherIncentives,
-  ]);
-
-  // Handle edit form changes
   const handleEditChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-
-    if (name.includes('.')) {
-      const [parent, child] = name.split('.');
-      setEditData({
-        ...editData,
-        [parent]: {
-          ...(editData[parent as keyof typeof editData] as any),
-          [child]: value,
-        },
-      });
-    } else {
-      setEditData({
-        ...editData,
-        [name]: value,
-      });
-    }
+    setEditData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Handle select changes
-  const handleSelectChange = (e: any) => {
-    const { name, value } = e.target;
-    setEditData({
-      ...editData,
-      [name]: value,
-    });
-  };
-
-  // Handle boolean changes
-  const handleBooleanChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, checked } = e.target;
-    setEditData({
-      ...editData,
-      [name]: checked,
-    });
-  };
-
-  // Handle number changes
   const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-
-    if (name.includes('.')) {
-      const [parent, child] = name.split('.');
-      setEditData({
-        ...editData,
-        [parent]: {
-          ...(editData[parent as keyof typeof editData] as any),
-          [child]: parseFloat(value) || 0,
-        },
-      });
-    } else {
-      setEditData({
-        ...editData,
-        [name]: parseFloat(value) || 0,
-      });
-    }
+    // Ensure empty string results in undefined or 0 based on field requirements
+    const numValue = value === '' ? undefined : parseFloat(value);
+    setEditData((prev) => ({
+      ...prev,
+      // Use 0 if parsing fails or value is empty for required number fields
+      [name]: isNaN(numValue as number) ? 0 : numValue,
+    }));
   };
 
-  // Toggle edit mode
   const toggleEditMode = () => {
     if (editMode) {
-      // Canceling edit - reset data
       setEditData(proposal || {});
     }
     setEditMode(!editMode);
   };
 
-  // Save proposal changes
   const saveProposal = async () => {
     if (!id || !editData) return;
 
+    const finalPayload: ProposalUpdatePayload = {
+      name: editData.name,
+      status: editData.status,
+      systemSize: editData.systemSize,
+      panelCount: editData.panelCount,
+      equipment: editData.equipment?.map((eq) => ({
+        item: typeof eq.item === 'string' ? eq.item : eq.item._id,
+        quantity: eq.quantity,
+        unitPrice: eq.unitPrice,
+      })),
+      projectCostExcludingStructure: editData.projectCostExcludingStructure,
+      structureCost: editData.structureCost,
+      subsidyAmount: editData.subsidyAmount,
+      additionalCosts: editData.additionalCosts,
+      currency: editData.currency,
+      validUntil: editData.validUntil,
+      notes: editData.notes,
+      active: editData.active,
+    };
+
+    Object.keys(finalPayload).forEach(
+      (key) =>
+        finalPayload[key as keyof ProposalUpdatePayload] === undefined &&
+        delete finalPayload[key as keyof ProposalUpdatePayload]
+    );
+
     try {
       setLoading(true);
-      console.log(
-        'Saving proposal with data:',
-        JSON.stringify(editData, null, 2)
-      ); // Log data being sent
-      await proposalService.updateProposal(id, editData);
+      await proposalService.updateProposal(id, finalPayload);
       await fetchProposal();
       setEditMode(false);
     } catch (err: any) {
@@ -304,10 +194,8 @@ const ProposalDetails = () => {
     }
   };
 
-  // Delete proposal
   const deleteProposal = async () => {
     if (!id) return;
-
     try {
       await proposalService.deleteProposal(id);
       navigate('/proposals');
@@ -316,10 +204,8 @@ const ProposalDetails = () => {
     }
   };
 
-  // Send proposal
   const sendProposal = async () => {
     if (!id) return;
-
     try {
       await proposalService.sendProposal(id);
       setOpenSendDialog(false);
@@ -329,10 +215,26 @@ const ProposalDetails = () => {
     }
   };
 
-  // Update proposal status
+  const handleDownloadPdf = async () => {
+    if (!id) return;
+    setDownloading(true);
+    setDownloadError(null);
+    try {
+      await proposalService.downloadProposalPdf(id);
+    } catch (err: any) {
+      console.error('Download error:', err);
+      setDownloadError(
+        err?.response?.data?.message ||
+          err?.message ||
+          'Failed to download PDF. Please check console for details.'
+      );
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   const updateStatus = async () => {
     if (!id || !statusDialog.status) return;
-
     try {
       await proposalService.updateStatus(id, statusDialog.status as any);
       setStatusDialog({ ...statusDialog, open: false });
@@ -342,11 +244,9 @@ const ProposalDetails = () => {
     }
   };
 
-  // Open status update dialog
   const openStatusDialog = (status: string) => {
     let title = '';
     let message = '';
-
     switch (status) {
       case 'accepted':
         title = 'Mark as Accepted';
@@ -363,107 +263,31 @@ const ProposalDetails = () => {
         message = `Are you sure you want to change the proposal status to "${status}"?`;
         break;
     }
-
-    setStatusDialog({
-      open: true,
-      status,
-      title,
-      message,
-    });
+    setStatusDialog({ open: true, status, title, message });
   };
 
-  // Handle financing option changes
-  const handleFinancingChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setNewFinancing({
-      ...newFinancing,
-      [name]: name === 'type' ? value : parseFloat(value) || 0,
-    });
-  };
-
-  // Add financing option
-  const addFinancingOption = () => {
-    if (!editData.financingOptions) {
-      setEditData({
-        ...editData,
-        financingOptions: [newFinancing],
-      });
-    } else {
-      setEditData({
-        ...editData,
-        financingOptions: [...editData.financingOptions, newFinancing],
-      });
-    }
-
-    setFinancingDialog(false);
-    setNewFinancing({
-      type: 'cash',
-      termYears: 0,
-      downPayment: 0,
-      apr: 0,
-      monthlyPayment: 0,
-      totalCost: 0,
-      selected: false,
-    });
-  };
-
-  // Remove financing option
-  const removeFinancingOption = (index: number) => {
-    if (!editData.financingOptions) return;
-
-    const updatedOptions = [...editData.financingOptions];
-    updatedOptions.splice(index, 1);
-
-    setEditData({
-      ...editData,
-      financingOptions: updatedOptions,
-    });
-  };
-
-  // Set selected financing option
-  const selectFinancingOption = (index: number) => {
-    if (!editData.financingOptions) return;
-
-    const updatedOptions = editData.financingOptions.map((option, i) => ({
-      ...option,
-      selected: i === index,
-    }));
-
-    setEditData({
-      ...editData,
-      financingOptions: updatedOptions,
-    });
-  };
-
-  if (loading && !proposal) {
+  if (loading && !proposal)
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
         <CircularProgress />
       </Box>
     );
-  }
-
-  if (error && !proposal) {
+  if (error && !proposal)
     return (
       <Alert severity="error" sx={{ mt: 2 }}>
         {error}
       </Alert>
     );
-  }
-
-  if (!proposal) {
+  if (!proposal)
     return (
       <Alert severity="error" sx={{ mt: 2 }}>
         Proposal not found
       </Alert>
     );
-  }
 
   return (
     <Box sx={{ flexGrow: 1 }}>
-      {/* Breadcrumbs navigation */}
+      {/* Breadcrumbs */}
       <Breadcrumbs sx={{ mb: 2 }}>
         <Link
           component={RouterLink}
@@ -483,8 +307,7 @@ const ProposalDetails = () => {
         </Link>
         <Typography color="text.primary">{proposal.name}</Typography>
       </Breadcrumbs>
-
-      {/* Header with actions */}
+      {/* Header */}
       <Box
         sx={{
           display: 'flex',
@@ -506,7 +329,6 @@ const ProposalDetails = () => {
             sx={{ ml: 2 }}
           />
         </Box>
-
         <Box>
           {!editMode ? (
             <>
@@ -520,7 +342,6 @@ const ProposalDetails = () => {
                   Send to Lead
                 </Button>
               )}
-
               {['sent', 'viewed'].includes(proposal.status) && (
                 <>
                   <Button
@@ -543,7 +364,6 @@ const ProposalDetails = () => {
                   </Button>
                 </>
               )}
-
               <Button
                 variant="outlined"
                 startIcon={<EditIcon />}
@@ -557,8 +377,24 @@ const ProposalDetails = () => {
                 color="error"
                 startIcon={<DeleteIcon />}
                 onClick={() => setDeleteDialog(true)}
+                sx={{ mr: 1 }}
               >
                 Delete
+              </Button>
+              <Button
+                variant="contained"
+                color="secondary"
+                startIcon={
+                  downloading ? (
+                    <CircularProgress size={20} color="inherit" />
+                  ) : (
+                    <DownloadIcon />
+                  )
+                }
+                onClick={handleDownloadPdf}
+                disabled={downloading}
+              >
+                {downloading ? 'Downloading...' : 'Download PDF'}
               </Button>
             </>
           ) : (
@@ -583,13 +419,21 @@ const ProposalDetails = () => {
           )}
         </Box>
       </Box>
-
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {error}
         </Alert>
       )}
-
+      {downloadError && (
+        <Alert
+          severity="error"
+          sx={{ mb: 2 }}
+          onClose={() => setDownloadError(null)}
+        >
+          {downloadError}
+        </Alert>
+      )}{' '}
+      {/* Show download error */}
       {/* Tabs */}
       <Paper sx={{ mb: 3 }}>
         <Tabs
@@ -615,7 +459,6 @@ const ProposalDetails = () => {
                     Proposal Information
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
-
                   <Grid container spacing={2}>
                     <Grid item xs={12} sm={6}>
                       <Typography variant="subtitle2" color="text.secondary">
@@ -626,7 +469,7 @@ const ProposalDetails = () => {
                           fullWidth
                           size="small"
                           name="name"
-                          value={editData.name || proposal.name}
+                          value={editData.name ?? proposal.name}
                           onChange={handleEditChange}
                           sx={{ mt: 1 }}
                         />
@@ -636,7 +479,27 @@ const ProposalDetails = () => {
                         </Typography>
                       )}
                     </Grid>
-
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Proposal ID
+                      </Typography>
+                      {editMode ? (
+                        <TextField
+                          fullWidth
+                          size="small"
+                          name="proposalId"
+                          value={
+                            editData.proposalId ?? proposal.proposalId ?? ''
+                          }
+                          onChange={handleEditChange}
+                          sx={{ mt: 1 }}
+                        />
+                      ) : (
+                        <Typography variant="body1" sx={{ mt: 0.5 }}>
+                          {proposal.proposalId || 'N/A'}
+                        </Typography>
+                      )}
+                    </Grid>
                     <Grid item xs={12} sm={6}>
                       <Typography variant="subtitle2" color="text.secondary">
                         Status
@@ -656,7 +519,6 @@ const ProposalDetails = () => {
                         />
                       </Box>
                     </Grid>
-
                     <Grid item xs={12} sm={6}>
                       <Typography variant="subtitle2" color="text.secondary">
                         Created
@@ -665,7 +527,6 @@ const ProposalDetails = () => {
                         {new Date(proposal.createdAt).toLocaleDateString()}
                       </Typography>
                     </Grid>
-
                     <Grid item xs={12} sm={6}>
                       <Typography variant="subtitle2" color="text.secondary">
                         Valid Until
@@ -692,7 +553,6 @@ const ProposalDetails = () => {
                         </Typography>
                       )}
                     </Grid>
-
                     <Grid item xs={12} sm={6}>
                       <Typography variant="subtitle2" color="text.secondary">
                         Lead
@@ -701,7 +561,6 @@ const ProposalDetails = () => {
                         {proposal.lead.firstName} {proposal.lead.lastName}
                       </Typography>
                     </Grid>
-
                     <Grid item xs={12} sm={6}>
                       <Typography variant="subtitle2" color="text.secondary">
                         Created By
@@ -711,7 +570,6 @@ const ProposalDetails = () => {
                         {proposal.createdBy.lastName}
                       </Typography>
                     </Grid>
-
                     {proposal.sentDate && (
                       <Grid item xs={12} sm={6}>
                         <Typography variant="subtitle2" color="text.secondary">
@@ -722,7 +580,6 @@ const ProposalDetails = () => {
                         </Typography>
                       </Grid>
                     )}
-
                     {proposal.viewedDate && (
                       <Grid item xs={12} sm={6}>
                         <Typography variant="subtitle2" color="text.secondary">
@@ -733,7 +590,6 @@ const ProposalDetails = () => {
                         </Typography>
                       </Grid>
                     )}
-
                     {proposal.acceptedDate && (
                       <Grid item xs={12} sm={6}>
                         <Typography variant="subtitle2" color="text.secondary">
@@ -744,7 +600,6 @@ const ProposalDetails = () => {
                         </Typography>
                       </Grid>
                     )}
-
                     {proposal.rejectedDate && (
                       <Grid item xs={12} sm={6}>
                         <Typography variant="subtitle2" color="text.secondary">
@@ -759,115 +614,58 @@ const ProposalDetails = () => {
                 </CardContent>
               </Card>
             </Grid>
-
             <Grid item xs={12} md={6}>
               <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    System Overview
-                  </Typography>
-                  <Divider sx={{ mb: 2 }} />
-
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">
-                        System Size
-                      </Typography>
-                      <Typography variant="body1" sx={{ mt: 0.5 }}>
-                        {proposal.systemSize} kW
-                      </Typography>
-                    </Grid>
-
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">
-                        Panel Count
-                      </Typography>
-                      <Typography variant="body1" sx={{ mt: 0.5 }}>
-                        {proposal.panelCount} panels
-                      </Typography>
-                    </Grid>
-
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">
-                        Panel Type
-                      </Typography>
-                      <Typography variant="body1" sx={{ mt: 0.5 }}>
-                        {proposal.panelType}
-                      </Typography>
-                    </Grid>
-
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">
-                        Inverter Type
-                      </Typography>
-                      <Typography variant="body1" sx={{ mt: 0.5 }}>
-                        {proposal.inverterType}
-                      </Typography>
-                    </Grid>
-
-                    <Grid item xs={12}>
-                      <Typography variant="subtitle2" color="text.secondary">
-                        Battery System
-                      </Typography>
-                      <Typography variant="body1" sx={{ mt: 0.5 }}>
-                        {proposal.includesBattery ? (
-                          <>
-                            {proposal.batteryCount} x {proposal.batteryType}
-                          </>
-                        ) : (
-                          'No battery system'
-                        )}
-                      </Typography>
-                    </Grid>
-                  </Grid>
-                </CardContent>
-              </Card>
-
-              <Card sx={{ mt: 2 }}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
                     Financial Summary
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
-
                   <Grid container spacing={2}>
                     <Grid item xs={12} sm={6}>
                       <Typography variant="subtitle2" color="text.secondary">
-                        Gross Cost
+                        Final Project Cost
                       </Typography>
                       <Typography variant="h6" sx={{ mt: 0.5 }}>
-                        <CurrencyDisplay amount={proposal.pricing.grossCost} />
+                        <CurrencyDisplay
+                          amount={proposal.finalProjectCost ?? 0}
+                          currencyCode={proposal.currency}
+                        />
                       </Typography>
                     </Grid>
-
                     <Grid item xs={12} sm={6}>
                       <Typography variant="subtitle2" color="text.secondary">
-                        Net Cost
-                      </Typography>
-                      <Typography variant="h6" sx={{ mt: 0.5 }}>
-                        <CurrencyDisplay amount={proposal.pricing.netCost} />
-                      </Typography>
-                    </Grid>
-
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">
-                        Yearly Production
-                      </Typography>
-                      <Typography variant="body1" sx={{ mt: 0.5 }}>
-                        {proposal.yearlyProductionEstimate.toLocaleString()} kWh
-                      </Typography>
-                    </Grid>
-
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">
-                        25-Year Savings
+                        Net Investment
                       </Typography>
                       <Typography
-                        variant="body1"
-                        sx={{ mt: 0.5, color: 'success.main' }}
+                        variant="h6"
+                        sx={{ mt: 0.5, color: 'primary.main' }}
                       >
                         <CurrencyDisplay
-                          amount={proposal.estimatedSavings.twentyFiveYear}
+                          amount={proposal.netInvestment ?? 0}
+                          currencyCode={proposal.currency}
+                        />
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Subsidy Amount
+                      </Typography>
+                      <Typography variant="body1" sx={{ mt: 0.5 }}>
+                        <CurrencyDisplay
+                          amount={proposal.subsidyAmount ?? 0}
+                          currencyCode={proposal.currency}
+                        />
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Additional Costs
+                      </Typography>
+                      <Typography variant="body1" sx={{ mt: 0.5 }}>
+                        <CurrencyDisplay
+                          amount={proposal.additionalCosts ?? 0}
+                          currencyCode={proposal.currency}
                         />
                       </Typography>
                     </Grid>
@@ -875,7 +673,6 @@ const ProposalDetails = () => {
                 </CardContent>
               </Card>
             </Grid>
-
             <Grid item xs={12}>
               <Card>
                 <CardContent>
@@ -883,7 +680,6 @@ const ProposalDetails = () => {
                     Notes
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
-
                   {editMode ? (
                     <TextField
                       fullWidth
@@ -895,7 +691,7 @@ const ProposalDetails = () => {
                     />
                   ) : (
                     <Typography variant="body1">
-                      {proposal.notes || 'No notes added to this proposal.'}
+                      {proposal.notes || 'No notes added.'}
                     </Typography>
                   )}
                 </CardContent>
@@ -914,7 +710,6 @@ const ProposalDetails = () => {
                     Lead Information
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
-
                   <Grid container spacing={2}>
                     <Grid item xs={12} sm={6}>
                       <Typography variant="subtitle2" color="text.secondary">
@@ -931,7 +726,6 @@ const ProposalDetails = () => {
                         {proposal.lead.firstName} {proposal.lead.lastName}
                       </Typography>
                     </Grid>
-
                     <Grid item xs={12} sm={6}>
                       <Typography variant="subtitle2" color="text.secondary">
                         Email
@@ -947,7 +741,6 @@ const ProposalDetails = () => {
                         {proposal.lead.email}
                       </Typography>
                     </Grid>
-
                     <Grid item xs={12} sm={6}>
                       <Typography variant="subtitle2" color="text.secondary">
                         Phone
@@ -963,7 +756,6 @@ const ProposalDetails = () => {
                         {proposal.lead.phone}
                       </Typography>
                     </Grid>
-
                     <Grid item xs={12}>
                       <Typography variant="subtitle2" color="text.secondary">
                         Address
@@ -983,7 +775,6 @@ const ProposalDetails = () => {
                       </Typography>
                     </Grid>
                   </Grid>
-
                   <Button
                     fullWidth
                     variant="outlined"
@@ -996,7 +787,6 @@ const ProposalDetails = () => {
                 </CardContent>
               </Card>
             </Grid>
-
             <Grid item xs={12} md={6}>
               <Card>
                 <CardContent>
@@ -1004,7 +794,6 @@ const ProposalDetails = () => {
                     Installation Address
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
-
                   <Typography
                     variant="body1"
                     sx={{ display: 'flex', alignItems: 'center' }}
@@ -1038,7 +827,6 @@ const ProposalDetails = () => {
                     System Configuration
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
-
                   <Grid container spacing={2}>
                     <Grid item xs={12} sm={6}>
                       <Typography variant="subtitle2" color="text.secondary">
@@ -1051,7 +839,7 @@ const ProposalDetails = () => {
                           name="systemSize"
                           type="number"
                           inputProps={{ min: 0, step: 0.1 }}
-                          value={editData.systemSize || proposal.systemSize}
+                          value={editData.systemSize ?? proposal.systemSize}
                           onChange={handleNumberChange}
                           sx={{ mt: 1 }}
                         />
@@ -1061,7 +849,6 @@ const ProposalDetails = () => {
                         </Typography>
                       )}
                     </Grid>
-
                     <Grid item xs={12} sm={6}>
                       <Typography variant="subtitle2" color="text.secondary">
                         Panel Count
@@ -1073,7 +860,7 @@ const ProposalDetails = () => {
                           name="panelCount"
                           type="number"
                           inputProps={{ min: 0 }}
-                          value={editData.panelCount || proposal.panelCount}
+                          value={editData.panelCount ?? proposal.panelCount}
                           onChange={handleNumberChange}
                           sx={{ mt: 1 }}
                         />
@@ -1083,254 +870,28 @@ const ProposalDetails = () => {
                         </Typography>
                       )}
                     </Grid>
-
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">
-                        Panel Type
-                      </Typography>
-                      {editMode ? (
-                        <TextField
-                          fullWidth
-                          size="small"
-                          name="panelType"
-                          value={editData.panelType || proposal.panelType}
-                          onChange={handleEditChange}
-                          sx={{ mt: 1 }}
-                        />
-                      ) : (
-                        <Typography variant="body1" sx={{ mt: 0.5 }}>
-                          {proposal.panelType}
-                        </Typography>
-                      )}
-                    </Grid>
-
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">
-                        Inverter Type
-                      </Typography>
-                      {editMode ? (
-                        <TextField
-                          fullWidth
-                          size="small"
-                          name="inverterType"
-                          value={editData.inverterType || proposal.inverterType}
-                          onChange={handleEditChange}
-                          sx={{ mt: 1 }}
-                        />
-                      ) : (
-                        <Typography variant="body1" sx={{ mt: 0.5 }}>
-                          {proposal.inverterType}
-                        </Typography>
-                      )}
-                    </Grid>
-
-                    <Grid item xs={12}>
-                      <Typography variant="subtitle2" color="text.secondary">
-                        Battery System
-                      </Typography>
-                      {editMode ? (
-                        <>
-                          <FormControlLabel
-                            control={
-                              <Switch
-                                checked={
-                                  editData.includesBattery ||
-                                  proposal.includesBattery
-                                }
-                                onChange={handleBooleanChange}
-                                name="includesBattery"
-                              />
-                            }
-                            label="Includes Battery"
-                          />
-                          {(editData.includesBattery ||
-                            proposal.includesBattery) && (
-                            <Grid container spacing={2} sx={{ mt: 1 }}>
-                              <Grid item xs={12} sm={6}>
-                                <TextField
-                                  fullWidth
-                                  size="small"
-                                  label="Battery Type"
-                                  name="batteryType"
-                                  value={
-                                    editData.batteryType ||
-                                    proposal.batteryType ||
-                                    ''
-                                  }
-                                  onChange={handleEditChange}
-                                />
-                              </Grid>
-                              <Grid item xs={12} sm={6}>
-                                <TextField
-                                  fullWidth
-                                  size="small"
-                                  label="Battery Count"
-                                  name="batteryCount"
-                                  type="number"
-                                  inputProps={{ min: 0 }}
-                                  value={
-                                    editData.batteryCount ||
-                                    proposal.batteryCount ||
-                                    0
-                                  }
-                                  onChange={handleNumberChange}
-                                />
-                              </Grid>
-                            </Grid>
-                          )}
-                        </>
-                      ) : (
-                        <Typography variant="body1" sx={{ mt: 0.5 }}>
-                          {proposal.includesBattery ? (
-                            <>
-                              {proposal.batteryCount} x {proposal.batteryType}
-                            </>
-                          ) : (
-                            'No battery system'
-                          )}
-                        </Typography>
-                      )}
-                    </Grid>
                   </Grid>
                 </CardContent>
               </Card>
             </Grid>
-
             <Grid item xs={12} md={6}>
               <Card>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
-                    Production & Savings Estimates
+                    Equipment
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
-
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">
-                        Yearly Production
-                      </Typography>
-                      {editMode ? (
-                        <TextField
-                          fullWidth
-                          size="small"
-                          name="yearlyProductionEstimate"
-                          type="number"
-                          inputProps={{ min: 0 }}
-                          value={
-                            editData.yearlyProductionEstimate ||
-                            proposal.yearlyProductionEstimate
-                          }
-                          onChange={handleNumberChange}
-                          sx={{ mt: 1 }}
+                  {/* TODO: Add equipment editing UI when in editMode */}
+                  <List dense>
+                    {proposal.equipment.map((eq, index) => (
+                      <ListItem key={index}>
+                        <ListItemText
+                          primary={`${eq.quantity} x ${eq.item.name}`}
+                          secondary={`${eq.item.category} - ${eq.item.modelNumber || 'N/A'}`}
                         />
-                      ) : (
-                        <Typography variant="body1" sx={{ mt: 0.5 }}>
-                          {proposal.yearlyProductionEstimate.toLocaleString()}{' '}
-                          kWh
-                        </Typography>
-                      )}
-                    </Grid>
-
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">
-                        First Year Savings
-                      </Typography>
-                      {editMode ? (
-                        <TextField
-                          fullWidth
-                          size="small"
-                          name="estimatedSavings.firstYear"
-                          type="number"
-                          inputProps={{ min: 0, step: 0.01 }}
-                          value={
-                            editData.estimatedSavings?.firstYear ||
-                            proposal.estimatedSavings.firstYear
-                          }
-                          onChange={handleNumberChange}
-                          sx={{ mt: 1 }}
-                        />
-                      ) : (
-                        <Typography variant="body1" sx={{ mt: 0.5 }}>
-                          <CurrencyDisplay
-                            amount={proposal.estimatedSavings.firstYear}
-                          />
-                        </Typography>
-                      )}
-                    </Grid>
-
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">
-                        25-Year Savings
-                      </Typography>
-                      {editMode ? (
-                        <TextField
-                          fullWidth
-                          size="small"
-                          name="estimatedSavings.twentyFiveYear"
-                          type="number"
-                          inputProps={{ min: 0, step: 0.01 }}
-                          value={
-                            editData.estimatedSavings?.twentyFiveYear ||
-                            proposal.estimatedSavings.twentyFiveYear
-                          }
-                          onChange={handleNumberChange}
-                          sx={{ mt: 1 }}
-                        />
-                      ) : (
-                        <Typography
-                          variant="body1"
-                          sx={{ mt: 0.5, color: 'success.main' }}
-                        >
-                          <CurrencyDisplay
-                            amount={proposal.estimatedSavings.twentyFiveYear}
-                          />
-                        </Typography>
-                      )}
-                    </Grid>
-                  </Grid>
-                </CardContent>
-              </Card>
-
-              <Card sx={{ mt: 2 }}>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Design Images
-                  </Typography>
-                  <Divider sx={{ mb: 2 }} />
-
-                  {!proposal.designImages ||
-                  proposal.designImages.length === 0 ? (
-                    <Typography variant="body2" color="text.secondary">
-                      No design images have been added to this proposal.
-                    </Typography>
-                  ) : (
-                    <Grid container spacing={2}>
-                      {proposal.designImages.map((image, index) => (
-                        <Grid item xs={12} sm={6} key={index}>
-                          <img
-                            src={image}
-                            alt={`Design ${index + 1}`}
-                            style={{
-                              width: '100%',
-                              height: 'auto',
-                              borderRadius: 4,
-                            }}
-                          />
-                        </Grid>
-                      ))}
-                    </Grid>
-                  )}
-
-                  {editMode && (
-                    <Button
-                      fullWidth
-                      variant="outlined"
-                      startIcon={<AddIcon />}
-                      sx={{ mt: 2 }}
-                    >
-                      Add Design Image
-                    </Button>
-                  )}
+                      </ListItem>
+                    ))}
+                  </List>
                 </CardContent>
               </Card>
             </Grid>
@@ -1340,85 +901,28 @@ const ProposalDetails = () => {
         {/* Financials Tab */}
         <TabPanel value={tabValue} index={3}>
           <Grid container spacing={3}>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12}>
               <Card>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
-                    Pricing & Incentives
+                    Pricing Details
                   </Typography>
                   <Divider sx={{ mb: 2 }} />
-
                   <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6}>
+                    <Grid item xs={12} sm={6} md={4}>
                       <Typography variant="subtitle2" color="text.secondary">
-                        Gross Cost
+                        Project Cost (Excl. Structure)
                       </Typography>
                       {editMode ? (
                         <TextField
                           fullWidth
                           size="small"
-                          name="pricing.grossCost"
+                          name="projectCostExcludingStructure"
                           type="number"
                           inputProps={{ min: 0, step: 0.01 }}
                           value={
-                            editData.pricing?.grossCost ||
-                            proposal.pricing.grossCost
-                          }
-                          onChange={handleNumberChange}
-                          sx={{ mt: 1 }}
-                        />
-                      ) : (
-                        <Typography variant="h6" sx={{ mt: 0.5 }}>
-                          <CurrencyDisplay
-                            amount={proposal.pricing.grossCost}
-                          />
-                        </Typography>
-                      )}
-                    </Grid>
-
-                    {/* Updated to Central Subsidy */}
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">
-                        Central Subsidy
-                      </Typography>
-                      {editMode ? (
-                        <TextField
-                          fullWidth
-                          size="small"
-                          name="pricing.centralSubsidy" // Updated name
-                          type="number"
-                          inputProps={{ min: 0, step: 0.01 }}
-                          value={
-                            editData.pricing?.centralSubsidy ?? // Use nullish coalescing
-                            proposal.pricing.centralSubsidy
-                          }
-                          onChange={handleNumberChange}
-                          sx={{ mt: 1 }}
-                        />
-                      ) : (
-                        <Typography variant="body1" sx={{ mt: 0.5 }}>
-                          <CurrencyDisplay
-                            amount={proposal.pricing.centralSubsidy}
-                          />
-                        </Typography>
-                      )}
-                    </Grid>
-
-                    {/* Updated to State Subsidy */}
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">
-                        State Subsidy
-                      </Typography>
-                      {editMode ? (
-                        <TextField
-                          fullWidth
-                          size="small"
-                          name="pricing.stateSubsidy" // Updated name
-                          type="number"
-                          inputProps={{ min: 0, step: 0.01 }}
-                          value={
-                            editData.pricing?.stateSubsidy ?? // Use nullish coalescing
-                            proposal.pricing.stateSubsidy ??
+                            editData.projectCostExcludingStructure ??
+                            proposal.projectCostExcludingStructure ??
                             0
                           }
                           onChange={handleNumberChange}
@@ -1427,26 +931,26 @@ const ProposalDetails = () => {
                       ) : (
                         <Typography variant="body1" sx={{ mt: 0.5 }}>
                           <CurrencyDisplay
-                            amount={proposal.pricing.stateSubsidy || 0}
+                            amount={proposal.projectCostExcludingStructure ?? 0}
+                            currencyCode={proposal.currency}
                           />
                         </Typography>
                       )}
                     </Grid>
-
-                    <Grid item xs={12} sm={6}>
+                    <Grid item xs={12} sm={6} md={4}>
                       <Typography variant="subtitle2" color="text.secondary">
-                        Utility Rebate
+                        Structure Cost
                       </Typography>
                       {editMode ? (
                         <TextField
                           fullWidth
                           size="small"
-                          name="pricing.utilityRebate"
+                          name="structureCost"
                           type="number"
                           inputProps={{ min: 0, step: 0.01 }}
                           value={
-                            editData.pricing?.utilityRebate ||
-                            proposal.pricing.utilityRebate ||
+                            editData.structureCost ??
+                            proposal.structureCost ??
                             0
                           }
                           onChange={handleNumberChange}
@@ -1455,274 +959,101 @@ const ProposalDetails = () => {
                       ) : (
                         <Typography variant="body1" sx={{ mt: 0.5 }}>
                           <CurrencyDisplay
-                            amount={proposal.pricing.utilityRebate || 0}
+                            amount={proposal.structureCost ?? 0}
+                            currencyCode={proposal.currency}
                           />
                         </Typography>
                       )}
                     </Grid>
-
-                    <Grid item xs={12} sm={6}>
+                    <Grid item xs={12} sm={6} md={4}>
                       <Typography variant="subtitle2" color="text.secondary">
-                        Other Incentives
-                      </Typography>
-                      {editMode ? (
-                        <TextField
-                          fullWidth
-                          size="small"
-                          name="pricing.otherIncentives"
-                          type="number"
-                          inputProps={{ min: 0, step: 0.01 }}
-                          value={
-                            editData.pricing?.otherIncentives ||
-                            proposal.pricing.otherIncentives ||
-                            0
-                          }
-                          onChange={handleNumberChange}
-                          sx={{ mt: 1 }}
-                        />
-                      ) : (
-                        <Typography variant="body1" sx={{ mt: 0.5 }}>
-                          <CurrencyDisplay
-                            amount={proposal.pricing.otherIncentives || 0}
-                          />
-                        </Typography>
-                      )}
-                    </Grid>
-
-                    {/* Added GST Rate */}
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">
-                        GST Rate (%)
-                      </Typography>
-                      {editMode ? (
-                        <TextField
-                          fullWidth
-                          size="small"
-                          name="pricing.gstRate"
-                          type="number"
-                          inputProps={{ min: 0, step: 0.1 }}
-                          value={
-                            editData.pricing?.gstRate ??
-                            proposal.pricing.gstRate ??
-                            12 // Default example
-                          }
-                          onChange={handleNumberChange}
-                          sx={{ mt: 1 }}
-                        />
-                      ) : (
-                        <Typography variant="body1" sx={{ mt: 0.5 }}>
-                          {proposal.pricing.gstRate || 0}%
-                        </Typography>
-                      )}
-                    </Grid>
-
-                    {/* Added GST Amount (Read Only) */}
-                    <Grid item xs={12} sm={6}>
-                      <Typography variant="subtitle2" color="text.secondary">
-                        GST Amount
-                      </Typography>
-                      <Typography variant="body1" sx={{ mt: 0.5 }}>
-                        <CurrencyDisplay
-                          amount={proposal.pricing.gstAmount || 0}
-                        />
-                      </Typography>
-                    </Grid>
-
-                    <Grid item xs={12}>
-                      <Divider sx={{ my: 1 }} />
-                      <Typography variant="subtitle2" color="text.secondary">
-                        Net Cost (Incl. GST, After Incentives)
+                        Final Project Cost
                       </Typography>
                       <Typography
-                        variant="h6"
-                        sx={{ mt: 0.5, color: 'primary.main' }}
+                        variant="body1"
+                        sx={{ mt: 0.5, fontWeight: 'medium' }}
                       >
-                        <CurrencyDisplay amount={proposal.pricing.netCost} />
+                        <CurrencyDisplay
+                          amount={proposal.finalProjectCost ?? 0}
+                          currencyCode={proposal.currency}
+                        />
                       </Typography>
                     </Grid>
-                  </Grid>
-                </CardContent>
-              </Card>
-            </Grid>
-
-            <Grid item xs={12} md={6}>
-              <Card>
-                <CardContent>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      mb: 1,
-                    }}
-                  >
-                    <Typography variant="h6">Financing Options</Typography>
-                    {editMode && (
-                      <Button
-                        size="small"
-                        startIcon={<AddIcon />}
-                        onClick={() => setFinancingDialog(true)}
+                    <Grid item xs={12} sm={6} md={4}>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Subsidy Amount
+                      </Typography>
+                      {editMode ? (
+                        <TextField
+                          fullWidth
+                          size="small"
+                          name="subsidyAmount"
+                          type="number"
+                          inputProps={{ min: 0, step: 0.01 }}
+                          value={
+                            editData.subsidyAmount ??
+                            proposal.subsidyAmount ??
+                            0
+                          }
+                          onChange={handleNumberChange}
+                          sx={{ mt: 1 }}
+                        />
+                      ) : (
+                        <Typography variant="body1" sx={{ mt: 0.5 }}>
+                          <CurrencyDisplay
+                            amount={proposal.subsidyAmount ?? 0}
+                            currencyCode={proposal.currency}
+                          />
+                        </Typography>
+                      )}
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={4}>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Net Investment
+                      </Typography>
+                      <Typography
+                        variant="body1"
+                        sx={{
+                          mt: 0.5,
+                          fontWeight: 'medium',
+                          color: 'primary.main',
+                        }}
                       >
-                        Add Option
-                      </Button>
-                    )}
-                  </Box>
-                  <Divider sx={{ mb: 2 }} />
-
-                  {!proposal.financingOptions ||
-                  proposal.financingOptions.length === 0 ? (
-                    <Typography variant="body2" color="text.secondary">
-                      No financing options have been defined for this proposal.
-                    </Typography>
-                  ) : (
-                    <List>
-                      {(editMode
-                        ? editData.financingOptions
-                        : proposal.financingOptions
-                      )?.map((option, index) => (
-                        <Paper
-                          key={index}
-                          sx={{
-                            mb: 2,
-                            p: 2,
-                            border: option.selected ? '2px solid' : 'none',
-                            borderColor: 'primary.main',
-                            position: 'relative',
-                          }}
-                        >
-                          {editMode && (
-                            <IconButton
-                              size="small"
-                              color="error"
-                              sx={{ position: 'absolute', top: 5, right: 5 }}
-                              onClick={() => removeFinancingOption(index)}
-                            >
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
-                          )}
-
-                          <Typography
-                            variant="subtitle1"
-                            fontWeight="medium"
-                            color="primary"
-                          >
-                            {financingTypeLabels[
-                              option.type as keyof typeof financingTypeLabels
-                            ] || option.type}
-                            {option.selected && (
-                              <Chip
-                                label="Selected"
-                                color="primary"
-                                size="small"
-                                sx={{ ml: 1 }}
-                              />
-                            )}
-                          </Typography>
-
-                          <Grid container spacing={2} sx={{ mt: 1 }}>
-                            {option.type !== 'cash' && (
-                              <>
-                                <Grid item xs={6}>
-                                  <Typography
-                                    variant="body2"
-                                    color="text.secondary"
-                                  >
-                                    Term Length
-                                  </Typography>
-                                  <Typography variant="body1">
-                                    {option.termYears}{' '}
-                                    {option.termYears === 1 ? 'year' : 'years'}
-                                  </Typography>
-                                </Grid>
-
-                                {(option.type === 'loan' ||
-                                  option.type === 'lease') && (
-                                  <Grid item xs={6}>
-                                    <Typography
-                                      variant="body2"
-                                      color="text.secondary"
-                                    >
-                                      Down Payment
-                                    </Typography>
-                                    <Typography variant="body1">
-                                      <CurrencyDisplay
-                                        amount={option.downPayment || 0}
-                                      />
-                                    </Typography>
-                                  </Grid>
-                                )}
-
-                                {option.type === 'loan' && (
-                                  <Grid item xs={6}>
-                                    <Typography
-                                      variant="body2"
-                                      color="text.secondary"
-                                    >
-                                      APR
-                                    </Typography>
-                                    <Typography variant="body1">
-                                      {option.apr}%
-                                    </Typography>
-                                  </Grid>
-                                )}
-
-                                <Grid item xs={6}>
-                                  <Typography
-                                    variant="body2"
-                                    color="text.secondary"
-                                  >
-                                    {option.type === 'ppa'
-                                      ? 'Price per kWh'
-                                      : 'Monthly Payment'}
-                                  </Typography>
-                                  <Typography variant="body1">
-                                    {option.type === 'ppa' ? (
-                                      <>
-                                        {getCurrencySymbol('INR')}
-                                        {option.monthlyPayment}/kWh
-                                      </>
-                                    ) : (
-                                      <>
-                                        <CurrencyDisplay
-                                          amount={option.monthlyPayment || 0}
-                                        />
-                                        /month
-                                      </>
-                                    )}
-                                  </Typography>
-                                </Grid>
-                              </>
-                            )}
-
-                            <Grid item xs={12}>
-                              <Typography
-                                variant="body2"
-                                color="text.secondary"
-                              >
-                                Total Cost
-                              </Typography>
-                              <Typography variant="body1" fontWeight="medium">
-                                <CurrencyDisplay
-                                  amount={option.totalCost || 0}
-                                />
-                              </Typography>
-                            </Grid>
-                          </Grid>
-
-                          {editMode && !option.selected && (
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              onClick={() => selectFinancingOption(index)}
-                              sx={{ mt: 1 }}
-                            >
-                              Set as Primary Option
-                            </Button>
-                          )}
-                        </Paper>
-                      ))}
-                    </List>
-                  )}
+                        <CurrencyDisplay
+                          amount={proposal.netInvestment ?? 0}
+                          currencyCode={proposal.currency}
+                        />
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={6} md={4}>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Additional Costs
+                      </Typography>
+                      {editMode ? (
+                        <TextField
+                          fullWidth
+                          size="small"
+                          name="additionalCosts"
+                          type="number"
+                          inputProps={{ min: 0, step: 0.01 }}
+                          value={
+                            editData.additionalCosts ??
+                            proposal.additionalCosts ??
+                            0
+                          }
+                          onChange={handleNumberChange}
+                          sx={{ mt: 1 }}
+                        />
+                      ) : (
+                        <Typography variant="body1" sx={{ mt: 0.5 }}>
+                          <CurrencyDisplay
+                            amount={proposal.additionalCosts ?? 0}
+                            currencyCode={proposal.currency}
+                          />
+                        </Typography>
+                      )}
+                    </Grid>
+                  </Grid>
                 </CardContent>
               </Card>
             </Grid>
@@ -1737,7 +1068,6 @@ const ProposalDetails = () => {
                 Proposal Timeline
               </Typography>
               <Divider sx={{ mb: 3 }} />
-
               <Box sx={{ position: 'relative' }}>
                 <Box
                   sx={{
@@ -1750,7 +1080,6 @@ const ProposalDetails = () => {
                     zIndex: 0,
                   }}
                 />
-
                 <List sx={{ position: 'relative', zIndex: 1 }}>
                   <ListItem sx={{ pb: 3 }}>
                     <ListItemAvatar>
@@ -1763,7 +1092,6 @@ const ProposalDetails = () => {
                       secondary={`Created on ${new Date(proposal.createdAt).toLocaleDateString()} by ${proposal.createdBy.firstName} ${proposal.createdBy.lastName}`}
                     />
                   </ListItem>
-
                   {proposal.sentDate && (
                     <ListItem sx={{ pb: 3 }}>
                       <ListItemAvatar>
@@ -1777,7 +1105,6 @@ const ProposalDetails = () => {
                       />
                     </ListItem>
                   )}
-
                   {proposal.viewedDate && (
                     <ListItem sx={{ pb: 3 }}>
                       <ListItemAvatar>
@@ -1791,7 +1118,6 @@ const ProposalDetails = () => {
                       />
                     </ListItem>
                   )}
-
                   {proposal.acceptedDate && (
                     <ListItem sx={{ pb: 3 }}>
                       <ListItemAvatar>
@@ -1805,7 +1131,6 @@ const ProposalDetails = () => {
                       />
                     </ListItem>
                   )}
-
                   {proposal.rejectedDate && (
                     <ListItem sx={{ pb: 3 }}>
                       <ListItemAvatar>
@@ -1819,7 +1144,6 @@ const ProposalDetails = () => {
                       />
                     </ListItem>
                   )}
-
                   {!proposal.sentDate &&
                     !proposal.viewedDate &&
                     !proposal.acceptedDate &&
@@ -1837,8 +1161,7 @@ const ProposalDetails = () => {
           </Card>
         </TabPanel>
       </Paper>
-
-      {/* Delete Confirmation Dialog */}
+      {/* Dialogs */}
       <Dialog open={deleteDialog} onClose={() => setDeleteDialog(false)}>
         <DialogTitle>Confirm Delete</DialogTitle>
         <DialogContent>
@@ -1852,8 +1175,6 @@ const ProposalDetails = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
-      {/* Send Proposal Dialog */}
       <Dialog open={sendDialog} onClose={() => setOpenSendDialog(false)}>
         <DialogTitle>Send Proposal</DialogTitle>
         <DialogContent>
@@ -1878,8 +1199,6 @@ const ProposalDetails = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
-      {/* Status Update Dialog */}
       <Dialog
         open={statusDialog.open}
         onClose={() => setStatusDialog({ ...statusDialog, open: false })}
@@ -1896,133 +1215,6 @@ const ProposalDetails = () => {
           </Button>
           <Button onClick={updateStatus} color="primary" variant="contained">
             Confirm
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Add Financing Option Dialog */}
-      <Dialog open={financingDialog} onClose={() => setFinancingDialog(false)}>
-        <DialogTitle>Add Financing Option</DialogTitle>
-        <DialogContent>
-          <Grid container spacing={2} sx={{ mt: 0.5 }}>
-            <Grid item xs={12}>
-              <FormControl fullWidth>
-                <InputLabel>Financing Type</InputLabel>
-                <Select
-                  name="type"
-                  value={newFinancing.type}
-                  label="Financing Type"
-                  onChange={handleFinancingChange as any}
-                >
-                  <MenuItem value="cash">Cash Purchase</MenuItem>
-                  <MenuItem value="loan">Solar Loan</MenuItem>
-                  <MenuItem value="lease">Solar Lease</MenuItem>
-                  <MenuItem value="ppa">
-                    Power Purchase Agreement (PPA)
-                  </MenuItem>
-                </Select>
-              </FormControl>
-            </Grid>
-
-            {newFinancing.type !== 'cash' && (
-              <>
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label="Term (Years)"
-                    name="termYears"
-                    type="number"
-                    inputProps={{ min: 0 }}
-                    value={newFinancing.termYears}
-                    onChange={handleFinancingChange}
-                  />
-                </Grid>
-
-                {(newFinancing.type === 'loan' ||
-                  newFinancing.type === 'lease') && (
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      label={`Down Payment (${getCurrencySymbol('INR')})`}
-                      name="downPayment"
-                      type="number"
-                      inputProps={{ min: 0, step: 0.01 }}
-                      value={newFinancing.downPayment}
-                      onChange={handleFinancingChange}
-                    />
-                  </Grid>
-                )}
-
-                {newFinancing.type === 'loan' && (
-                  <Grid item xs={12} md={6}>
-                    <TextField
-                      fullWidth
-                      label="APR (%)"
-                      name="apr"
-                      type="number"
-                      inputProps={{ min: 0, step: 0.01 }}
-                      value={newFinancing.apr}
-                      onChange={handleFinancingChange}
-                    />
-                  </Grid>
-                )}
-
-                <Grid item xs={12} md={6}>
-                  <TextField
-                    fullWidth
-                    label={
-                      newFinancing.type === 'ppa'
-                        ? `Price per kWh (${getCurrencySymbol('INR')})`
-                        : `Monthly Payment (${getCurrencySymbol('INR')})`
-                    }
-                    name="monthlyPayment"
-                    type="number"
-                    inputProps={{ min: 0, step: 0.01 }}
-                    value={newFinancing.monthlyPayment}
-                    onChange={handleFinancingChange}
-                  />
-                </Grid>
-              </>
-            )}
-
-            <Grid item xs={12}>
-              <TextField
-                fullWidth
-                label={`Total Cost (${getCurrencySymbol('INR')})`}
-                name="totalCost"
-                type="number"
-                inputProps={{ min: 0, step: 0.01 }}
-                value={newFinancing.totalCost}
-                onChange={handleFinancingChange}
-              />
-            </Grid>
-
-            <Grid item xs={12}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={newFinancing.selected}
-                    onChange={(e) =>
-                      setNewFinancing({
-                        ...newFinancing,
-                        selected: e.target.checked,
-                      })
-                    }
-                  />
-                }
-                label="Set as Primary Financing Option"
-              />
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setFinancingDialog(false)}>Cancel</Button>
-          <Button
-            onClick={addFinancingOption}
-            color="primary"
-            variant="contained"
-          >
-            Add Option
           </Button>
         </DialogActions>
       </Dialog>

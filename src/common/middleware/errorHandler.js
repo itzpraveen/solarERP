@@ -2,23 +2,36 @@
  * Global error handler middleware
  * This middleware handles all errors in a consistent way
  */
-
+const { validationResult } = require('express-validator'); // Import validationResult
 const { AppError } = require('../utils/errors');
 const config = require('../config');
 
 /**
- * Handle development errors
- * @param {Error} err - Error object
+ * Middleware to handle express-validator validation errors
+ * Place this middleware immediately after your validation checks in the route definition.
+ * @param {Object} req - Express request object
  * @param {Object} res - Express response object
+ * @param {Function} next - Express next function
  */
-const sendErrorDev = (err, res) => {
-  res.status(err.statusCode).json({
-    status: err.status,
-    error: err,
-    message: err.message,
-    stack: err.stack,
-  });
+exports.handleValidationErrors = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    // Format errors for a consistent response
+    const formattedErrors = errors.array().map((err) => ({
+      field: err.param, // Use param instead of path for consistency
+      message: err.msg,
+      value: err.value, // Optionally include the value that failed validation
+    }));
+    // Use AppError for consistent error structure, send 400 Bad Request
+    return next(new AppError('Validation failed', 400, formattedErrors)); // Added return
+    // Or send response directly:
+    // return res.status(400).json({ status: 'fail', errors: formattedErrors });
+  }
+  // No validation errors, proceed to the next middleware/controller
+  next();
 };
+
+// Removed unused sendErrorDev function
 
 /**
  * Handle production errors
@@ -93,25 +106,57 @@ const handleCastErrorDB = (err) => {
  * @param {Error} err - Error object
  * @param {Object} req - Express request object
  * @param {Object} res - Express response object
- * @param {Function} next - Express next function
+ * @param {Function} _next - Express next function (renamed as unused)
  */
-module.exports = (err, req, res, next) => {
+const globalErrorHandler = (err, req, res, _next) => {
+  // Rename next to _next
   err.statusCode = err.statusCode || 500;
   err.status = err.status || 'error';
 
   if (config.server.env === 'development') {
-    sendErrorDev(err, res);
+    // Include validation errors array in dev response if present
+    const response = {
+      status: err.status,
+      error: err,
+      message: err.message,
+      stack: err.stack,
+    };
+    if (err.errors) {
+      // Check if the error object has an 'errors' property (from handleValidationErrors)
+      response.validationErrors = err.errors;
+    }
+    res.status(err.statusCode).json(response);
   } else if (config.server.env === 'production') {
-    // Use original error object for checks to preserve type information
-    let error = err;
+    let handledError = { ...err, message: err.message }; // Create a copy to avoid param reassignment
 
-    if (error.code === 11000) error = handleDuplicateFieldsDB(error);
-    if (error.name === 'ValidationError')
-      error = handleValidationErrorDB(error);
-    if (error.name === 'CastError') error = handleCastErrorDB(error); // Added CastError handler
-    if (error.name === 'JsonWebTokenError') error = handleJWTError();
-    if (error.name === 'TokenExpiredError') error = handleJWTExpiredError();
+    // Handle specific operational errors first
+    if (handledError.message === 'Validation failed' && handledError.errors) {
+      // If it's our custom validation error, send the details
+      return res.status(handledError.statusCode).json({
+        // Added return
+        status: handledError.status,
+        message: handledError.message,
+        errors: handledError.errors, // Include the formatted validation errors
+      });
+    }
+    if (handledError.code === 11000)
+      handledError = handleDuplicateFieldsDB(handledError);
+    if (handledError.name === 'ValidationError')
+      handledError = handleValidationErrorDB(handledError); // Mongoose validation
+    if (handledError.name === 'CastError')
+      handledError = handleCastErrorDB(handledError);
+    if (handledError.name === 'JsonWebTokenError')
+      handledError = handleJWTError();
+    if (handledError.name === 'TokenExpiredError')
+      handledError = handleJWTExpiredError();
 
-    sendErrorProd(error, res);
+    // Send generic or specific operational error message
+    sendErrorProd(handledError, res); // Pass the handledError
   }
+};
+
+// Export both the global handler and the validation handler
+module.exports = {
+  globalErrorHandler,
+  handleValidationErrors: exports.handleValidationErrors, // Re-export for clarity if needed elsewhere
 };

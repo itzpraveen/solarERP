@@ -3,9 +3,11 @@ const Lead = require('../models/lead.model');
 const AppError = require('../../utils/appError');
 const catchAsync = require('../../utils/catchAsync');
 const sendEmail = require('../../utils/email');
+const { generateProposalPdf } = require('../../utils/generatePdf'); // Import the PDF generator
 
 // Get all proposals with filtering, sorting, and pagination
-exports.getAllProposals = catchAsync(async (req, res, next) => {
+exports.getAllProposals = catchAsync(async (req, res, _next) => {
+  // Rename next to _next
   // BUILD FILTER CONDITIONS
   const filterConditions = {};
 
@@ -83,7 +85,7 @@ exports.getProposal = catchAsync(async (req, res, next) => {
   const proposal = await Proposal.findById(req.params.id).populate('lead'); // Populate the lead field
 
   if (!proposal) {
-    return next(new AppError('No proposal found with that ID', 404));
+    return next(new AppError('No proposal found with that ID', 404)); // Added return
   }
 
   res.status(200).json({
@@ -102,14 +104,14 @@ exports.createProposal = catchAsync(async (req, res, next) => {
   // Verify that the lead exists
   const lead = await Lead.findById(req.body.lead);
   if (!lead) {
-    return next(new AppError('No lead found with that ID', 404));
+    return next(new AppError('No lead found with that ID', 404)); // Added return
   }
 
   const newProposal = await Proposal.create(req.body);
 
   // Update lead status to proposal if it's not already in a later stage
   if (['new', 'contacted', 'qualified'].includes(lead.status)) {
-    await Lead.findByIdAndUpdate(lead._id, { status: 'proposal' });
+    await Lead.findByIdAndUpdate(lead.id, { status: 'proposal' }); // Use lead.id
   }
 
   res.status(201).json({
@@ -146,7 +148,7 @@ exports.updateProposal = catchAsync(async (req, res, next) => {
   );
 
   if (!proposal) {
-    return next(new AppError('No proposal found with that ID', 404));
+    return next(new AppError('No proposal found with that ID', 404)); // Added return
   }
 
   res.status(200).json({
@@ -164,7 +166,7 @@ exports.deleteProposal = catchAsync(async (req, res, next) => {
   });
 
   if (!proposal) {
-    return next(new AppError('No proposal found with that ID', 404));
+    return next(new AppError('No proposal found with that ID', 404)); // Added return
   }
 
   res.status(204).json({
@@ -184,14 +186,14 @@ exports.updateProposalStatus = catchAsync(async (req, res, next) => {
   );
 
   if (!proposal) {
-    return next(new AppError('No proposal found with that ID', 404));
+    return next(new AppError('No proposal found with that ID', 404)); // Added return
   }
 
   // If proposal is accepted or rejected, update lead status
   if (status === 'accepted') {
-    await Lead.findByIdAndUpdate(proposal.lead._id, { status: 'won' });
+    await Lead.findByIdAndUpdate(proposal.lead.id, { status: 'won' }); // Use proposal.lead.id
   } else if (status === 'rejected') {
-    await Lead.findByIdAndUpdate(proposal.lead._id, { status: 'lost' });
+    await Lead.findByIdAndUpdate(proposal.lead.id, { status: 'lost' }); // Use proposal.lead.id
   }
 
   res.status(200).json({
@@ -207,7 +209,7 @@ exports.sendProposal = catchAsync(async (req, res, next) => {
   const proposal = await Proposal.findById(req.params.id);
 
   if (!proposal) {
-    return next(new AppError('No proposal found with that ID', 404));
+    return next(new AppError('No proposal found with that ID', 404)); // Added return
   }
 
   // Update status to sent
@@ -216,16 +218,36 @@ exports.sendProposal = catchAsync(async (req, res, next) => {
   await proposal.save();
 
   // Get full lead information
-  const lead = await Lead.findById(proposal.lead._id);
+  const lead = await Lead.findById(proposal.lead.id); // Use proposal.lead.id
 
   // Create view link with tracking capability
-  const viewLink = `${req.protocol}://${req.get('host')}/proposals/view/${proposal._id}`;
+  const viewLink = `${req.protocol}://${req.get('host')}/proposals/view/${proposal.id}`; // Use proposal.id
+
+  // Populate equipment details if not already populated (might be needed if proposal was fetched without pre-find hook)
+  await proposal.populate({
+    path: 'equipment.item',
+    select: 'name category modelNumber',
+  });
+
+  // Generate equipment list for email
+  const equipmentListHtml = proposal.equipment
+    .map(
+      (eq) =>
+        `<li>${eq.quantity} x ${eq.item.name} (${eq.item.category}${eq.item.modelNumber ? ` - ${eq.item.modelNumber}` : ''})</li>`
+    )
+    .join('');
+
+  // Format currency helper
+  const formatCurrency = (amount) => {
+    return `${proposal.currency === 'INR' ? '₹' : '$'}${amount?.toLocaleString() || '0'}`;
+  };
 
   // Send email to customer
   await sendEmail({
     email: lead.email,
     subject: `Your Solar Proposal: ${proposal.name}`,
-    message: `Dear ${lead.firstName} ${lead.lastName},\n\nThank you for your interest in our solar solutions. We're excited to share your custom proposal with you.\n\nYou can view your proposal at: ${viewLink}\n\nThis proposal is valid until ${new Date(proposal.validUntil).toLocaleDateString()}.\n\nIf you have any questions, please don't hesitate to contact us.\n\nBest regards,\nYour Solar Team`,
+    // Update plain text message as well
+    message: `Dear ${lead.firstName} ${lead.lastName},\n\nThank you for your interest in our solar solutions. We're excited to share your custom proposal with you.\n\nYou can view your proposal at: ${viewLink}\n\nThis proposal includes a ${proposal.systemSize}kW solar system.\n\nKey Financials:\n- Final Project Cost: ${formatCurrency(proposal.finalProjectCost)}\n- Subsidy: ${formatCurrency(proposal.subsidyAmount)}\n- Net Investment: ${formatCurrency(proposal.netInvestment)}\n\nEquipment:\n${proposal.equipment.map((eq) => `- ${eq.quantity} x ${eq.item.name} (${eq.item.category})`).join('\n')}\n\nThis proposal is valid until ${new Date(proposal.validUntil).toLocaleDateString()}.\n\nIf you have any questions, please don't hesitate to contact us.\n\nBest regards,\nYour Solar Team`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Your Solar Proposal is Ready</h2>
@@ -234,11 +256,17 @@ exports.sendProposal = catchAsync(async (req, res, next) => {
         <div style="text-align: center; margin: 30px 0;">
           <a href="${viewLink}" style="background-color: #4CAF50; color: white; padding: 12px 20px; text-decoration: none; border-radius: 4px; font-weight: bold;">View Your Proposal</a>
         </div>
-        <p>This proposal includes:</p>
+        <p>This proposal includes a ${proposal.systemSize}kW solar system.</p>
+        <p><strong>Key Financials:</strong></p>
         <ul>
-          <li>${proposal.systemSize}kW solar system with ${proposal.panelCount} ${proposal.panelType} panels</li>
-          <li>Estimated annual production of ${proposal.yearlyProductionEstimate.toLocaleString()} kWh</li>
-          <li>Potential 25-year savings of $${proposal.estimatedSavings.twentyFiveYear.toLocaleString()}</li>
+          <li>Final Project Cost: ${formatCurrency(proposal.finalProjectCost)}</li>
+          <li>Subsidy (PM Surya Ghar): ${formatCurrency(proposal.subsidyAmount)}</li>
+          <li>Net Investment: ${formatCurrency(proposal.netInvestment)}</li>
+          ${proposal.additionalCosts > 0 ? `<li>Additional Costs (Registration, etc.): ${formatCurrency(proposal.additionalCosts)}</li>` : ''}
+        </ul>
+        <p><strong>Equipment Included:</strong></p>
+        <ul>
+          ${equipmentListHtml || '<li>Details available in the full proposal.</li>'}
         </ul>
         <p>This proposal is valid until <strong>${new Date(proposal.validUntil).toLocaleDateString()}</strong>.</p>
         <p>If you have any questions, please don't hesitate to contact us.</p>
@@ -261,7 +289,7 @@ exports.trackProposalView = catchAsync(async (req, res, next) => {
   const proposal = await Proposal.findById(req.params.id);
 
   if (!proposal) {
-    return next(new AppError('No proposal found with that ID', 404));
+    return next(new AppError('No proposal found with that ID', 404)); // Added return
   }
 
   // Only update to viewed if it's in sent status
@@ -275,4 +303,39 @@ exports.trackProposalView = catchAsync(async (req, res, next) => {
   res.status(200).json({
     status: 'success',
   });
+});
+
+// Download proposal as PDF
+exports.downloadProposalPdf = catchAsync(async (req, res, next) => {
+  console.log(
+    `Entering downloadProposalPdf for ID: ${req.params.id} by User: ${req.user?.id}`
+  ); // <-- Add logging
+
+  // Use findOne to explicitly include inactive proposals for download
+  const proposal = await Proposal.findOne({
+    _id: req.params.id,
+    active: { $in: [true, false] }, // Bypass the pre-find hook filtering active=false
+  })
+    .populate('lead')
+    .populate('equipment.item'); // Ensure necessary fields are populated
+
+  if (!proposal) {
+    // This 404 is now only triggered if the ID truly doesn't exist at all
+    return next(new AppError('No proposal found with that ID', 404)); // Added return
+  }
+
+  try {
+    const pdfBuffer = await generateProposalPdf(proposal.toObject()); // Pass plain object
+
+    res.setHeader('Content-Type', 'application/pdf');
+    // Use proposal name or ID for the filename
+    const filename = `Proposal-${proposal.name || proposal.id}.pdf`
+      .replace(/[^a-z0-9]/gi, '_')
+      .toLowerCase(); // Use proposal.id
+    res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+    res.send(pdfBuffer);
+  } catch (error) {
+    console.error('PDF Generation Error in Controller:', error);
+    return next(new AppError('Failed to generate PDF.', 500));
+  }
 });

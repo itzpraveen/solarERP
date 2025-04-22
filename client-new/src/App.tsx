@@ -31,6 +31,10 @@ import Equipment from './pages/equipment/Equipment';
 import EquipmentDetails from './pages/equipment/EquipmentDetails';
 import Documents from './pages/documents/Documents';
 import Reports from './pages/reports/Reports';
+import InventoryList from './pages/inventory/InventoryList';
+// import InventoryForm from './features/inventory/components/InventoryForm'; // No longer needed directly here
+import InventoryAdd from './pages/inventory/InventoryAdd'; // Import Add page
+import InventoryEdit from './pages/inventory/InventoryEdit'; // Import Edit page
 
 // Service Request Module
 import ServiceRequests from './pages/services/ServiceRequests';
@@ -67,7 +71,6 @@ function App() {
             >
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="dashboard" element={<Dashboard />} />
-
               {/* Implemented Routes */}
               <Route path="leads" element={<Leads />} />
               <Route path="leads/:id" element={<LeadDetails />} />
@@ -81,7 +84,15 @@ function App() {
               <Route path="equipment/:id" element={<EquipmentDetails />} />
               <Route path="documents" element={<Documents />} />
               <Route path="reports" element={<Reports />} />
-
+              {/* Inventory Routes */}
+              <Route path="inventory" element={<InventoryList />} />
+              <Route path="inventory/add" element={<InventoryAdd />} />{' '}
+              {/* Use InventoryAdd page */}
+              <Route
+                path="inventory/edit/:id"
+                element={<InventoryEdit />}
+              />{' '}
+              {/* Use InventoryEdit page */}
               {/* Service Request Routes */}
               <Route path="services" element={<ServiceRequests />} />
               <Route path="services/new" element={<ServiceRequestForm />} />
@@ -90,7 +101,6 @@ function App() {
                 path="services/:id/edit"
                 element={<ServiceRequestForm />}
               />
-
               {/* Profile & Settings */}
               <Route path="profile" element={<Profile />} />
               <Route path="settings" element={<Settings />} />

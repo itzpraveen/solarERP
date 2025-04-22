@@ -232,9 +232,9 @@ const SystemSettingsForm = ({
               label="Currency"
               onChange={handleSelectChange}
             >
-              <MenuItem value="USD">USD ($)</MenuItem>
+              {/* <MenuItem value="USD">USD ($)</MenuItem> */}
               <MenuItem value="INR">INR (₹)</MenuItem>
-              <MenuItem value="EUR">EUR (€)</MenuItem>
+              {/* <MenuItem value="EUR">EUR (€)</MenuItem> */}
               <MenuItem value="GBP">GBP (£)</MenuItem>
               <MenuItem value="CAD">CAD ($)</MenuItem>
               <MenuItem value="AUD">AUD ($)</MenuItem>
