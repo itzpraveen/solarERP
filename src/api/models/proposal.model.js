@@ -20,6 +20,12 @@ const proposalSchema = new mongoose.Schema(
       // required: [true, 'Proposal ID is required'],
       trim: true,
     },
+    projectType: {
+      type: String,
+      enum: ['Residential', 'Commercial'],
+      required: [true, 'Project type is required'],
+      default: 'Residential',
+    },
     status: {
       type: String,
       enum: ['draft', 'sent', 'viewed', 'accepted', 'rejected', 'expired'],
@@ -192,24 +198,31 @@ proposalSchema.pre(/^find/, function (next) {
   next();
 });
 
-// Calculate derived values before saving based on new structure
-proposalSchema.pre('save', function (next) {
-  // Calculate Final Project Cost and Net Investment
-  if (
-    this.isModified('projectCostExcludingStructure') ||
-    this.isModified('structureCost') ||
-    this.isModified('subsidyAmount')
-  ) {
-    const costA = this.projectCostExcludingStructure || 0;
-    const costB = this.structureCost || 0;
-    const subsidy = this.subsidyAmount || 0;
+    // Calculate derived values and enforce subsidy rule before saving
+    proposalSchema.pre('save', function (next) {
+      // Enforce subsidy rule: Commercial projects must have 0 subsidy
+      if (this.projectType === 'Commercial') {
+        this.subsidyAmount = 0;
+      }
 
-    this.finalProjectCost = costA + costB;
-    this.netInvestment = this.finalProjectCost - subsidy;
-  }
+      // Calculate Final Project Cost and Net Investment
+      if (
+        this.isModified('projectCostExcludingStructure') ||
+        this.isModified('structureCost') ||
+        this.isModified('subsidyAmount') ||
+        this.isModified('projectType') // Recalculate if type changes
+      ) {
+        const costA = this.projectCostExcludingStructure || 0;
+        const costB = this.structureCost || 0;
+        // Use the potentially modified subsidyAmount
+        const subsidy = this.subsidyAmount || 0;
 
-  next();
-});
+        this.finalProjectCost = costA + costB;
+        this.netInvestment = this.finalProjectCost - subsidy;
+      }
+
+      next();
+    });
 
 // Update status dates automatically
 proposalSchema.pre('save', function (next) {

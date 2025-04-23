@@ -26,6 +26,10 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  RadioGroup, // Moved from icons
+  FormControlLabel, // Moved from icons
+  Radio, // Moved from icons
+  FormLabel, // Moved from icons
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -33,6 +37,7 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   Refresh as RefreshIcon,
+  // Removed Radio, RadioGroup, FormControlLabel, FormLabel from here
 } from '@mui/icons-material';
 import leadService, { Lead, LeadFilter } from '../../api/leadService';
 import userService from '../../api/userService'; // Import userService
@@ -53,6 +58,7 @@ const statusColors = {
 interface LeadFormData {
   firstName: string;
   lastName: string;
+  projectType: 'Residential' | 'Commercial'; // Added projectType
   email: string;
   phone: string;
   address: {
@@ -89,6 +95,7 @@ const LeadForm = ({
     // Explicitly type formData
     firstName: '',
     lastName: '',
+    projectType: 'Residential', // Initialize projectType
     email: '',
     phone: '',
     address: {
@@ -172,6 +179,9 @@ const LeadForm = ({
     // If billAmountString is empty or not a valid number,
     // monthlyElectricBill will not be included in processedData
 
+    // Ensure projectType is included
+    processedData.projectType = formData.projectType;
+
     onSubmit(processedData);
   };
 
@@ -190,6 +200,22 @@ const LeadForm = ({
                 value={formData.firstName}
                 onChange={handleChange}
               />
+            </Grid>
+            {/* Project Type Selection */}
+            <Grid item xs={12}>
+              <FormControl component="fieldset" required>
+                <FormLabel component="legend">Project Type</FormLabel>
+                <RadioGroup
+                  row
+                  aria-label="project-type"
+                  name="projectType"
+                  value={formData.projectType}
+                  onChange={handleChange}
+                >
+                  <FormControlLabel value="Residential" control={<Radio />} label="Residential" />
+                  <FormControlLabel value="Commercial" control={<Radio />} label="Commercial" />
+                </RadioGroup>
+              </FormControl>
             </Grid>
             <Grid item xs={12} md={6}>
               <TextField

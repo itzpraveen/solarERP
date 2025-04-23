@@ -7,7 +7,13 @@ const leadSchema = new mongoose.Schema(
       required: [true, 'First name is required'],
       trim: true,
     },
-    lastName: {
+    projectType: {
+      type: String,
+      enum: ['Residential', 'Commercial'],
+      required: [true, 'Project type is required'],
+      default: 'Residential',
+    },
+    source: {
       type: String,
       trim: true,
     },

@@ -15,6 +15,10 @@ import {
   CircularProgress,
   Alert,
   Autocomplete,
+  RadioGroup, // Added
+  FormControlLabel, // Added
+  Radio, // Added
+  FormLabel, // Added
 } from '@mui/material';
 import projectService, { ProjectCreatePayload } from '../../../api/projectService';
 import proposalService, { Proposal } from '../../../api/proposalService';
@@ -24,6 +28,7 @@ import userService, { User } from '../../../api/userService'; // Import user ser
 // Define the structure for the form data
 export interface ProjectFormData {
   name: string;
+  projectType: 'Residential' | 'Commercial'; // Added projectType
   customer: string; // Customer ID
   proposal?: string; // Optional Proposal ID
   status: 'active' | 'on_hold' | 'completed' | 'cancelled';
@@ -78,6 +83,7 @@ const ProjectForm = ({
 }: ProjectFormProps) => {
   const [formData, setFormData] = useState<ProjectFormData>({
     name: '',
+    projectType: 'Residential', // Initialize projectType
     customer: '',
     status: 'active',
     stage: 'planning',
@@ -172,6 +178,7 @@ const ProjectForm = ({
       // Reset form when dialog closes
       setFormData({
         name: '',
+        projectType: 'Residential', // Reset projectType
         customer: '',
         status: 'active',
         stage: 'planning',
@@ -261,6 +268,7 @@ const ProjectForm = ({
     // Construct payload matching backend expectations
     const payload: ProjectCreatePayload = {
       name: formData.name,
+      projectType: formData.projectType, // Add projectType
       customer: formData.customer,
       proposal: formData.proposal, // Include proposal ID if available
       status: formData.status,
@@ -360,6 +368,23 @@ const ProjectForm = ({
                 value={formData.name}
                 onChange={handleChange}
               />
+            </Grid>
+
+            {/* Project Type Selection */}
+            <Grid item xs={12}>
+              <FormControl component="fieldset" required>
+                <FormLabel component="legend">Project Type</FormLabel>
+                <RadioGroup
+                  row
+                  aria-label="project-type"
+                  name="projectType"
+                  value={formData.projectType}
+                  onChange={handleChange} // Use existing handleChange
+                >
+                  <FormControlLabel value="Residential" control={<Radio />} label="Residential" />
+                  <FormControlLabel value="Commercial" control={<Radio />} label="Commercial" />
+                </RadioGroup>
+              </FormControl>
             </Grid>
 
             {/* Status & Stage */}

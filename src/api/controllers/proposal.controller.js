@@ -109,7 +109,13 @@ exports.createProposal = catchAsync(async (req, res, next) => {
     return next(new AppError('No lead found with that ID', 404)); // Added return
   }
 
-  const newProposal = await Proposal.create(req.body);
+  // --> ADDED: Copy projectType from Lead to the new proposal data <--
+  const proposalData = {
+    ...req.body,
+    projectType: lead.projectType, // Copy from the fetched lead
+  };
+
+  const newProposal = await Proposal.create(proposalData); // Use the combined data
 
   // Update lead status to proposal if it's not already in a later stage
   if (['new', 'contacted', 'qualified'].includes(lead.status)) {

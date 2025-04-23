@@ -4,6 +4,7 @@ export interface Lead {
   _id: string;
   firstName: string;
   lastName: string;
+  projectType: 'Residential' | 'Commercial'; // Added projectType
   email: string;
   phone: string;
   address: {

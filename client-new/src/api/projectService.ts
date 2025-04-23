@@ -174,6 +174,7 @@ export interface ProjectTask {
 export interface Project {
   _id: string;
   name: string;
+  projectType: 'Residential' | 'Commercial'; // Added projectType
   customer: {
     _id: string;
     firstName: string;

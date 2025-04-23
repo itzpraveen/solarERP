@@ -31,10 +31,6 @@ exports.getAllProjects = catchAsync(async (req, res, _next) => {
       // Add logic here if range filters (gte, lte) or search are needed
     }
   });
-  console.log(
-    'getAllProjects - Standard filters applied:',
-    JSON.stringify(filterConditions)
-  );
 
   // Note: The 'active' filter is handled by the pre-find middleware in the model.
 
@@ -103,7 +99,7 @@ exports.getProject = catchAsync(async (req, res, next) => {
   // should ideally be loaded on demand by separate requests from the frontend.
 
   if (!project) {
-    return next(new AppError('No project found with that ID', 404));
+    return next(new AppError('No project found with that ID', 404)); // Added return
   }
 
   res.status(200).json({
@@ -123,7 +119,7 @@ exports.createProject = catchAsync(async (req, res, next) => {
   // Verify that the customer exists
   const customer = await Customer.findById(req.body.customer);
   if (!customer) {
-    return next(new AppError('No customer found with that ID', 404));
+    return next(new AppError('No customer found with that ID', 404)); // Added return
   }
   // Log the fetched customer's address
   console.log(
@@ -135,7 +131,7 @@ exports.createProject = catchAsync(async (req, res, next) => {
   if (req.body.proposal) {
     const proposal = await Proposal.findById(req.body.proposal);
     if (!proposal) {
-      return next(new AppError('No proposal found with that ID', 404));
+      return next(new AppError('No proposal found with that ID', 404)); // Added return
     }
 
     // Auto-populate project data from proposal if not provided
@@ -149,6 +145,8 @@ exports.createProject = catchAsync(async (req, res, next) => {
       if (!req.body.batteryType) req.body.batteryType = proposal.batteryType;
       if (!req.body.batteryCount) req.body.batteryCount = proposal.batteryCount;
     }
+    // --> ADDED: Copy projectType from proposal if not provided in request <--
+    if (!req.body.projectType) req.body.projectType = proposal.projectType;
 
     // Set financials if not provided
     if (!req.body.financials || !req.body.financials.totalContractValue) {
@@ -227,7 +225,7 @@ exports.createProject = catchAsync(async (req, res, next) => {
   } catch (error) {
     console.error('Error during Project.create:', error); // Log the full error
     // Pass the error to the global error handler
-    return next(new AppError(`Project creation failed: ${error.message}`, 400));
+    return next(new AppError(`Project creation failed: ${error.message}`, 400)); // Added return
   }
 
   return res.status(201).json({
@@ -258,7 +256,7 @@ exports.updateProject = catchAsync(async (req, res, next) => {
   });
 
   if (!project) {
-    return next(new AppError('No project found with that ID', 404));
+    return next(new AppError('No project found with that ID', 404)); // Added return
   }
 
   res.status(200).json({
@@ -277,7 +275,7 @@ exports.deleteProject = catchAsync(async (req, res, next) => {
   });
 
   if (!project) {
-    return next(new AppError('No project found with that ID', 404));
+    return next(new AppError('No project found with that ID', 404)); // Added return
   }
 
   res.status(204).json({
@@ -289,11 +287,17 @@ exports.deleteProject = catchAsync(async (req, res, next) => {
 
 // Update project status
 exports.updateProjectStatus = catchAsync(async (req, res, next) => {
-  const { status } = req.body;
+  const { status } = req.body; // Extract status from body
+
+  // Basic validation (optional, depends on requirements)
+  if (!status) {
+    return next(new AppError('Please provide a status to update.', 400));
+  }
+  // Could add validation against allowed statuses here
 
   const project = await Project.findByIdAndUpdate(
     req.params.id,
-    { status },
+    { status }, // Update only the status field
     { new: true, runValidators: true }
   );
 
@@ -307,16 +311,21 @@ exports.updateProjectStatus = catchAsync(async (req, res, next) => {
       project,
     },
   });
-  // No return needed here as it's the main function body
 });
 
 // Update project stage
 exports.updateProjectStage = catchAsync(async (req, res, next) => {
-  const { stage } = req.body;
+  const { stage } = req.body; // Extract stage from body
+
+  // Basic validation (optional)
+  if (!stage) {
+    return next(new AppError('Please provide a stage to update.', 400));
+  }
+  // Could add validation against allowed stages here
 
   const project = await Project.findByIdAndUpdate(
     req.params.id,
-    { stage },
+    { stage }, // Update only the stage field
     { new: true, runValidators: true }
   );
 
@@ -330,7 +339,6 @@ exports.updateProjectStage = catchAsync(async (req, res, next) => {
       project,
     },
   });
-  // No return needed here as it's the main function body
 });
 
 // Add note to project
@@ -381,32 +389,58 @@ exports.addProjectIssue = catchAsync(async (req, res, next) => {
   // No return needed here as it's the main function body
 });
 
-// Update project issue
+// Update a specific issue within a project
 exports.updateProjectIssue = catchAsync(async (req, res, next) => {
-  const { issueId } = req.params;
+  const { id, issueId } = req.params; // Project ID and Issue ID
+  const updateData = req.body; // Data to update the issue with
 
-  // If status is being changed to resolved, add resolution date
-  if (req.body.status === 'resolved' && !req.body.resolvedAt) {
-    req.body.resolvedAt = Date.now();
+  // Prevent updating immutable fields like _id or reportedBy if necessary
+  delete updateData._id;
+  delete updateData.reportedBy;
+  delete updateData.createdAt; // Usually shouldn't be updated
+
+  // If status is being changed to resolved, add resolution date automatically
+  if (updateData.status === 'resolved' && !updateData.resolvedAt) {
+    updateData.resolvedAt = Date.now();
   }
 
-  const project = await Project.findOneAndUpdate(
-    { _id: req.params.id, 'issues._id': issueId },
-    { $set: { 'issues.$': { ...req.body, _id: issueId } } },
-    { new: true, runValidators: true }
+  // Build the $set object for findOneAndUpdate using the positional operator $
+  const setUpdate = {};
+  for (const key in updateData) {
+    if (Object.prototype.hasOwnProperty.call(updateData, key)) {
+      setUpdate[`issues.$.${key}`] = updateData[key];
+    }
+  }
+
+  // Perform the atomic update
+  const updatedProject = await Project.findOneAndUpdate(
+    { _id: id, 'issues._id': issueId }, // Query to find the project and the specific issue
+    { $set: setUpdate }, // Use $set with positional operator
+    { new: true, runValidators: true } // Options: return updated doc, run schema validators
   );
 
-  if (!project) {
-    return next(new AppError('No project or issue found with that ID', 404));
+  if (!updatedProject) {
+    return next(
+      new AppError(
+        'Failed to update issue. Project or issue may no longer exist or validation failed.',
+        404
+      )
+    );
+  }
+
+  // Find the updated issue within the returned project document
+  const updatedIssue = updatedProject.issues.id(issueId);
+  if (!updatedIssue) {
+    // Should not happen if findOneAndUpdate succeeded, but safety check
+    return next(new AppError('Failed to retrieve updated issue data.', 500));
   }
 
   res.status(200).json({
     status: 'success',
     data: {
-      project,
+      issue: updatedIssue, // Return the updated issue object
     },
   });
-  // No return needed here as it's the main function body
 });
 
 // Add document to project

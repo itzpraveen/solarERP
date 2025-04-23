@@ -17,6 +17,13 @@ const projectSchema = new mongoose.Schema(
       type: mongoose.Schema.ObjectId,
       ref: 'Proposal',
     },
+    projectType: {
+      type: String,
+      enum: ['Residential', 'Commercial'],
+      required: [true, 'Project type is required'],
+      // Default might be set when converting from proposal, but a fallback is good
+      default: 'Residential',
+    },
     status: {
       type: String,
       enum: ['active', 'on_hold', 'completed', 'cancelled'],

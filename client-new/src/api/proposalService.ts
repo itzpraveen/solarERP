@@ -70,6 +70,7 @@ export interface Proposal {
     };
   };
   name: string;
+  projectType: 'Residential' | 'Commercial'; // Added projectType
   proposalId?: string; // Added proposalId (optional for now)
   status: 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired';
   systemSize: number;
@@ -121,6 +122,7 @@ export interface Proposal {
 // Matches the structure needed by the backend API call
 export interface ProposalUpdatePayload {
   name?: string;
+  projectType?: 'Residential' | 'Commercial'; // Added projectType
   status?: 'draft' | 'sent' | 'viewed' | 'accepted' | 'rejected' | 'expired';
   systemSize?: number;
   panelCount?: number;
@@ -201,6 +203,7 @@ const proposalService = {
     proposalData: {
       lead: string; // Lead ID
       name: string;
+      projectType: 'Residential' | 'Commercial'; // Added projectType
       systemSize: number;
       panelCount: number; // Or remove if derived solely from equipment
       // yearlyProductionEstimate: number; // Removed

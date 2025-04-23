@@ -31,8 +31,12 @@ import {
   IconButton,
   Breadcrumbs,
   Link,
+  RadioGroup, // Added
+  FormControlLabel, // Added
+  Radio, // Added
+  FormLabel, // Added
 } from '@mui/material';
-import {
+import { // Keep icons import separate
   Person as PersonIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
@@ -46,6 +50,8 @@ import {
   EventNote as NoteIcon,
   Forum as InteractionIcon,
   Description as DescriptionIcon, // Added for Proposal button
+  Business as CommercialIcon, // Added for project type
+  HomeWork as ResidentialIcon, // Added for project type
 } from '@mui/icons-material';
 import leadService, { Lead } from '../../api/leadService';
 import userService, { User } from '../../api/userService'; // Import userService and User type
@@ -739,6 +745,29 @@ const LeadDetails = () => {
                         <Typography variant="body1" sx={{ mt: 1 }}>
                           {lead.source.charAt(0).toUpperCase() +
                             lead.source.slice(1).replace('_', ' ')}
+                        </Typography>
+                      )}
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Project Type
+                      </Typography>
+                      {editMode ? (
+                        <FormControl component="fieldset" sx={{ mt: 1 }}>
+                          <RadioGroup
+                            row
+                            name="projectType"
+                            value={editData.projectType || lead.projectType}
+                            onChange={handleEditChange}
+                          >
+                            <FormControlLabel value="Residential" control={<Radio size="small" />} label="Residential" />
+                            <FormControlLabel value="Commercial" control={<Radio size="small" />} label="Commercial" />
+                          </RadioGroup>
+                        </FormControl>
+                      ) : (
+                        <Typography variant="body1" sx={{ mt: 1, display: 'flex', alignItems: 'center' }}>
+                          {lead.projectType === 'Commercial' ? <CommercialIcon fontSize="small" sx={{ mr: 0.5 }} /> : <ResidentialIcon fontSize="small" sx={{ mr: 0.5 }} />}
+                          {lead.projectType}
                         </Typography>
                       )}
                     </Grid>

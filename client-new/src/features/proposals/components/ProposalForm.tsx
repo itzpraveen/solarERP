@@ -25,6 +25,12 @@ import {
   TableHead, // Added
   TableRow, // Added
   Paper, // Added
+  RadioGroup, // Added for projectType
+  FormControlLabel, // Added for projectType
+  // RadioGroup, // Removed
+  // FormControlLabel, // Removed
+  // Radio, // Removed
+  // FormLabel, // Removed
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -43,8 +49,9 @@ interface LineItem {
 
 // Updated structure for the form data to match new model
 export interface ProposalFormData {
-  lead: string;
+  lead: string; // Lead ID
   name: string;
+  projectType: 'Residential' | 'Commercial'; // Re-added projectType
   proposalId?: string; // Added proposalId
   systemSize: number;
   panelCount: number; // Keep or remove based on final decision
@@ -86,9 +93,11 @@ const ProposalForm = ({
   loading,
   initialLeadId,
 }: ProposalFormProps) => {
+  // Initialize with default projectType, it will be updated when lead data loads
   const [formData, setFormData] = useState<ProposalFormData>({
     lead: '',
     name: '',
+    projectType: 'Residential', // Initialize with default
     systemSize: 0,
     panelCount: 0,
     panelModel: '', // Initialize
@@ -114,6 +123,8 @@ const ProposalForm = ({
   const [selectedItemQuantity, setSelectedItemQuantity] = useState<number>(1);
 
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [selectedLeadData, setSelectedLeadData] = useState<Lead | null>(null); // State to hold full selected lead data
+  const [error, setError] = useState<string | null>(null); // Added error state
   const [leadsLoading, setLeadsLoading] = useState(false);
   const [inventory, setInventory] = useState<CategorizedInventory>({
     panel: [],
@@ -135,12 +146,16 @@ const ProposalForm = ({
           const { lead } = response.data;
           if (lead) {
             setLeads([lead]);
+            setSelectedLeadData(lead); // Store fetched lead data
             setFormData((prev) => ({
               ...prev,
               lead: lead._id,
               name: `Solar Proposal for ${lead.firstName} ${lead.lastName}`,
+              // Reset subsidy if lead is Commercial
+              subsidyAmount: lead.projectType === 'Commercial' ? 0 : prev.subsidyAmount,
             }));
           } else {
+            // Fetch list if specific lead not found (or no initial ID)
             const response = await leadService.getLeads({ limit: 100 });
             setLeads(response.data.leads || []);
           }
@@ -149,11 +164,17 @@ const ProposalForm = ({
           const fetchedLeads = response.data.leads || [];
           setLeads(fetchedLeads);
           if (fetchedLeads.length > 0) {
+            const firstLead = fetchedLeads[0];
+            setSelectedLeadData(firstLead); // Store first lead data
             setFormData((prev) => ({
               ...prev,
-              lead: fetchedLeads[0]._id,
-              name: `Solar Proposal for ${fetchedLeads[0].firstName} ${fetchedLeads[0].lastName}`,
+              lead: firstLead._id,
+              name: `Solar Proposal for ${firstLead.firstName} ${firstLead.lastName}`,
+              // Reset subsidy if first lead is Commercial
+              subsidyAmount: firstLead.projectType === 'Commercial' ? 0 : prev.subsidyAmount,
             }));
+          } else {
+             setSelectedLeadData(null); // No leads found
           }
         }
       } catch (error) {
@@ -320,6 +341,7 @@ const ProposalForm = ({
         },
       }));
     } else {
+      // Handle other standard fields
       setFormData((prev) => ({
         ...prev,
         [name]: value,
@@ -353,14 +375,19 @@ const ProposalForm = ({
     const { name, value } = e.target;
 
     if (name === 'lead') {
-      const selectedLead = leads.find((lead) => lead._id === value);
+      const selectedLead = leads.find((l) => l._id === value); // Use different variable name
       if (selectedLead) {
+        setSelectedLeadData(selectedLead); // Store selected lead data
         setFormData((prev) => ({
           ...prev,
           lead: value,
           name: `Solar Proposal for ${selectedLead.firstName} ${selectedLead.lastName}`,
+           // Reset subsidy if selected lead is Commercial
+          subsidyAmount: selectedLead.projectType === 'Commercial' ? 0 : prev.subsidyAmount,
         }));
         return;
+      } else {
+         setSelectedLeadData(null); // Clear if lead not found (shouldn't happen with dropdown)
       }
       // No need to handle other selects here if they are replaced by Autocomplete
     } else {
@@ -376,9 +403,17 @@ const ProposalForm = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Construct the data object strictly based on ProposalFormData and backend expectations
+    // Ensure projectType is included, derived from the selected lead
+    if (!selectedLeadData) {
+       setError("Lead data is missing. Cannot determine project type."); // Use setError state setter
+       // setLoading(false); // setLoading is not defined in this component, it's a prop
+       return;
+    }
+    // Construct the data object including projectType from selectedLeadData
     const dataToSubmit: ProposalFormData = {
       lead: formData.lead,
       name: formData.name,
+      projectType: selectedLeadData.projectType, // Get projectType from selected lead (Single line now)
       systemSize: Number(formData.systemSize) || 0,
       panelCount: Number(formData.panelCount) || 0,
       projectCostExcludingStructure:
@@ -470,6 +505,8 @@ const ProposalForm = ({
                 onChange={handleChange}
               />
             </Grid>
+
+            {/* Project Type is now derived from Lead, no selector needed here */}
 
             {/* System Specifications */}
             <Grid item xs={12}>
@@ -608,6 +645,9 @@ const ProposalForm = ({
                 inputProps={{ min: 0, step: 0.01 }}
                 value={formData.subsidyAmount}
                 onChange={handleNumberChange}
+                // Disable based on selectedLeadData's projectType
+                disabled={selectedLeadData?.projectType === 'Commercial'}
+                helperText={selectedLeadData?.projectType === 'Commercial' ? 'Not applicable for Commercial projects' : ''}
               />
             </Grid>
             <Grid item xs={12} md={6}>

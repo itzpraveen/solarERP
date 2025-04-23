@@ -581,6 +581,15 @@ const ProjectDetails = () => {
                     </Grid>
                     <Grid item xs={12} sm={6}>
                       <Typography variant="subtitle2" color="text.secondary">
+                        Project Type
+                      </Typography>
+                      {/* Add edit mode handling if needed later */}
+                      <Typography variant="body1" sx={{ mt: 0.5 }}>
+                        {project?.projectType || 'N/A'}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="subtitle2" color="text.secondary">
                         Created At
                       </Typography>
                       <Typography variant="body1" sx={{ mt: 0.5 }}>

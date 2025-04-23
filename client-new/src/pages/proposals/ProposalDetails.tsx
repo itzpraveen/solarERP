@@ -57,7 +57,7 @@ import {
 } from '@mui/icons-material';
 import proposalService, {
   Proposal,
-  ProposalUpdatePayload,
+  ProposalUpdatePayload, // Ensure projectType is part of this if needed for updates
 } from '../../api/proposalService';
 import inventoryService, { InventoryItem } from '../../api/inventoryService'; // Added
 import CurrencyDisplay from '../../components/common/CurrencyDisplay';
@@ -177,7 +177,12 @@ const ProposalDetails = () => {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setEditData((prev) => ({ ...prev, [name]: value }));
+    // Handle projectType specifically if it's a radio/select in edit mode later
+    if (name === 'projectType') {
+       setEditData((prev) => ({ ...prev, projectType: value as 'Residential' | 'Commercial' }));
+    } else {
+       setEditData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -221,6 +226,7 @@ const ProposalDetails = () => {
 
     const finalPayload: ProposalUpdatePayload = {
       name: editData.name,
+      projectType: editData.projectType, // Add projectType
       status: editData.status,
       systemSize: editData.systemSize,
       panelCount: editData.panelCount,
@@ -666,6 +672,15 @@ const ProposalDetails = () => {
                       </Typography>
                       <Typography variant="body1" sx={{ mt: 0.5 }}>
                         {proposal.lead.firstName} {proposal.lead.lastName}
+                      </Typography>
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Project Type
+                      </Typography>
+                      {/* Add edit mode handling if needed later */}
+                      <Typography variant="body1" sx={{ mt: 0.5 }}>
+                        {proposal.projectType || 'N/A'}
                       </Typography>
                     </Grid>
                     <Grid item xs={12} sm={6}>
