@@ -14,8 +14,8 @@ ENV NODE_ENV=production
 # Ensure nodejs and npm are installed via apk for robustness
 RUN apk add --update nodejs npm
 
-# Install dependencies
-RUN npm install
+# Install dependencies, ignoring scripts (like husky prepare) not needed in production
+RUN npm install --ignore-scripts
 
 # Build the client application
 RUN npm run build
