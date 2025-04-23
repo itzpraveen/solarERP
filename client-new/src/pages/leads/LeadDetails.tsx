@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react'; // Import useCallback
 import { useParams, useNavigate, Link as RouterLink } from 'react-router-dom'; // Import Link as RouterLink
 import {
   Box,
@@ -189,8 +189,8 @@ const LeadDetails = () => {
     date: new Date().toISOString().split('T')[0],
   });
 
-  // Fetch lead data
-  const fetchLead = async () => {
+  // Fetch lead data - wrapped in useCallback
+  const fetchLead = useCallback(async () => {
     if (!id) return;
 
     try {
@@ -207,13 +207,13 @@ const LeadDetails = () => {
       setError(err?.message || 'Failed to fetch lead');
       setLoading(false);
     }
-  };
+  }, [id]); // Add `id` as a dependency for useCallback
 
   // Initial data fetch
   useEffect(() => {
     fetchLead();
     // Users will be fetched on demand when edit mode is entered
-  }, [id, fetchLead]); // Added fetchLead to dependencies
+  }, [fetchLead]); // Now only depends on the memoized fetchLead
 
   // Function to fetch users, called on demand
   const fetchUsersIfNeeded = async () => {
@@ -291,11 +291,14 @@ const LeadDetails = () => {
     // Special handling for assignedTo: find the user object and store it
     if (name === 'assignedTo') {
       const selectedUser = users.find((user) => user._id === value);
-      setEditData((prevData) => ({
-        ...prevData,
-        // Store the found user object or undefined if "Unassigned" (value === '')
-        assignedTo: selectedUser || undefined,
-      } as Partial<Lead>)); // Explicitly cast the returned object
+      setEditData(
+        (prevData) =>
+          ({
+            ...prevData,
+            // Store the found user object or undefined if "Unassigned" (value === '')
+            assignedTo: selectedUser || undefined,
+          }) as Partial<Lead>
+      ); // Explicitly cast the returned object
     } else {
       setEditData((prevData) => ({
         ...prevData,
@@ -327,7 +330,10 @@ const LeadDetails = () => {
     const updatePayload: any = { ...editData };
 
     // Ensure assignedTo is sent as an ID string or null
-    if (updatePayload.assignedTo && typeof updatePayload.assignedTo === 'object') {
+    if (
+      updatePayload.assignedTo &&
+      typeof updatePayload.assignedTo === 'object'
+    ) {
       // If it's a user object, extract the ID
       updatePayload.assignedTo = (updatePayload.assignedTo as User)._id;
     } else if (updatePayload.assignedTo === undefined) {
@@ -336,19 +342,33 @@ const LeadDetails = () => {
     }
     // If it's already null or a string ID, it's fine as is.
 
+    console.log('[Frontend] saveLead function entered.'); // Log function entry
+
     try {
-      console.log('Saving lead with payload:', JSON.stringify(updatePayload, null, 2));
+      console.log(
+        '[Frontend] Preparing payload:',
+        JSON.stringify(updatePayload, null, 2)
+      );
       setLoading(true);
       // Send the specifically prepared payload
       // Cast to Partial<Lead> for the service call, assuming the service handles the ID correctly
+      console.log('[Frontend] Calling leadService.updateLead...'); // Log before API call
       await leadService.updateLead(id, updatePayload as Partial<Lead>);
-      console.log('Lead update successful');
+      console.log('[Frontend] leadService.updateLead successful.'); // Log after API call
       await fetchLead(); // Refresh data with potentially populated assignedTo object
       setEditMode(false);
+      enqueueSnackbar('Lead updated successfully!', { variant: 'success' }); // Add success notification
     } catch (err: any) {
-      console.error('Error updating lead:', err);
-      setError(err?.message || 'Failed to update lead');
-      setLoading(false);
+      console.error('[Frontend] Error updating lead:', err);
+      // Use the error message from the API response if available
+      const errorMsg =
+        err?.response?.data?.message || err?.message || 'Failed to update lead';
+      setError(errorMsg); // Set error state for display
+      enqueueSnackbar(`Error updating lead: ${errorMsg}`, { variant: 'error' }); // Show error snackbar
+      // Keep loading false or set it false here if needed, but it should be handled in finally usually
+    } finally {
+      console.log('[Frontend] saveLead function finished.'); // Log function exit
+      setLoading(false); // Ensure loading is always turned off
     }
   };
 
@@ -790,13 +810,14 @@ const LeadDetails = () => {
                               value={editData.assignedTo?._id || ''}
                               label="Assigned To"
                               onChange={handleSelectChange}
-                          >
-                            <MenuItem value="">
-                              <em>Unassigned</em>
-                            </MenuItem>
-                            {users.map((user) => (
-                              <MenuItem key={user._id} value={user._id}>
-                                  {user.firstName} {user.lastName} ({user.email})
+                            >
+                              <MenuItem value="">
+                                <em>Unassigned</em>
+                              </MenuItem>
+                              {users.map((user) => (
+                                <MenuItem key={user._id} value={user._id}>
+                                  {user.firstName} {user.lastName} ({user.email}
+                                  )
                                 </MenuItem>
                               ))}
                             </Select>
@@ -1713,18 +1734,31 @@ const LeadDetails = () => {
 
               const createdProposalResponse = // Renamed variable for clarity
                 await proposalService.createProposal(dataToSubmit);
-              console.log('Proposal created successfully:', createdProposalResponse);
+              console.log(
+                'Proposal created successfully:',
+                createdProposalResponse
+              );
               setProposalDialogOpen(false);
               // Add success notification
-              enqueueSnackbar('Proposal created successfully!', { variant: 'success' });
+              enqueueSnackbar('Proposal created successfully!', {
+                variant: 'success',
+              });
               // Update lead status to 'proposal' (fire and forget, or handle potential error)
               updateStatus('proposal').catch((statusErr) => {
-                console.error('Failed to auto-update lead status to proposal:', statusErr);
+                console.error(
+                  'Failed to auto-update lead status to proposal:',
+                  statusErr
+                );
                 // Optionally show another snackbar for this specific error
-                enqueueSnackbar('Proposal created, but failed to update lead status.', { variant: 'warning' });
+                enqueueSnackbar(
+                  'Proposal created, but failed to update lead status.',
+                  { variant: 'warning' }
+                );
               });
               // Navigate to the new proposal's detail page
-              navigate(`/proposals/${createdProposalResponse.data.proposal._id}`);
+              navigate(
+                `/proposals/${createdProposalResponse.data.proposal._id}`
+              );
             } catch (err: any) {
               console.error('Failed to create proposal:', err);
               const errorMsg =

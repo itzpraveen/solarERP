@@ -119,9 +119,10 @@ const leadService = {
   // Update lead
   updateLead: async (id: string, leadData: Partial<Lead>) => {
     try {
-      console.log('Sending update request to API for lead:', id);
+      console.log('Sending update request (PATCH) to API for lead:', id); // Log PATCH
       console.log('Update data:', JSON.stringify(leadData, null, 2));
-      const result = await apiService.put(`/api/leads/${id}`, leadData);
+      // Use PATCH instead of PUT to match the backend route
+      const result = await apiService.patch(`/api/leads/${id}`, leadData);
       console.log('API response:', JSON.stringify(result, null, 2));
       return result;
     } catch (error) {

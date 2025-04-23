@@ -29,7 +29,7 @@ if (process.env.NODE_ENV === 'production') {
 axios.interceptors.request.use(
   (config) => {
     // Retrieve the token from local storage (adjust key if different)
-    const token = localStorage.getItem('authToken'); // Or sessionStorage, or wherever it's stored
+    const token = localStorage.getItem('token'); // Use 'token' key
     if (token) {
       // Ensure headers object exists
       if (!config.headers) {

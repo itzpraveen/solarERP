@@ -217,6 +217,12 @@ exports.updateLead = catchAsync(async (req, res, next) => {
   }
   // --- End Handle Referral Fields on Update ---
 
+  console.log(`[updateLead] Attempting to update Lead ID: ${req.params.id}`);
+  console.log(
+    `[updateLead] Data being passed to findByIdAndUpdate:`,
+    JSON.stringify(updateData, null, 2)
+  ); // Log the exact data
+
   const lead = await Lead.findByIdAndUpdate(req.params.id, updateData, {
     new: true,
     runValidators: true,
@@ -225,6 +231,11 @@ exports.updateLead = catchAsync(async (req, res, next) => {
   if (!lead) {
     return next(new AppError('No lead found with that ID', 404)); // Added return
   }
+
+  console.log(
+    `[updateLead] Update result for Lead ID ${req.params.id}:`,
+    lead ? 'Success' : 'Failed or Not Found'
+  ); // Log success/failure
 
   return res.status(200).json({
     status: 'success',

@@ -431,7 +431,9 @@ const ProposalDetails = () => {
                   variant="contained"
                   color="success"
                   startIcon={<CreateProjectIcon />}
-                  onClick={() => navigate(`/projects/add?proposalId=${proposal._id}`)}
+                  onClick={() =>
+                    navigate(`/projects/add?proposalId=${proposal._id}`)
+                  }
                   sx={{ mr: 1 }}
                   title="Create a new project from this accepted proposal"
                 >
@@ -989,13 +991,22 @@ const ProposalDetails = () => {
                     </Typography>
                     <Divider sx={{ mb: 2 }} />
                     {/* Item Selection Row */}
-                    <Grid container spacing={2} alignItems="flex-end" sx={{ mb: 2 }}>
+                    <Grid
+                      container
+                      spacing={2}
+                      alignItems="flex-end"
+                      sx={{ mb: 2 }}
+                    >
                       <Grid item xs={12} sm={6}>
                         <Autocomplete
                           options={inventoryItems}
-                          getOptionLabel={(option) => `${option.name} (${option.modelNumber || 'N/A'}) - ${option.category}`}
+                          getOptionLabel={(option) =>
+                            `${option.name} (${option.modelNumber || 'N/A'}) - ${option.category}`
+                          }
                           value={selectedInventoryItem}
-                          onChange={(_, newValue) => setSelectedInventoryItem(newValue)}
+                          onChange={(_, newValue) =>
+                            setSelectedInventoryItem(newValue)
+                          }
                           loading={inventoryLoading}
                           renderInput={(params) => (
                             <TextField
@@ -1005,7 +1016,12 @@ const ProposalDetails = () => {
                                 ...params.InputProps,
                                 endAdornment: (
                                   <>
-                                    {inventoryLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                                    {inventoryLoading ? (
+                                      <CircularProgress
+                                        color="inherit"
+                                        size={20}
+                                      />
+                                    ) : null}
                                     {params.InputProps.endAdornment}
                                   </>
                                 ),
@@ -1022,7 +1038,9 @@ const ProposalDetails = () => {
                           size="small"
                           inputProps={{ min: 1 }}
                           value={selectedItemQuantity}
-                          onChange={(e) => setSelectedItemQuantity(Number(e.target.value) || 1)}
+                          onChange={(e) =>
+                            setSelectedItemQuantity(Number(e.target.value) || 1)
+                          }
                         />
                       </Grid>
                       <Grid item xs={6} sm={3}>
@@ -1030,7 +1048,9 @@ const ProposalDetails = () => {
                           variant="outlined"
                           startIcon={<AddIcon />}
                           onClick={handleAddLineEditItem}
-                          disabled={!selectedInventoryItem || selectedItemQuantity <= 0}
+                          disabled={
+                            !selectedInventoryItem || selectedItemQuantity <= 0
+                          }
                           fullWidth
                         >
                           Add Item
@@ -1053,13 +1073,23 @@ const ProposalDetails = () => {
                           <TableBody>
                             {editLineItems.map((item) => (
                               <TableRow key={item.itemId}>
-                                <TableCell>{item.name || item.itemDetails?.name || 'N/A'}</TableCell>
-                                <TableCell>{item.modelNumber || item.itemDetails?.modelNumber || 'N/A'}</TableCell>
-                                <TableCell align="right">{item.quantity}</TableCell>
+                                <TableCell>
+                                  {item.name || item.itemDetails?.name || 'N/A'}
+                                </TableCell>
+                                <TableCell>
+                                  {item.modelNumber ||
+                                    item.itemDetails?.modelNumber ||
+                                    'N/A'}
+                                </TableCell>
+                                <TableCell align="right">
+                                  {item.quantity}
+                                </TableCell>
                                 <TableCell align="center">
                                   <IconButton
                                     size="small"
-                                    onClick={() => handleRemoveLineEditItem(item.itemId)}
+                                    onClick={() =>
+                                      handleRemoveLineEditItem(item.itemId)
+                                    }
                                     color="error"
                                     title="Remove Item"
                                   >
@@ -1077,42 +1107,46 @@ const ProposalDetails = () => {
               </Grid>
             )}
             {/* Display Line Items (View Mode) - Using && */}
-            {!editMode && proposal?.lineItems && proposal.lineItems.length > 0 && (
-              <Grid item xs={12}>
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      Line Items
-                    </Typography>
-                    <Divider sx={{ mb: 2 }} />
-                    <TableContainer component={MuiPaper}>
-                      <Table size="small">
-                        <TableHead>
-                          <TableRow>
-                            <TableCell>Item Name</TableCell>
-                            <TableCell>Model</TableCell>
-                            <TableCell>Category</TableCell>
-                            <TableCell align="right">Quantity</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {proposal.lineItems.map((item) => (
-                            <TableRow key={item._id || item.itemId._id}>
-                              <TableCell>{item.itemId.name}</TableCell>
-                              <TableCell>
-                                {item.itemId.modelNumber || 'N/A'}
-                              </TableCell>
-                              <TableCell>{item.itemId.category}</TableCell>
-                              <TableCell align="right">{item.quantity}</TableCell>
+            {!editMode &&
+              proposal?.lineItems &&
+              proposal.lineItems.length > 0 && (
+                <Grid item xs={12}>
+                  <Card>
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom>
+                        Line Items
+                      </Typography>
+                      <Divider sx={{ mb: 2 }} />
+                      <TableContainer component={MuiPaper}>
+                        <Table size="small">
+                          <TableHead>
+                            <TableRow>
+                              <TableCell>Item Name</TableCell>
+                              <TableCell>Model</TableCell>
+                              <TableCell>Category</TableCell>
+                              <TableCell align="right">Quantity</TableCell>
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  </CardContent>
-                </Card>
-              </Grid>
-            )}
+                          </TableHead>
+                          <TableBody>
+                            {proposal.lineItems.map((item) => (
+                              <TableRow key={item._id || item.itemId._id}>
+                                <TableCell>{item.itemId.name}</TableCell>
+                                <TableCell>
+                                  {item.itemId.modelNumber || 'N/A'}
+                                </TableCell>
+                                <TableCell>{item.itemId.category}</TableCell>
+                                <TableCell align="right">
+                                  {item.quantity}
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              )}
           </Grid>
         </TabPanel>
 
@@ -1120,7 +1154,8 @@ const ProposalDetails = () => {
         <TabPanel value={tabValue} index={3}>
           <Grid container spacing={3}>
             <Grid item xs={12}>
-              <Card>
+              {/* Add key prop based on editMode to force re-render */}
+              <Card key={editMode ? 'edit-financials' : 'view-financials'}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
                     Pricing Details
