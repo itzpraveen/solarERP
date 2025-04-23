@@ -67,8 +67,12 @@ app.use(mongoSanitize());
 app.use(
   cors({
     origin(origin, callback) {
-      // Allow requests from localhost:3000 and localhost:3001
-      const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001'];
+      // Allow requests from localhost:3000, localhost:3001, and the Railway frontend URL
+      const allowedOrigins = [
+        'http://localhost:3000',
+        'http://localhost:3001',
+        'https://solarerp-production.up.railway.app',
+      ];
       if (!origin || allowedOrigins.indexOf(origin) !== -1) {
         callback(null, true);
       } else {
