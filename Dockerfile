@@ -11,6 +11,9 @@ COPY . .
 # Set environment to production
 ENV NODE_ENV=production
 
+# Ensure nodejs and npm are installed via apk for robustness
+RUN apk add --update nodejs npm
+
 # Install dependencies
 RUN npm install
 
