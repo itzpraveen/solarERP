@@ -184,7 +184,7 @@ exports.deleteProposal = catchAsync(async (req, res, next) => {
     data: null,
   });
   // No return needed for 204 status
-});
+}); // Removed duplicate });
 
 // Update proposal status
 exports.updateProposalStatus = catchAsync(async (req, res, next) => {
@@ -200,6 +200,7 @@ exports.updateProposalStatus = catchAsync(async (req, res, next) => {
     return next(new AppError('No proposal found with that ID', 404)); // Added return
   }
 
+  // Removed duplicate declaration of 'proposal' variable
   // If proposal is accepted or rejected, update lead status
   if (status === 'accepted') {
     await Lead.findByIdAndUpdate(proposal.lead.id, { status: 'won' }); // Use proposal.lead.id
@@ -237,7 +238,7 @@ exports.sendProposal = catchAsync(async (req, res, next) => {
 
   // Populate line item details if not already populated
   await proposal.populate({
-    path: 'lineItems.itemId', // Populate the referenced InventoryItem
+    path: 'lineItems.itemId', // Populate the referenced Inventory
     select: 'name category modelNumber', // Select fields needed for display
   });
 

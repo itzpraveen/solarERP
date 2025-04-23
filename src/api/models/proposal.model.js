@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+require('./inventory.model'); // Ensure Inventory model is registered before Proposal uses it
 
 const proposalSchema = new mongoose.Schema(
   {
@@ -109,7 +110,7 @@ const proposalSchema = new mongoose.Schema(
       {
         itemId: {
           type: mongoose.Schema.ObjectId,
-          ref: 'InventoryItem',
+          ref: 'Inventory',
           required: true,
         },
         quantity: {
@@ -198,31 +199,31 @@ proposalSchema.pre(/^find/, function (next) {
   next();
 });
 
-    // Calculate derived values and enforce subsidy rule before saving
-    proposalSchema.pre('save', function (next) {
-      // Enforce subsidy rule: Commercial projects must have 0 subsidy
-      if (this.projectType === 'Commercial') {
-        this.subsidyAmount = 0;
-      }
+// Calculate derived values and enforce subsidy rule before saving
+proposalSchema.pre('save', function (next) {
+  // Enforce subsidy rule: Commercial projects must have 0 subsidy
+  if (this.projectType === 'Commercial') {
+    this.subsidyAmount = 0;
+  }
 
-      // Calculate Final Project Cost and Net Investment
-      if (
-        this.isModified('projectCostExcludingStructure') ||
-        this.isModified('structureCost') ||
-        this.isModified('subsidyAmount') ||
-        this.isModified('projectType') // Recalculate if type changes
-      ) {
-        const costA = this.projectCostExcludingStructure || 0;
-        const costB = this.structureCost || 0;
-        // Use the potentially modified subsidyAmount
-        const subsidy = this.subsidyAmount || 0;
+  // Calculate Final Project Cost and Net Investment
+  if (
+    this.isModified('projectCostExcludingStructure') ||
+    this.isModified('structureCost') ||
+    this.isModified('subsidyAmount') ||
+    this.isModified('projectType') // Recalculate if type changes
+  ) {
+    const costA = this.projectCostExcludingStructure || 0;
+    const costB = this.structureCost || 0;
+    // Use the potentially modified subsidyAmount
+    const subsidy = this.subsidyAmount || 0;
 
-        this.finalProjectCost = costA + costB;
-        this.netInvestment = this.finalProjectCost - subsidy;
-      }
+    this.finalProjectCost = costA + costB;
+    this.netInvestment = this.finalProjectCost - subsidy;
+  }
 
-      next();
-    });
+  next();
+});
 
 // Update status dates automatically
 proposalSchema.pre('save', function (next) {

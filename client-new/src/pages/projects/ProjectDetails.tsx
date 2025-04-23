@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react'; // Added useCallback
 import { useParams, useNavigate, Link as RouterLink } from 'react-router-dom';
 import {
   Box,
@@ -157,8 +157,8 @@ const ProjectDetails = () => {
     priority: 'medium',
   });
 
-  // Fetch project data
-  const fetchProject = async () => {
+  // Fetch project data - wrapped in useCallback
+  const fetchProject = useCallback(async () => { // Wrap in useCallback
     if (!id) return;
 
     try {
@@ -173,12 +173,12 @@ const ProjectDetails = () => {
       setError(err?.message || 'Failed to fetch project');
       setLoading(false);
     }
-  };
+  }, [id]); // Add id as dependency for useCallback
 
   // Initial data fetch
   useEffect(() => {
     fetchProject();
-  }, [id, fetchProject]); // Ensure fetchProject dependency is present
+  }, [fetchProject]); // Now only depends on the memoized fetchProject
 
   // Handle tab change
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {

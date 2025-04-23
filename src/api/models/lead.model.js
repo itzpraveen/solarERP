@@ -60,23 +60,8 @@ const leadSchema = new mongoose.Schema(
         trim: true,
       },
     },
-    source: {
-      type: String,
-      required: [true, 'Lead source is required'],
-      enum: [
-        'website',
-        'dealer_referral', // Specific referral types
-        'customer_referral',
-        'staff_referral',
-        'bni_referral',
-        'google_page',
-        'social_media_promo', // More specific than just social_media
-        'partner', // Kept existing
-        'cold_call', // Kept existing
-        'event', // Kept existing
-        'other', // Kept existing
-      ],
-    },
+    // Removed the duplicate 'source' definition that was here.
+    // The first 'source' definition near the top is kept.
     // Fields to store the specific referrer based on the source type
     referringDealer: {
       type: mongoose.Schema.ObjectId,

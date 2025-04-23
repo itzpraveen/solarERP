@@ -15,6 +15,19 @@ const config = require('./common/config');
 // Import error handler middleware
 const errorHandler = require('./common/middleware/errorHandler');
 
+// --- Preload Mongoose Models ---
+// Ensure all models are registered before routes that might use them
+require('./api/models/user.model');
+require('./api/models/lead.model');
+require('./api/models/customer.model');
+require('./api/models/dealer.model'); // Assuming dealer model exists
+require('./api/models/inventory.model');
+require('./api/models/proposal.model');
+require('./api/models/project.model');
+require('./api/models/document.model');
+require('./api/models/ServiceRequest'); // Assuming ServiceRequest model exists
+// Add any other models here if created later
+
 // Import routes
 const authRoutes = require('./modules/auth/auth.routes');
 const leadRoutes = require('./api/routes/lead.routes');

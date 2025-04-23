@@ -25,10 +25,7 @@ import {
   TableHead, // Added
   TableRow, // Added
   Paper, // Added
-  RadioGroup, // Added for projectType
-  FormControlLabel, // Added for projectType
-  // RadioGroup, // Removed
-  // FormControlLabel, // Removed
+  // Removed unused RadioGroup, FormControlLabel
   // Radio, // Removed
   // FormLabel, // Removed
 } from '@mui/material';
@@ -124,7 +121,7 @@ const ProposalForm = ({
 
   const [leads, setLeads] = useState<Lead[]>([]);
   const [selectedLeadData, setSelectedLeadData] = useState<Lead | null>(null); // State to hold full selected lead data
-  const [error, setError] = useState<string | null>(null); // Added error state
+  // const [error, setError] = useState<string | null>(null); // Removed unused error state
   const [leadsLoading, setLeadsLoading] = useState(false);
   const [inventory, setInventory] = useState<CategorizedInventory>({
     panel: [],
@@ -405,7 +402,8 @@ const ProposalForm = ({
     // Construct the data object strictly based on ProposalFormData and backend expectations
     // Ensure projectType is included, derived from the selected lead
     if (!selectedLeadData) {
-       setError("Lead data is missing. Cannot determine project type."); // Use setError state setter
+       // setError("Lead data is missing. Cannot determine project type."); // Removed setError call
+       console.error("Lead data is missing. Cannot determine project type."); // Log error instead
        // setLoading(false); // setLoading is not defined in this component, it's a prop
        return;
     }

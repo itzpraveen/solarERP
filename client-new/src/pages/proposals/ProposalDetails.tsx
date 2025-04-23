@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react'; // Added useCallback
 import { useParams, useNavigate, Link as RouterLink } from 'react-router-dom';
 import {
   Box,
@@ -132,7 +132,7 @@ const ProposalDetails = () => {
     useState<InventoryItem | null>(null);
   const [selectedItemQuantity, setSelectedItemQuantity] = useState<number>(1);
 
-  const fetchProposalAndInventory = async () => {
+  const fetchProposalAndInventory = useCallback(async () => { // Wrap in useCallback
     if (!id) return;
     setLoading(true);
     setError(null);
@@ -163,11 +163,11 @@ const ProposalDetails = () => {
       setLoading(false);
       setInventoryLoading(false);
     }
-  };
+  }, [id]); // Add id as dependency
 
   useEffect(() => {
     fetchProposalAndInventory();
-  }, [id]);
+  }, [fetchProposalAndInventory]); // Depend on the memoized function
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
