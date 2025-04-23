@@ -1,0 +1,3 @@
+node_modules
+client-new/build
+client-new/public/service-worker.js

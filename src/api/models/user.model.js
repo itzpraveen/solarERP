@@ -72,7 +72,7 @@ const userSchema = new mongoose.Schema(
 // Encrypt password before saving
 userSchema.pre('save', async function (next) {
   // Only run this function if password was modified
-  if (!this.isModified('password')) return next();
+  if (!this.isModified('password')) return next(); // Added return
 
   // Hash the password with cost of 12
   this.password = await bcrypt.hash(this.password, 12);
@@ -82,10 +82,10 @@ userSchema.pre('save', async function (next) {
 
 // Update the passwordChangedAt property when password is changed
 userSchema.pre('save', function (next) {
-  if (!this.isModified('password') || this.isNew) return next();
+  if (!this.isModified('password') || this.isNew) return next(); // Added return
 
   this.passwordChangedAt = Date.now() - 1000; // Subtracting 1 second as a safeguard
-  next();
+  return next(); // Added return
 });
 
 // Only query active users
@@ -99,7 +99,7 @@ userSchema.methods.correctPassword = async function (
   candidatePassword,
   userPassword
 ) {
-  return await bcrypt.compare(candidatePassword, userPassword);
+  return bcrypt.compare(candidatePassword, userPassword); // Removed redundant await
 };
 
 // Check if password was changed after the token was issued

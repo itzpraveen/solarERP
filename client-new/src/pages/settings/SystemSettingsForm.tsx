@@ -172,28 +172,6 @@ const SystemSettingsForm = ({
         <Grid item xs={12} md={4}>
           <TextField
             fullWidth
-            label="Labor Margin"
-            name="pricingDefaults.margins.labor"
-            type="number"
-            value={formData.pricingDefaults.margins.labor}
-            onChange={handleNumberChange}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">%</InputAdornment>
-              ),
-              inputProps: {
-                min: 0,
-                max: 1,
-                step: 0.01,
-              },
-            }}
-            helperText="Enter as decimal (e.g., 0.3 = 30%)"
-          />
-        </Grid>
-
-        <Grid item xs={12} md={4}>
-          <TextField
-            fullWidth
             label="Permits Margin"
             name="pricingDefaults.margins.permits"
             type="number"

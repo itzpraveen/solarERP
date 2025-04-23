@@ -331,15 +331,15 @@ const LeadForm = ({
                   label="Assign To"
                   onChange={handleSelectChange}
                 >
-                  <MenuItem value="">
-                    <em>Unassigned</em>
-                  </MenuItem>
-                  {users.map((user) => (
-                    <MenuItem key={user.id} value={user.id}>
-                      {user.name} ({user.email})
-                    </MenuItem>
-                  ))}
-                </Select>
+                      <MenuItem value="">
+                        <em>All Users</em>
+                      </MenuItem>
+                      {users.map((user) => (
+                        <MenuItem key={user._id} value={user._id}>
+                          {user.firstName} {user.lastName}
+                        </MenuItem>
+                      ))}
+                    </Select>
               </FormControl>
             </Grid>
           </Grid>

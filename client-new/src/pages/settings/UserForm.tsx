@@ -46,11 +46,10 @@ const UserForm: React.FC<UserFormProps> = ({
 
   useEffect(() => {
     if (isEditMode && initialData) {
-      // Split name into first and last for editing if 'name' exists
-      const nameParts = initialData.name?.split(' ') || ['', ''];
+      // Use firstName and lastName directly from initialData
       setFormData({
-        firstName: nameParts[0] || '',
-        lastName: nameParts.slice(1).join(' ') || '', // Handle names with multiple parts
+        firstName: initialData.firstName || '',
+        lastName: initialData.lastName || '',
         email: initialData.email || '',
         role: initialData.role || 'user',
       });

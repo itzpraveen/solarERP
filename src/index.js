@@ -2,10 +2,12 @@ const app = require('./server');
 
 // Start the server
 const DEFAULT_PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 5002;
+let server; // Declare server variable here
 
 const startServer = (portArg) => {
   const port = Number(portArg);
-  const server = app.listen(port, () => {
+  server = app.listen(port, () => {
+    // Assign to the outer server variable
     console.log(
       `Server running in ${process.env.NODE_ENV || 'development'} mode on port ${port}`
     );

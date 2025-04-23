@@ -27,6 +27,14 @@ import {
   Breadcrumbs,
   Link,
   Chip,
+  Table, // Added
+  TableBody, // Added
+  TableCell, // Added
+  TableContainer, // Added
+  TableHead, // Added
+  TableRow, // Added
+  Paper as MuiPaper, // Renamed Paper
+  Autocomplete, // Added
 } from '@mui/material';
 import {
   Description as ProposalIcon,
@@ -44,13 +52,24 @@ import {
   Check as CheckIcon,
   Close as CloseIcon,
   Download as DownloadIcon,
+  AddCircleOutline as CreateProjectIcon,
+  Add as AddIcon, // Added
 } from '@mui/icons-material';
 import proposalService, {
   Proposal,
-  // ProposalEquipmentItem, // Removed unused import
   ProposalUpdatePayload,
 } from '../../api/proposalService';
-import CurrencyDisplay from '../../components/common/CurrencyDisplay'; // Ensure this component handles undefined amount gracefully
+import inventoryService, { InventoryItem } from '../../api/inventoryService'; // Added
+import CurrencyDisplay from '../../components/common/CurrencyDisplay';
+
+// Interface for line items
+interface LineItem {
+  itemId: string;
+  name?: string;
+  modelNumber?: string;
+  quantity: number;
+  itemDetails?: InventoryItem;
+}
 
 // Tab panel component
 interface TabPanelProps {
@@ -102,28 +121,53 @@ const ProposalDetails = () => {
     title: '',
     message: '',
   });
-  const [downloading, setDownloading] = useState(false); // State for download loading
-  const [downloadError, setDownloadError] = useState<string | null>(null); // State for download error
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+  // State for inventory items
+  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
+  const [inventoryLoading, setInventoryLoading] = useState(false);
+  // State for line item editing
+  const [editLineItems, setEditLineItems] = useState<LineItem[]>([]);
+  const [selectedInventoryItem, setSelectedInventoryItem] =
+    useState<InventoryItem | null>(null);
+  const [selectedItemQuantity, setSelectedItemQuantity] = useState<number>(1);
 
-  const fetchProposal = async () => {
+  const fetchProposalAndInventory = async () => {
     if (!id) return;
+    setLoading(true);
+    setError(null);
+    setInventoryLoading(true);
     try {
-      setLoading(true);
-      setError(null);
-      const response = await proposalService.getProposal(id);
-      const fetchedProposal = response.data.proposal;
+      const [proposalResponse, inventoryResponse] = await Promise.all([
+        proposalService.getProposal(id),
+        inventoryService.getAllInventory(),
+      ]);
+
+      const fetchedProposal = proposalResponse.data.proposal;
       setProposal(fetchedProposal);
-      setEditData(fetchedProposal); // Initialize editData
+      setEditData(fetchedProposal);
+      setEditLineItems(
+        fetchedProposal.lineItems?.map((li: any) => ({
+          itemId: li.itemId?._id || li.itemId,
+          quantity: li.quantity,
+          name: li.itemId?.name,
+          modelNumber: li.itemId?.modelNumber,
+          itemDetails: li.itemId,
+        })) || []
+      );
+      setInventoryItems(inventoryResponse || []);
       setLoading(false);
+      setInventoryLoading(false);
     } catch (err: any) {
-      setError(err?.message || 'Failed to fetch proposal');
+      setError(err?.message || 'Failed to fetch proposal or inventory');
       setLoading(false);
+      setInventoryLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchProposal();
-  }, [id, fetchProposal]); // Added fetchProposal to dependency array
+    fetchProposalAndInventory();
+  }, [id]);
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
@@ -138,11 +182,9 @@ const ProposalDetails = () => {
 
   const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    // Ensure empty string results in undefined or 0 based on field requirements
     const numValue = value === '' ? undefined : parseFloat(value);
     setEditData((prev) => ({
       ...prev,
-      // Use 0 if parsing fails or value is empty for required number fields
       [name]: isNaN(numValue as number) ? 0 : numValue,
     }));
   };
@@ -150,6 +192,26 @@ const ProposalDetails = () => {
   const toggleEditMode = () => {
     if (editMode) {
       setEditData(proposal || {});
+      setEditLineItems(
+        proposal?.lineItems?.map((li: any) => ({
+          itemId: li.itemId?._id || li.itemId,
+          quantity: li.quantity,
+          name: li.itemId?.name,
+          modelNumber: li.itemId?.modelNumber,
+          itemDetails: li.itemId,
+        })) || []
+      );
+    } else {
+      setEditData(proposal || {});
+      setEditLineItems(
+        proposal?.lineItems?.map((li: any) => ({
+          itemId: li.itemId?._id || li.itemId,
+          quantity: li.quantity,
+          name: li.itemId?.name,
+          modelNumber: li.itemId?.modelNumber,
+          itemDetails: li.itemId,
+        })) || []
+      );
     }
     setEditMode(!editMode);
   };
@@ -162,11 +224,6 @@ const ProposalDetails = () => {
       status: editData.status,
       systemSize: editData.systemSize,
       panelCount: editData.panelCount,
-      equipment: editData.equipment?.map((eq) => ({
-        item: typeof eq.item === 'string' ? eq.item : eq.item._id,
-        quantity: eq.quantity,
-        unitPrice: eq.unitPrice,
-      })),
       projectCostExcludingStructure: editData.projectCostExcludingStructure,
       structureCost: editData.structureCost,
       subsidyAmount: editData.subsidyAmount,
@@ -175,6 +232,10 @@ const ProposalDetails = () => {
       validUntil: editData.validUntil,
       notes: editData.notes,
       active: editData.active,
+      lineItems: editLineItems.map((item) => ({
+        itemId: item.itemId,
+        quantity: item.quantity,
+      })),
     };
 
     Object.keys(finalPayload).forEach(
@@ -186,7 +247,7 @@ const ProposalDetails = () => {
     try {
       setLoading(true);
       await proposalService.updateProposal(id, finalPayload);
-      await fetchProposal();
+      await fetchProposalAndInventory();
       setEditMode(false);
     } catch (err: any) {
       setError(err?.message || 'Failed to update proposal');
@@ -209,7 +270,7 @@ const ProposalDetails = () => {
     try {
       await proposalService.sendProposal(id);
       setOpenSendDialog(false);
-      fetchProposal();
+      fetchProposalAndInventory();
     } catch (err: any) {
       setError(err?.message || 'Failed to send proposal');
     }
@@ -233,12 +294,45 @@ const ProposalDetails = () => {
     }
   };
 
+  // --- Handlers for Line Items in Edit Mode ---
+  const handleAddLineEditItem = () => {
+    if (selectedInventoryItem && selectedItemQuantity > 0) {
+      const existingItemIndex = editLineItems.findIndex(
+        (item) => item.itemId === selectedInventoryItem._id
+      );
+
+      if (existingItemIndex > -1) {
+        const updatedLineItems = [...editLineItems];
+        updatedLineItems[existingItemIndex].quantity += selectedItemQuantity;
+        setEditLineItems(updatedLineItems);
+      } else {
+        const newLineItem: LineItem = {
+          itemId: selectedInventoryItem._id,
+          name: selectedInventoryItem.name,
+          modelNumber: selectedInventoryItem.modelNumber,
+          quantity: selectedItemQuantity,
+          itemDetails: selectedInventoryItem,
+        };
+        setEditLineItems((prev) => [...prev, newLineItem]);
+      }
+      setSelectedInventoryItem(null);
+      setSelectedItemQuantity(1);
+    }
+  };
+
+  const handleRemoveLineEditItem = (itemIdToRemove: string) => {
+    setEditLineItems((prev) =>
+      prev.filter((item) => item.itemId !== itemIdToRemove)
+    );
+  };
+  // --- End Handlers for Line Items ---
+
   const updateStatus = async () => {
     if (!id || !statusDialog.status) return;
     try {
       await proposalService.updateStatus(id, statusDialog.status as any);
       setStatusDialog({ ...statusDialog, open: false });
-      fetchProposal();
+      fetchProposalAndInventory();
     } catch (err: any) {
       setError(err?.message || 'Failed to update status');
     }
@@ -332,6 +426,18 @@ const ProposalDetails = () => {
         <Box>
           {!editMode ? (
             <>
+              {proposal.status === 'accepted' && (
+                <Button
+                  variant="contained"
+                  color="success"
+                  startIcon={<CreateProjectIcon />}
+                  onClick={() => navigate(`/projects/add?proposalId=${proposal._id}`)}
+                  sx={{ mr: 1 }}
+                  title="Create a new project from this accepted proposal"
+                >
+                  Create Project
+                </Button>
+              )}
               {proposal.status === 'draft' && (
                 <Button
                   variant="outlined"
@@ -432,8 +538,7 @@ const ProposalDetails = () => {
         >
           {downloadError}
         </Alert>
-      )}{' '}
-      {/* Show download error */}
+      )}
       {/* Tabs */}
       <Paper sx={{ mb: 3 }}>
         <Tabs
@@ -874,27 +979,140 @@ const ProposalDetails = () => {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={12} md={6}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Equipment
-                  </Typography>
-                  <Divider sx={{ mb: 2 }} />
-                  {/* TODO: Add equipment editing UI when in editMode */}
-                  <List dense>
-                    {proposal.equipment.map((eq, index) => (
-                      <ListItem key={index}>
-                        <ListItemText
-                          primary={`${eq.quantity} x ${eq.item.name}`}
-                          secondary={`${eq.item.category} - ${eq.item.modelNumber || 'N/A'}`}
+            {/* Line Items Editing Section (only in edit mode) */}
+            {editMode && (
+              <Grid item xs={12}>
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>
+                      Edit Line Items
+                    </Typography>
+                    <Divider sx={{ mb: 2 }} />
+                    {/* Item Selection Row */}
+                    <Grid container spacing={2} alignItems="flex-end" sx={{ mb: 2 }}>
+                      <Grid item xs={12} sm={6}>
+                        <Autocomplete
+                          options={inventoryItems}
+                          getOptionLabel={(option) => `${option.name} (${option.modelNumber || 'N/A'}) - ${option.category}`}
+                          value={selectedInventoryItem}
+                          onChange={(_, newValue) => setSelectedInventoryItem(newValue)}
+                          loading={inventoryLoading}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              label="Select Inventory Item"
+                              InputProps={{
+                                ...params.InputProps,
+                                endAdornment: (
+                                  <>
+                                    {inventoryLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                                    {params.InputProps.endAdornment}
+                                  </>
+                                ),
+                              }}
+                            />
+                          )}
                         />
-                      </ListItem>
-                    ))}
-                  </List>
-                </CardContent>
-              </Card>
-            </Grid>
+                      </Grid>
+                      <Grid item xs={6} sm={3}>
+                        <TextField
+                          fullWidth
+                          label="Quantity"
+                          type="number"
+                          size="small"
+                          inputProps={{ min: 1 }}
+                          value={selectedItemQuantity}
+                          onChange={(e) => setSelectedItemQuantity(Number(e.target.value) || 1)}
+                        />
+                      </Grid>
+                      <Grid item xs={6} sm={3}>
+                        <Button
+                          variant="outlined"
+                          startIcon={<AddIcon />}
+                          onClick={handleAddLineEditItem}
+                          disabled={!selectedInventoryItem || selectedItemQuantity <= 0}
+                          fullWidth
+                        >
+                          Add Item
+                        </Button>
+                      </Grid>
+                    </Grid>
+
+                    {/* Added Items Table */}
+                    {editLineItems.length > 0 && (
+                      <TableContainer component={MuiPaper}>
+                        <Table size="small">
+                          <TableHead>
+                            <TableRow>
+                              <TableCell>Item Name</TableCell>
+                              <TableCell>Model</TableCell>
+                              <TableCell align="right">Quantity</TableCell>
+                              <TableCell align="center">Actions</TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {editLineItems.map((item) => (
+                              <TableRow key={item.itemId}>
+                                <TableCell>{item.name || item.itemDetails?.name || 'N/A'}</TableCell>
+                                <TableCell>{item.modelNumber || item.itemDetails?.modelNumber || 'N/A'}</TableCell>
+                                <TableCell align="right">{item.quantity}</TableCell>
+                                <TableCell align="center">
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => handleRemoveLineEditItem(item.itemId)}
+                                    color="error"
+                                    title="Remove Item"
+                                  >
+                                    <DeleteIcon fontSize="small" />
+                                  </IconButton>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    )}
+                  </CardContent>
+                </Card>
+              </Grid>
+            )}
+            {/* Display Line Items (View Mode) - Using && */}
+            {!editMode && proposal?.lineItems && proposal.lineItems.length > 0 && (
+              <Grid item xs={12}>
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6" gutterBottom>
+                      Line Items
+                    </Typography>
+                    <Divider sx={{ mb: 2 }} />
+                    <TableContainer component={MuiPaper}>
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Item Name</TableCell>
+                            <TableCell>Model</TableCell>
+                            <TableCell>Category</TableCell>
+                            <TableCell align="right">Quantity</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {proposal.lineItems.map((item) => (
+                            <TableRow key={item._id || item.itemId._id}>
+                              <TableCell>{item.itemId.name}</TableCell>
+                              <TableCell>
+                                {item.itemId.modelNumber || 'N/A'}
+                              </TableCell>
+                              <TableCell>{item.itemId.category}</TableCell>
+                              <TableCell align="right">{item.quantity}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </CardContent>
+                </Card>
+              </Grid>
+            )}
           </Grid>
         </TabPanel>
 

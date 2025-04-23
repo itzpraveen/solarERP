@@ -7,12 +7,12 @@ import {
   Button,
   useTheme,
   alpha,
-  Paper,
   Divider,
   useMediaQuery,
 } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
+
 
 interface BreadcrumbItem {
   label: string;
@@ -40,38 +40,21 @@ const PageHeader: React.FC<PageHeaderProps> = ({
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
 
   return (
-    <Paper
-      elevation={0}
-      sx={{
-        mb: 3,
-        borderRadius: theme.shape.borderRadius * 1.5,
-        // overflow: 'hidden', // Removed to prevent text clipping
-        backgroundColor: theme.palette.background.paper,
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.03)',
-        border: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
-      }}
-    >
-      <Box
-        sx={{
-          // Padding moved to inner Box
-          background: `linear-gradient(to right, ${alpha(theme.palette.primary.main, 0.03)}, ${alpha(theme.palette.background.paper, 0.5)})`,
-        }}
-      >
-        {/* Breadcrumbs */}
-        {breadcrumbs && breadcrumbs.length > 0 && (
+    // Replaced Paper with Box and removed Paper-specific styling
+    <Box sx={{ mb: 3 }}>
+      {/* Breadcrumbs */}
+      {breadcrumbs && breadcrumbs.length > 0 && (
+        <Box sx={{ px: { xs: 2, sm: 3 }, pt: { xs: 2, sm: 3 } }}>
+          {' '}
+          {/* Added padding wrapper for breadcrumbs */}
           <Breadcrumbs
             aria-label="breadcrumb"
             sx={{
               mb: 1.5,
-              '& .MuiBreadcrumbs-ol': {
-                flexWrap: 'wrap',
-              },
-              '& .MuiBreadcrumbs-li': {
-                fontSize: '0.85rem',
-              },
+              '& .MuiBreadcrumbs-ol': { flexWrap: 'wrap' },
+              '& .MuiBreadcrumbs-li': { fontSize: '0.85rem' },
             }}
           >
             {breadcrumbs.map((crumb, index) => {
@@ -105,10 +88,15 @@ const PageHeader: React.FC<PageHeaderProps> = ({
               );
             })}
           </Breadcrumbs>
-        )}
+          {/* Removed duplicate closing tag */}
+        </Box>
+      )}
 
-        {/* Back Link */}
-        {backLink && (
+      {/* Back Link */}
+      {backLink && (
+        <Box sx={{ px: { xs: 2, sm: 3 } }}>
+          {' '}
+          {/* Added padding wrapper */}
           <Button
             component={RouterLink}
             to={backLink}
@@ -123,75 +111,66 @@ const PageHeader: React.FC<PageHeaderProps> = ({
           >
             {backLabel}
           </Button>
-        )}
+        </Box>
+      )}
 
-        {/* Header Content */}
-        <Box
-          sx={{
-            p: { xs: 2, sm: 3 }, // Added padding to inner flex box
-            display: 'flex',
-            flexDirection: { xs: 'column', md: 'row' },
-            justifyContent: 'space-between',
-            alignItems: 'flex-start', // Revert to always align top
-            // gap: 2,
-          }}
-        >
-          {/* Removed inner Box wrapper */}
+      {/* Header Content */}
+      <Box
+        sx={{
+          p: { xs: 2, sm: 3 }, // Retained padding here
+          display: 'flex',
+          flexDirection: { xs: 'column', md: 'row' },
+          justifyContent: 'space-between',
+          alignItems: 'flex-start', // Align top
+          gap: 2, // Added gap for spacing between title/subtitle and action
+        }}
+      >
+        {/* Title and Subtitle */}
+        <Box sx={{ flexGrow: 1 }}>
           <Typography
             variant={isMobile ? 'h5' : 'h4'}
             component="h1"
-            sx={{
-              fontWeight: 700,
-              color: theme.palette.text.primary,
-              lineHeight: 'normal', // Let browser handle title line height
-              mb: 1, // Add explicit bottom margin to title
-            }}
+            sx={{ fontWeight: 700, color: theme.palette.text.primary, mb: 1 }}
           >
-            {title}
-          </Typography>
-          {subtitle && (
-            <Typography
-              variant="body1"
-              color="text.secondary"
-              sx={{
-                mt: 0, // Revert negative margin
-                maxWidth: '800px',
-                lineHeight: 'normal', // Let browser calculate line height
-                // pt: 0.2,
-              }}
-            >
-              {subtitle}
+              {title}
             </Typography>
-          )}
-          {/* Removed inner Box wrapper */}
+            {subtitle && (
+              <Typography
+                variant="body1"
+                color="text.secondary"
+                sx={{ maxWidth: '800px' }}
+              >
+                {subtitle}
+              </Typography>
+            )}
+          </Box>
 
           {/* Action Button */}
           {action && (
             <Box
               sx={{
-                mt: { xs: 1, md: 0 },
+                mt: { xs: 2, md: 0 }, // Adjusted margin top for spacing
                 display: 'flex',
                 flexDirection: { xs: 'column', sm: 'row' },
-                gap: 1, // Keep gap for row layout
+                gap: 1,
                 alignItems: { xs: 'stretch', sm: 'center' },
-                // Reverted specific margin for stacked buttons
+                flexShrink: 0, // Prevent action button from shrinking
               }}
             >
               {action}
             </Box>
           )}
         </Box>
-      </Box>
 
       {/* Optional Children Content */}
       {children && (
-        <>
-          <Divider />
-          <Box sx={{ p: { xs: 2, sm: 3 } }}>{children}</Box>
-        </>
+        <Box sx={{ p: { xs: 2, sm: 3 } }}>
+          <Divider sx={{ mb: 2 }} /> {/* Added margin bottom to divider */}
+          {children}
+        </Box>
       )}
-    </Paper>
+    </Box>
   );
-};
+}; // Added missing closing brace and semicolon
 
 export default PageHeader;

@@ -20,7 +20,6 @@ import {
   Collapse,
   alpha,
   Badge,
-  useMediaQuery,
   Zoom,
 } from '@mui/material';
 import {
@@ -29,7 +28,6 @@ import {
   Groups as CustomerIcon,
   InsertDriveFile as ProposalIcon,
   Assignment as ProjectIcon,
-  ElectricBolt as EquipmentIcon,
   Description as DocumentIcon,
   BarChart as ReportIcon,
   Settings as SettingsIcon,
@@ -58,7 +56,6 @@ const menuItems = [
   { text: 'Proposals', icon: <ProposalIcon />, path: '/proposals' }, // Moved Proposals up
   { text: 'Customers', icon: <CustomerIcon />, path: '/customers' }, // Moved Customers down
   { text: 'Projects', icon: <ProjectIcon />, path: '/projects' },
-  { text: 'Equipment', icon: <EquipmentIcon />, path: '/equipment' },
   { text: 'Inventory', icon: <InventoryIcon />, path: '/inventory' }, // Add Inventory menu item
   { text: 'Service Requests', icon: <ServiceIcon />, path: '/services' },
   { text: 'Documents', icon: <DocumentIcon />, path: '/documents' },
@@ -454,7 +451,7 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
             }}
           >
             <Avatar
-              alt={user?.name || 'User'}
+              alt={user ? `${user.firstName} ${user.lastName}` : 'User'}
               src={user?.avatar}
               sx={{
                 bgcolor: theme.palette.primary.main,
@@ -463,11 +460,11 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
                 boxShadow: `0 2px 8px ${alpha(theme.palette.primary.main, 0.25)}`,
               }}
             >
-              {!user?.avatar && (user?.name?.charAt(0) || 'U')}
+              {!user?.avatar && (user?.firstName?.charAt(0) || 'U')}
             </Avatar>
             <Box sx={{ flex: 1 }}>
               <Typography variant="body2" fontWeight={600}>
-                {user?.name || 'User'}
+                {user ? `${user.firstName} ${user.lastName}` : 'User'}
               </Typography>
               <Typography
                 variant="caption"

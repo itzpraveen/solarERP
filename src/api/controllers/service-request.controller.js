@@ -50,7 +50,7 @@ exports.getServiceRequests = async (req, res) => {
     ); // Keep this log
 
     // Pagination
-    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10); // Added radix 10
 
     // Execute query
     const serviceRequests = await ServiceRequest.find(filterConditions)
@@ -60,7 +60,7 @@ exports.getServiceRequests = async (req, res) => {
       .populate('createdBy', 'firstName lastName')
       .sort(sort)
       .skip(skip)
-      .limit(parseInt(limit));
+      .limit(parseInt(limit, 10)); // Added radix 10
 
     // Get total count
     const total = await ServiceRequest.countDocuments(filterConditions);
@@ -69,10 +69,11 @@ exports.getServiceRequests = async (req, res) => {
       status: 'success',
       results: serviceRequests.length,
       total,
-      page: parseInt(page),
-      pages: Math.ceil(total / parseInt(limit)),
+      page: parseInt(page, 10), // Added radix 10
+      pages: Math.ceil(total / parseInt(limit, 10)), // Added radix 10
       serviceRequests,
     });
+    // No return needed here as it's the main function body
   } catch (error) {
     console.error('Error in getServiceRequests:', error);
     res.status(500).json({
@@ -104,6 +105,7 @@ exports.getServiceRequest = async (req, res) => {
       status: 'success',
       serviceRequest,
     });
+    // No return needed here as it's the main function body
   } catch (error) {
     console.error('Error in getServiceRequest:', error);
     res.status(500).json({
@@ -134,6 +136,7 @@ exports.createServiceRequest = async (req, res) => {
       status: 'success',
       serviceRequest: populatedServiceRequest,
     });
+    // No return needed here as it's the main function body
   } catch (error) {
     console.error('Error in createServiceRequest:', error);
     res.status(400).json({
@@ -190,6 +193,7 @@ exports.updateServiceRequest = async (req, res) => {
       status: 'success',
       serviceRequest,
     });
+    // No return needed here as it's the main function body
   } catch (error) {
     console.error('Error in updateServiceRequest:', error);
     res.status(400).json({
@@ -218,6 +222,7 @@ exports.deleteServiceRequest = async (req, res) => {
       status: 'success',
       message: 'Service request deleted successfully',
     });
+    // No return needed here as it's the main function body
   } catch (error) {
     console.error('Error in deleteServiceRequest:', error);
     res.status(500).json({
@@ -271,6 +276,7 @@ exports.addNote = async (req, res) => {
       status: 'success',
       notes: serviceRequest.notes,
     });
+    // No return needed here as it's the main function body
   } catch (error) {
     console.error('Error in addNote:', error);
     res.status(500).json({
@@ -319,6 +325,7 @@ exports.assignTechnician = async (req, res) => {
       status: 'success',
       serviceRequest,
     });
+    // No return needed here as it's the main function body
   } catch (error) {
     console.error('Error in assignTechnician:', error);
     res.status(500).json({
@@ -383,6 +390,7 @@ exports.updateStatus = async (req, res) => {
       status: 'success',
       serviceRequest,
     });
+    // No return needed here as it's the main function body
   } catch (error) {
     console.error('Error in updateStatus:', error);
     res.status(500).json({
@@ -442,6 +450,7 @@ exports.scheduleService = async (req, res) => {
       status: 'success',
       serviceRequest,
     });
+    // No return needed here as it's the main function body
   } catch (error) {
     console.error('Error in scheduleService:', error);
     res.status(500).json({
@@ -504,6 +513,7 @@ exports.completeService = async (req, res) => {
       serviceRequest,
       notes: serviceRequest.notes,
     });
+    // No return needed here as it's the main function body
   } catch (error) {
     console.error('Error in completeService:', error);
     res.status(500).json({
@@ -529,6 +539,7 @@ exports.getCustomerServiceRequests = async (req, res) => {
       results: serviceRequests.length,
       serviceRequests,
     });
+    // No return needed here as it's the main function body
   } catch (error) {
     console.error('Error in getCustomerServiceRequests:', error);
     res.status(500).json({
@@ -554,6 +565,7 @@ exports.getProjectServiceRequests = async (req, res) => {
       results: serviceRequests.length,
       serviceRequests,
     });
+    // No return needed here as it's the main function body
   } catch (error) {
     console.error('Error in getProjectServiceRequests:', error);
     res.status(500).json({

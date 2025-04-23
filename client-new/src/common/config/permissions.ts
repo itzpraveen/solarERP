@@ -37,10 +37,6 @@ export const PERMISSIONS = {
   DELETE_PROJECT: 'delete:project',
   VIEW_PROJECT_FINANCIALS: 'view:project_financials',
 
-  // Equipment
-  MANAGE_EQUIPMENT: 'manage:equipment',
-  VIEW_EQUIPMENT: 'view:equipment',
-
   // Documents
   UPLOAD_DOCUMENT: 'upload:document',
   VIEW_DOCUMENTS: 'view:documents',

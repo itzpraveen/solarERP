@@ -35,6 +35,7 @@ exports.getAllUsers = catchAsync(async (req, res, next) => {
       users,
     },
   });
+  // No return needed here as it's the main function body
 });
 
 // Get a single user by ID
@@ -51,6 +52,7 @@ exports.getUser = catchAsync(async (req, res, next) => {
       user,
     },
   });
+  // No return needed here as it's the main function body
 });
 
 // Create a new user (Admin action)
@@ -100,6 +102,7 @@ exports.createUser = catchAsync(async (req, res, next) => {
       user: newUser,
     },
   });
+  // No return needed here as it's the main function body
 });
 
 // Update user details (Admin action - restricted fields)
@@ -142,6 +145,7 @@ exports.updateUser = catchAsync(async (req, res, next) => {
       user: updatedUser,
     },
   });
+  // No return needed here as it's the main function body
 });
 
 // Delete user (soft delete - Admin action)
@@ -156,4 +160,5 @@ exports.deleteUser = catchAsync(async (req, res, next) => {
     status: 'success',
     data: null,
   });
+  // No return needed for 204 status
 });

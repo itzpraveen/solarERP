@@ -54,7 +54,7 @@ const authorize = (...requiredPermissions) => {
     }
 
     // User has the required permissions
-    next();
+    return next(); // Added return
   };
 };
 

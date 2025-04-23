@@ -1,5 +1,6 @@
 import apiService from './apiService';
 import { User } from '../features/auth/types/User'; // Assuming User type is here
+export type { User }; // Re-export the User type
 
 // Interface for the API response when fetching multiple users
 interface GetUsersResponse {

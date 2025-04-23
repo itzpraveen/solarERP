@@ -6,10 +6,8 @@ const catchAsync = require('../../utils/catchAsync');
 const AppError = require('../../utils/appError');
 const Document = require('../models/document.model');
 
-const unlinkAsync = promisify(fs.unlink);
-
 // Get all documents with filtering, sorting, and pagination
-exports.getAllDocuments = catchAsync(async (req, res, next) => {
+exports.getAllDocuments = catchAsync(async (req, res, _next) => {
   // BUILD QUERY
   // 1) Filtering
   const queryObj = { ...req.query };
@@ -71,6 +69,7 @@ exports.getAllDocuments = catchAsync(async (req, res, next) => {
       documents,
     },
   });
+  // No return needed here as it's the main function body
 });
 
 // Get document by ID
@@ -94,7 +93,8 @@ exports.getDocument = catchAsync(async (req, res, next) => {
     });
 
   if (!document) {
-    return next(new AppError('No document found with that ID', 404));
+    next(new AppError('No document found with that ID', 404));
+    return;
   }
 
   // Check if user has access
@@ -114,9 +114,10 @@ exports.getDocument = catchAsync(async (req, res, next) => {
       !hasWriteAccess &&
       req.user.role !== 'admin'
     ) {
-      return next(
+      next(
         new AppError('You do not have permission to access this document', 403)
       );
+      return;
     }
   }
 
@@ -126,6 +127,7 @@ exports.getDocument = catchAsync(async (req, res, next) => {
       document,
     },
   });
+  // No return needed here as it's the main function body
 });
 
 // Create new document (file upload handled by multer middleware)
@@ -135,7 +137,8 @@ exports.createDocument = catchAsync(async (req, res, next) => {
 
   // Extract file information from the uploaded file
   if (!req.file) {
-    return next(new AppError('Please upload a file', 400));
+    next(new AppError('Please upload a file', 400));
+    return;
   }
 
   // Construct file object from uploaded file
@@ -172,6 +175,7 @@ exports.createDocument = catchAsync(async (req, res, next) => {
       document: newDocument,
     },
   });
+  // No return needed here as it's the main function body
 });
 
 // Update document
@@ -180,7 +184,8 @@ exports.updateDocument = catchAsync(async (req, res, next) => {
   const document = await Document.findById(req.params.id);
 
   if (!document) {
-    return next(new AppError('No document found with that ID', 404));
+    next(new AppError('No document found with that ID', 404));
+    return;
   }
 
   // Check if user has write access
@@ -191,9 +196,10 @@ exports.updateDocument = catchAsync(async (req, res, next) => {
   );
 
   if (userId !== creatorId && !hasWriteAccess && req.user.role !== 'admin') {
-    return next(
+    next(
       new AppError('You do not have permission to update this document', 403)
     );
+    return;
   }
 
   // Extract file information if new file is uploaded
@@ -259,6 +265,7 @@ exports.updateDocument = catchAsync(async (req, res, next) => {
       document: updatedDocument,
     },
   });
+  // No return needed here as it's the main function body
 });
 
 // Delete document (soft delete)
@@ -267,7 +274,8 @@ exports.deleteDocument = catchAsync(async (req, res, next) => {
   const document = await Document.findById(req.params.id);
 
   if (!document) {
-    return next(new AppError('No document found with that ID', 404));
+    next(new AppError('No document found with that ID', 404));
+    return;
   }
 
   // Check if user has write access
@@ -275,9 +283,10 @@ exports.deleteDocument = catchAsync(async (req, res, next) => {
   const creatorId = document.createdBy._id.toString();
 
   if (userId !== creatorId && req.user.role !== 'admin') {
-    return next(
+    next(
       new AppError('You do not have permission to delete this document', 403)
     );
+    return;
   }
 
   await Document.findByIdAndUpdate(req.params.id, { active: false });
@@ -286,6 +295,7 @@ exports.deleteDocument = catchAsync(async (req, res, next) => {
     status: 'success',
     data: null,
   });
+  // No return needed for 204 status
 });
 
 // Download document
@@ -293,7 +303,8 @@ exports.downloadDocument = catchAsync(async (req, res, next) => {
   const document = await Document.findById(req.params.id);
 
   if (!document) {
-    return next(new AppError('No document found with that ID', 404));
+    next(new AppError('No document found with that ID', 404));
+    return;
   }
 
   // Check if user has access
@@ -313,12 +324,13 @@ exports.downloadDocument = catchAsync(async (req, res, next) => {
       !hasWriteAccess &&
       req.user.role !== 'admin'
     ) {
-      return next(
+      next(
         new AppError(
           'You do not have permission to download this document',
           403
         )
       );
+      return;
     }
   }
 
@@ -329,7 +341,8 @@ exports.downloadDocument = catchAsync(async (req, res, next) => {
   try {
     await fs.promises.access(filePath, fs.constants.F_OK);
   } catch (err) {
-    return next(new AppError('File not found on server', 404));
+    next(new AppError('File not found on server', 404));
+    return;
   }
 
   // Set content-disposition header for download
@@ -341,7 +354,7 @@ exports.downloadDocument = catchAsync(async (req, res, next) => {
 
   // Stream file to response
   const fileStream = fs.createReadStream(filePath);
-  fileStream.pipe(res);
+  return fileStream.pipe(res); // Added return
 });
 
 // Get public document (no auth required)
@@ -354,12 +367,14 @@ exports.getPublicDocument = catchAsync(async (req, res, next) => {
   });
 
   if (!document) {
-    return next(new AppError('No public document found with that token', 404));
+    next(new AppError('No public document found with that token', 404));
+    return;
   }
 
   // Check if share has expired
   if (document.shareExpiration && Date.now() > document.shareExpiration) {
-    return next(new AppError('This link has expired', 403));
+    next(new AppError('This link has expired', 403));
+    return;
   }
 
   res.status(200).json({
@@ -368,6 +383,7 @@ exports.getPublicDocument = catchAsync(async (req, res, next) => {
       document,
     },
   });
+  // No return needed here as it's the main function body
 });
 
 // Share document (create public access)
@@ -375,7 +391,8 @@ exports.shareDocument = catchAsync(async (req, res, next) => {
   const document = await Document.findById(req.params.id);
 
   if (!document) {
-    return next(new AppError('No document found with that ID', 404));
+    next(new AppError('No document found with that ID', 404));
+    return;
   }
 
   // Check if user has permission to share
@@ -386,9 +403,10 @@ exports.shareDocument = catchAsync(async (req, res, next) => {
   );
 
   if (userId !== creatorId && !hasWriteAccess && req.user.role !== 'admin') {
-    return next(
+    next(
       new AppError('You do not have permission to share this document', 403)
     );
+    return;
   }
 
   // Generate unique token
@@ -399,7 +417,7 @@ exports.shareDocument = catchAsync(async (req, res, next) => {
   if (req.body.expirationDays) {
     shareExpiration = new Date();
     shareExpiration.setDate(
-      shareExpiration.getDate() + parseInt(req.body.expirationDays)
+      shareExpiration.getDate() + parseInt(req.body.expirationDays, 10) // Added radix 10
     );
   }
 
@@ -420,6 +438,7 @@ exports.shareDocument = catchAsync(async (req, res, next) => {
       document: updatedDocument,
     },
   });
+  // No return needed here as it's the main function body
 });
 
 // Add signature to document
@@ -427,7 +446,8 @@ exports.signDocument = catchAsync(async (req, res, next) => {
   const document = await Document.findById(req.params.id);
 
   if (!document) {
-    return next(new AppError('No document found with that ID', 404));
+    next(new AppError('No document found with that ID', 404));
+    return;
   }
 
   // Add signature
@@ -450,6 +470,7 @@ exports.signDocument = catchAsync(async (req, res, next) => {
       document: updatedDocument,
     },
   });
+  // No return needed here as it's the main function body
 });
 
 // Search documents
@@ -457,7 +478,8 @@ exports.searchDocuments = catchAsync(async (req, res, next) => {
   const { query } = req.query;
 
   if (!query) {
-    return next(new AppError('Please provide a search query', 400));
+    next(new AppError('Please provide a search query', 400));
+    return;
   }
 
   const documents = await Document.find({
@@ -473,4 +495,5 @@ exports.searchDocuments = catchAsync(async (req, res, next) => {
       documents,
     },
   });
+  // No return needed here as it's the main function body
 });

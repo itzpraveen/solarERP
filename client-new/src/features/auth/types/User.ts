@@ -1,9 +1,11 @@
 /**
  * User interface representing a user in the system
+ * Aligned with typical backend model structure (_id, firstName, lastName)
  */
 export interface User {
-  id: string;
-  name: string;
+  _id: string; // Use _id consistent with MongoDB
+  firstName: string;
+  lastName: string;
   email: string;
   role: string;
   avatar?: string;

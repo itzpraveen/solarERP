@@ -25,27 +25,27 @@ const leadSchema = new mongoose.Schema(
     address: {
       street: {
         type: String,
-        required: [true, 'Street address is required'],
+        // required: [true, 'Street address is required'], // Made optional
         trim: true,
       },
       city: {
         type: String,
-        required: [true, 'City is required'],
+        // required: [true, 'City is required'], // Made optional
         trim: true,
       },
       district: {
         type: String,
-        required: [true, 'District is required'],
+        // required: [true, 'District is required'], // Made optional
         trim: true,
       },
       state: {
         type: String,
-        required: [true, 'State is required'],
+        // required: [true, 'State is required'], // Made optional
         trim: true,
       },
       zipCode: {
         type: String,
-        required: [true, 'ZIP code is required'],
+        // required: [true, 'ZIP code is required'], // Made optional
         trim: true,
       },
       country: {

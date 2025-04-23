@@ -115,7 +115,8 @@ const Proposals = () => {
   // Initial data fetch
   useEffect(() => {
     fetchProposals();
-  }, [page, rowsPerPage, filters, fetchProposals]); // Added fetchProposals to dependency array
+    // Dependencies: page, rowsPerPage, filters object, and searchTerm
+  }, [page, rowsPerPage, filters, searchTerm]);
 
   // Handle page change
   const handleChangePage = (_: unknown, newPage: number) => {
@@ -140,10 +141,10 @@ const Proposals = () => {
     setPage(0);
   };
 
-  // Handle search
+  // Handle search term change (triggers useEffect)
   const handleSearch = () => {
     setPage(0);
-    fetchProposals();
+    // No need to call fetchProposals directly, useEffect will handle it
   };
 
   // Handle proposal creation - Update type signature to use ProposalFormData

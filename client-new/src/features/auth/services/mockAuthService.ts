@@ -10,8 +10,9 @@ const MOCK_TOKEN = 'mock-jwt-token-for-development-only';
 
 // Mock user data
 const MOCK_USER: User = {
-  id: '1',
-  name: 'Demo User',
+  _id: 'mock-user-1', // Use _id and a more descriptive mock ID
+  firstName: 'Demo',
+  lastName: 'User',
   email: DEMO_EMAIL,
   role: 'admin',
 };

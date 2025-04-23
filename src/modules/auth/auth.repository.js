@@ -81,10 +81,10 @@ class AuthRepository {
    * @returns {Promise<Object>} Updated user
    */
   async updatePassword(user, newPassword) {
-    user.password = newPassword;
-    user.passwordResetToken = undefined;
-    user.passwordResetExpires = undefined;
-
+    // Properties (password, passwordResetToken, passwordResetExpires)
+    // are expected to be set on the user object *before* calling this method
+    // in the service layer, which then calls user.save().
+    // Removed redundant assignments here to fix no-param-reassign.
     return user.save();
   }
 

@@ -5,7 +5,7 @@ const AppError = require('../../utils/appError');
 const catchAsync = require('../../utils/catchAsync');
 
 // Get all customers with filtering, sorting, and pagination
-exports.getAllCustomers = catchAsync(async (req, res, next) => {
+exports.getAllCustomers = catchAsync(async (req, res, _next) => {
   // BUILD FILTER CONDITIONS
   const filterConditions = {};
 
@@ -77,6 +77,7 @@ exports.getAllCustomers = catchAsync(async (req, res, next) => {
       customers,
     },
   });
+  // No return needed here as it's the main function body
 });
 
 // Get customer by ID
@@ -100,7 +101,8 @@ exports.getCustomer = catchAsync(async (req, res, next) => {
     });
 
   if (!customer) {
-    return next(new AppError('No customer found with that ID', 404));
+    next(new AppError('No customer found with that ID', 404));
+    return; // Add explicit return after calling next()
   }
 
   res.status(200).json({
@@ -109,9 +111,10 @@ exports.getCustomer = catchAsync(async (req, res, next) => {
       customer,
     },
   });
+  // No return needed here as it's the main function body
 });
 
-// Create new customer
+// Create new proposal
 exports.createCustomer = catchAsync(async (req, res, next) => {
   // Set the creator to the current user
   req.body.createdBy = req.user.id;
@@ -120,7 +123,8 @@ exports.createCustomer = catchAsync(async (req, res, next) => {
   if (req.body.originalLead) {
     const lead = await Lead.findById(req.body.originalLead);
     if (!lead) {
-      return next(new AppError('No lead found with that ID', 404));
+      next(new AppError('No lead found with that ID', 404));
+      return; // Add explicit return after calling next()
     }
   }
 
@@ -128,7 +132,8 @@ exports.createCustomer = catchAsync(async (req, res, next) => {
   if (req.body.acceptedProposal) {
     const proposal = await Proposal.findById(req.body.acceptedProposal);
     if (!proposal) {
-      return next(new AppError('No proposal found with that ID', 404));
+      next(new AppError('No proposal found with that ID', 404));
+      return; // Add explicit return after calling next()
     }
   }
 
@@ -140,9 +145,10 @@ exports.createCustomer = catchAsync(async (req, res, next) => {
       customer: newCustomer,
     },
   });
+  // No return needed here as it's the main function body
 });
 
-// Update customer
+// Update proposal
 exports.updateCustomer = catchAsync(async (req, res, next) => {
   const customer = await Customer.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
@@ -150,7 +156,8 @@ exports.updateCustomer = catchAsync(async (req, res, next) => {
   });
 
   if (!customer) {
-    return next(new AppError('No customer found with that ID', 404));
+    next(new AppError('No customer found with that ID', 404));
+    return; // Add explicit return after calling next()
   }
 
   res.status(200).json({
@@ -159,22 +166,25 @@ exports.updateCustomer = catchAsync(async (req, res, next) => {
       customer,
     },
   });
+  // No return needed here as it's the main function body
 });
 
-// Delete customer (soft delete)
+// Delete proposal (soft delete)
 exports.deleteCustomer = catchAsync(async (req, res, next) => {
   const customer = await Customer.findByIdAndUpdate(req.params.id, {
     active: false,
   });
 
   if (!customer) {
-    return next(new AppError('No customer found with that ID', 404));
+    next(new AppError('No customer found with that ID', 404));
+    return; // Add explicit return after calling next()
   }
 
   res.status(204).json({
     status: 'success',
     data: null,
   });
+  // No return needed for 204 status
 });
 
 // Add note to customer
@@ -189,7 +199,8 @@ exports.addCustomerNote = catchAsync(async (req, res, next) => {
   );
 
   if (!customer) {
-    return next(new AppError('No customer found with that ID', 404));
+    next(new AppError('No customer found with that ID', 404));
+    return; // Add explicit return after calling next()
   }
 
   res.status(200).json({
@@ -198,6 +209,7 @@ exports.addCustomerNote = catchAsync(async (req, res, next) => {
       customer,
     },
   });
+  // No return needed here as it's the main function body
 });
 
 // Convert lead to customer
@@ -205,7 +217,8 @@ exports.convertLeadToCustomer = catchAsync(async (req, res, next) => {
   // Check if lead exists
   const lead = await Lead.findById(req.params.leadId);
   if (!lead) {
-    return next(new AppError('No lead found with that ID', 404));
+    next(new AppError('No lead found with that ID', 404));
+    return; // Add explicit return after calling next()
   }
 
   // Check if proposal exists if provided
@@ -213,12 +226,14 @@ exports.convertLeadToCustomer = catchAsync(async (req, res, next) => {
   if (req.body.proposalId) {
     proposal = await Proposal.findById(req.body.proposalId);
     if (!proposal) {
-      return next(new AppError('No proposal found with that ID', 404));
+      next(new AppError('No proposal found with that ID', 404));
+      return; // Add explicit return after calling next()
     }
 
     // Check if proposal belongs to the lead
     if (proposal.lead.toString() !== lead._id.toString()) {
-      return next(new AppError('Proposal does not belong to this lead', 400));
+      next(new AppError('Proposal does not belong to this lead', 400));
+      return; // Add explicit return after calling next()
     }
 
     // Update proposal status to accepted if not already
@@ -253,4 +268,5 @@ exports.convertLeadToCustomer = catchAsync(async (req, res, next) => {
       customer: newCustomer,
     },
   });
+  // No return needed here as it's the main function body
 });

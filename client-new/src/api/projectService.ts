@@ -1,11 +1,13 @@
 import apiService from './apiService';
 
+// Allow address fields to be optional for flexibility in creation/updates
 export interface ProjectAddress {
-  street: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  country: string;
+  street?: string;
+  city?: string;
+  district?: string; // Added district based on lead model
+  state?: string;
+  zipCode?: string;
+  country?: string;
 }
 
 export interface ProjectDates {
@@ -48,23 +50,6 @@ export interface ProjectTeam {
     lastName: string;
     email: string;
   }>;
-}
-
-export interface ProjectEquipment {
-  _id?: string;
-  type:
-    | 'panel'
-    | 'inverter'
-    | 'battery'
-    | 'optimizers'
-    | 'racking'
-    | 'monitoring'
-    | 'other';
-  manufacturer: string;
-  model: string;
-  serialNumber?: string;
-  quantity: number;
-  notes?: string;
 }
 
 export interface ProjectDocument {
@@ -219,7 +204,6 @@ export interface Project {
   batteryCount?: number;
   dates: ProjectDates;
   team: ProjectTeam;
-  equipment?: ProjectEquipment[];
   documents?: ProjectDocument[];
   notes?: ProjectNote[];
   issues?: ProjectIssue[];
@@ -235,6 +219,42 @@ export interface Project {
   updatedAt: string;
   tasks?: ProjectTask[]; // Add tasks array to Project interface
 }
+
+// Define the payload type for creating a project
+export type ProjectCreatePayload = Omit<
+  Project,
+  | '_id'
+  | 'createdAt'
+  | 'updatedAt'
+  | 'createdBy' // Usually set by backend
+  | 'active' // Usually defaults on backend
+  | 'customer' // Expecting customer ID string
+  | 'proposal' // Expecting proposal ID string
+  | 'team' // Expecting team member IDs
+  | 'notes' // Expecting specific note structure if provided
+  | 'financials' // Expecting specific financial structure
+  | 'installAddress' // Make optional in payload
+> & {
+  customer: string; // Required customer ID
+  proposal?: string; // Optional proposal ID
+  installAddress?: ProjectAddress; // Make installAddress optional here
+  // Allow simplified notes structure for creation
+  notes?: Array<{ text: string }>;
+  // Ensure team members are IDs for creation payload
+  team?: {
+    projectManager?: string;
+    salesRep?: string;
+    designer?: string;
+    installationTeam?: string[];
+  };
+  // Ensure financials structure matches creation needs
+  financials?: {
+    totalContractValue: number;
+    totalContractValueCurrency: string;
+    // Payment schedule and expenses are likely added later, not on initial creation
+  };
+};
+
 export interface ProjectFilter {
   status?: string;
   stage?: string;
@@ -279,10 +299,10 @@ const projectService = {
   },
 
   // Create new project
-  createProject: async (
-    projectData: Omit<Project, '_id' | 'createdAt' | 'updatedAt'>
-  ) => {
+  createProject: async (projectData: ProjectCreatePayload) => {
     try {
+      // Ensure the payload sent matches the backend expectations
+      // The ProjectCreatePayload type helps enforce this structure
       return await apiService.post('/api/projects', projectData);
     } catch (error) {
       throw error;
@@ -387,25 +407,6 @@ const projectService = {
   ) => {
     try {
       return await apiService.post(`/api/projects/${id}/documents`, document);
-    } catch (error) {
-      throw error;
-    }
-  },
-
-  // Add equipment to project
-  addEquipment: async (
-    id: string,
-    equipment: {
-      type: string;
-      manufacturer: string;
-      model: string;
-      quantity: number;
-      serialNumber?: string;
-      notes?: string;
-    }
-  ) => {
-    try {
-      return await apiService.post(`/api/projects/${id}/equipment`, equipment);
     } catch (error) {
       throw error;
     }

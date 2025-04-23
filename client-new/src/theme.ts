@@ -177,7 +177,7 @@ let theme = createTheme({
     MuiPaper: {
       styleOverrides: {
         root: {
-          borderRadius: 12,
+          // Removed borderRadius: 12 to use default theme shape.borderRadius
           boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.05)',
         },
         elevation1: {

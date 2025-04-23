@@ -35,23 +35,6 @@ const proposalSchema = new mongoose.Schema(
       required: [true, 'Number of panels is required'],
       min: 0,
     },
-    // Equipment array to store inventory items used (Keep for internal use/details)
-    equipment: [
-      {
-        item: {
-          type: mongoose.Schema.ObjectId,
-          ref: 'Inventory',
-          required: true,
-        },
-        quantity: {
-          type: Number,
-          required: true,
-          min: 1,
-        },
-        // Optional: Store unit price at the time of proposal creation
-        unitPrice: Number,
-      },
-    ],
     energyMeter: {
       // Added field based on image
       type: String,
@@ -62,7 +45,7 @@ const proposalSchema = new mongoose.Schema(
     projectCostExcludingStructure: {
       // Renamed from grossCost
       type: Number,
-      required: [true, 'Project cost (excluding structure) is required'],
+      // required: [true, 'Project cost (excluding structure) is required'], // Made optional
       min: 0,
     },
     structureCost: {
@@ -79,7 +62,7 @@ const proposalSchema = new mongoose.Schema(
     subsidyAmount: {
       // Renamed from centralSubsidy
       type: Number,
-      required: [true, 'Subsidy amount is required'],
+      // required: [true, 'Subsidy amount is required'], // Made optional
       min: 0,
     },
     netInvestment: {
@@ -113,6 +96,25 @@ const proposalSchema = new mongoose.Schema(
         downPayment: Number,
         monthlyPayment: Number,
         notes: String,
+      },
+    ],
+    // Add line items
+    lineItems: [
+      {
+        itemId: {
+          type: mongoose.Schema.ObjectId,
+          ref: 'InventoryItem',
+          required: true,
+        },
+        quantity: {
+          type: Number,
+          required: true,
+          min: 1,
+        },
+        // Optional: Store name/model for easier display if needed,
+        // but keep itemId as the source of truth
+        // name: String,
+        // modelNumber: String,
       },
     ],
     // Removed designImages
@@ -160,8 +162,7 @@ proposalSchema.index({ createdBy: 1 });
 proposalSchema.index({ createdAt: -1 });
 
 // Only query active proposals
-proposalSchema.pre(/^find/, (next) => {
-  // Convert to arrow function
+proposalSchema.pre(/^find/, function (next) {
   // Ensure the active filter is added without overwriting other conditions
   const currentQuery = this.getQuery();
   if (currentQuery.active === undefined) {
@@ -179,28 +180,20 @@ proposalSchema.pre(/^find/, (next) => {
 });
 
 // Populate references
-proposalSchema.pre(/^find/, (next) => {
-  // Convert to arrow function
+proposalSchema.pre(/^find/, function (next) {
   this.populate({
     path: 'lead',
     select: 'firstName lastName email phone address',
-  })
-    .populate({
-      path: 'createdBy',
-      select: 'firstName lastName email',
-    })
-    .populate({
-      // Populate equipment details
-      path: 'equipment.item',
-      select: 'name category unitPrice modelNumber', // Select fields you need
-    });
+  }).populate({
+    path: 'createdBy',
+    select: 'firstName lastName email',
+  });
 
   next();
 });
 
 // Calculate derived values before saving based on new structure
-proposalSchema.pre('save', (next) => {
-  // Convert to arrow function
+proposalSchema.pre('save', function (next) {
   // Calculate Final Project Cost and Net Investment
   if (
     this.isModified('projectCostExcludingStructure') ||
@@ -219,8 +212,7 @@ proposalSchema.pre('save', (next) => {
 });
 
 // Update status dates automatically
-proposalSchema.pre('save', (next) => {
-  // Convert to arrow function
+proposalSchema.pre('save', function (next) {
   if (this.isModified('status')) {
     switch (this.status) {
       case 'sent':

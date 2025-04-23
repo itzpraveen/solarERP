@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link as RouterLink } from 'react-router-dom'; // Import Link as RouterLink
 import {
   Box,
   Typography,
@@ -48,9 +48,11 @@ import {
   Description as DescriptionIcon, // Added for Proposal button
 } from '@mui/icons-material';
 import leadService, { Lead } from '../../api/leadService';
+import userService, { User } from '../../api/userService'; // Import userService and User type
 // Import Proposal type along with the service
 import proposalService from '../../api/proposalService'; // Removed unused Proposal type import
 import ProposalForm from '../../features/proposals/components/ProposalForm'; // Import the new form component
+import { useSnackbar } from 'notistack'; // Import useSnackbar
 // Tab panel component
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -155,6 +157,7 @@ const shadingOptions = [
 const LeadDetails = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { enqueueSnackbar } = useSnackbar(); // Call the hook here
 
   // State for lead data
   const [lead, setLead] = useState<Lead | null>(null);
@@ -175,6 +178,8 @@ const LeadDetails = () => {
   const [proposalDialogOpen, setProposalDialogOpen] = useState(false); // State for proposal dialog
   const [proposalLoading, setProposalLoading] = useState(false); // State for proposal creation loading
   const [proposalError, setProposalError] = useState<string | null>(null); // State for proposal creation error
+  const [users, setUsers] = useState<User[]>([]); // State for users list
+  const [usersLoading, setUsersLoading] = useState(false); // State for user loading indicator
 
   // State for new note and interaction
   const [newNote, setNewNote] = useState('');
@@ -193,8 +198,10 @@ const LeadDetails = () => {
       setError(null);
 
       const response = await leadService.getLead(id);
-      setLead(response.data.lead);
-      setEditData(response.data.lead);
+      const fetchedLead = response.data.lead;
+      setLead(fetchedLead);
+      // Initialize editData with the full lead object
+      setEditData(fetchedLead);
       setLoading(false);
     } catch (err: any) {
       setError(err?.message || 'Failed to fetch lead');
@@ -205,7 +212,30 @@ const LeadDetails = () => {
   // Initial data fetch
   useEffect(() => {
     fetchLead();
-  }, [id, fetchLead]); // Added fetchLead to dependency array
+    // Users will be fetched on demand when edit mode is entered
+  }, [id, fetchLead]); // Added fetchLead to dependencies
+
+  // Function to fetch users, called on demand
+  const fetchUsersIfNeeded = async () => {
+    // Only fetch if users haven't been loaded yet and aren't currently loading
+    if (users.length === 0 && !usersLoading) {
+      setUsersLoading(true); // Set loading state
+      try {
+        console.log('Fetching users for assignment dropdown...');
+        // Fetch all users, maybe limit fields later if needed
+        const response = await userService.getUsers({ limit: 1000 }); // Fetch a large number for now
+        setUsers(response.data.users);
+        console.log('Users fetched successfully.');
+      } catch (err) {
+        console.error('Failed to fetch users:', err);
+        enqueueSnackbar('Failed to load users for assignment', {
+          variant: 'error',
+        });
+      } finally {
+        setUsersLoading(false); // Reset loading state regardless of success/failure
+      }
+    }
+  };
 
   // Handle tab change
   const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
@@ -258,16 +288,31 @@ const LeadDetails = () => {
   // Handle select changes
   const handleSelectChange = (e: any) => {
     const { name, value } = e.target;
-    setEditData({
-      ...editData,
-      [name]: value,
-    });
+    // Special handling for assignedTo: find the user object and store it
+    if (name === 'assignedTo') {
+      const selectedUser = users.find((user) => user._id === value);
+      setEditData((prevData) => ({
+        ...prevData,
+        // Store the found user object or undefined if "Unassigned" (value === '')
+        assignedTo: selectedUser || undefined,
+      } as Partial<Lead>)); // Explicitly cast the returned object
+    } else {
+      setEditData((prevData) => ({
+        ...prevData,
+        [name]: value,
+      }));
+    }
   };
 
   // Toggle edit mode
   const toggleEditMode = () => {
-    if (editMode) {
-      // Canceling edit - reset data
+    if (!editMode) {
+      // Entering edit mode
+      fetchUsersIfNeeded();
+      // Reset editData to the current lead state
+      setEditData(lead || {});
+    } else {
+      // Canceling edit mode - reset editData to the current lead state
       setEditData(lead || {});
     }
     setEditMode(!editMode);
@@ -277,12 +322,28 @@ const LeadDetails = () => {
   const saveLead = async () => {
     if (!id || !editData) return;
 
+    // Prepare the payload specifically for the API update
+    // Create a new object to avoid mutating editData directly
+    const updatePayload: any = { ...editData };
+
+    // Ensure assignedTo is sent as an ID string or null
+    if (updatePayload.assignedTo && typeof updatePayload.assignedTo === 'object') {
+      // If it's a user object, extract the ID
+      updatePayload.assignedTo = (updatePayload.assignedTo as User)._id;
+    } else if (updatePayload.assignedTo === undefined) {
+      // If it's undefined (meaning unassigned was selected), send null
+      updatePayload.assignedTo = null;
+    }
+    // If it's already null or a string ID, it's fine as is.
+
     try {
-      console.log('Saving lead with data:', JSON.stringify(editData, null, 2));
+      console.log('Saving lead with payload:', JSON.stringify(updatePayload, null, 2));
       setLoading(true);
-      await leadService.updateLead(id, editData);
+      // Send the specifically prepared payload
+      // Cast to Partial<Lead> for the service call, assuming the service handles the ID correctly
+      await leadService.updateLead(id, updatePayload as Partial<Lead>);
       console.log('Lead update successful');
-      await fetchLead();
+      await fetchLead(); // Refresh data with potentially populated assignedTo object
       setEditMode(false);
     } catch (err: any) {
       console.error('Error updating lead:', err);
@@ -708,11 +769,46 @@ const LeadDetails = () => {
                       <Typography variant="subtitle2" color="text.secondary">
                         Assigned To
                       </Typography>
-                      <Typography variant="body1" sx={{ mt: 1 }}>
-                        {lead.assignedTo
-                          ? `${lead.assignedTo.firstName} ${lead.assignedTo.lastName}`
-                          : 'Unassigned'}
-                      </Typography>
+                      {editMode ? (
+                        <FormControl fullWidth size="small" sx={{ mt: 1 }}>
+                          <InputLabel>Assigned To</InputLabel>
+                          {usersLoading ? (
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                height: '40px', // Match Select height
+                              }}
+                            >
+                              <CircularProgress size={20} />
+                            </Box>
+                          ) : (
+                            <Select
+                              name="assignedTo"
+                              // Derive the value (ID) from the user object stored in editData
+                              value={editData.assignedTo?._id || ''}
+                              label="Assigned To"
+                              onChange={handleSelectChange}
+                          >
+                            <MenuItem value="">
+                              <em>Unassigned</em>
+                            </MenuItem>
+                            {users.map((user) => (
+                              <MenuItem key={user._id} value={user._id}>
+                                  {user.firstName} {user.lastName} ({user.email})
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          )}
+                        </FormControl>
+                      ) : (
+                        <Typography variant="body1" sx={{ mt: 1 }}>
+                          {lead.assignedTo
+                            ? `${lead.assignedTo.firstName} ${lead.assignedTo.lastName}`
+                            : 'Unassigned'}
+                        </Typography>
+                      )}
                     </Grid>
                   </Grid>
                 </CardContent>
@@ -835,6 +931,50 @@ const LeadDetails = () => {
                             />
                           </ListItem>
                         ))}
+                    </List>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Linked Proposals Card */}
+              <Card sx={{ mt: 2 }}>
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Linked Proposals
+                  </Typography>
+                  <Divider sx={{ mb: 2 }} />
+                  {!lead.proposals || lead.proposals.length === 0 ? (
+                    <Typography variant="body2" color="text.secondary">
+                      No proposals created for this lead yet.
+                    </Typography>
+                  ) : (
+                    <List dense>
+                      {lead.proposals.map((proposal) => (
+                        <ListItem
+                          key={proposal._id}
+                          secondaryAction={
+                            <Chip
+                              label={proposal.status}
+                              size="small"
+                              // Add color based on proposal status if needed
+                            />
+                          }
+                          disablePadding
+                        >
+                          <ListItemText
+                            primary={
+                              <Link
+                                component={RouterLink}
+                                to={`/proposals/${proposal._id}`}
+                                underline="hover"
+                              >
+                                {proposal.name}
+                              </Link>
+                            }
+                            secondary={`Created: ${new Date(proposal.createdAt).toLocaleDateString()}`}
+                          />
+                        </ListItem>
+                      ))}
                     </List>
                   )}
                 </CardContent>
@@ -1550,45 +1690,20 @@ const LeadDetails = () => {
               const validUntilDate = new Date();
               validUntilDate.setDate(validUntilDate.getDate() + 30); // Set valid for 30 days
 
-              // Ensure pricing object has required fields for the type
-              const defaultPricing = {
-                grossCost: 0,
-                centralSubsidy: 0,
-                stateSubsidy: 0,
-                gstRate: 12, // Default GST
-                gstAmount: 0,
-                utilityRebate: 0,
-                otherIncentives: 0,
-                netCost: 0,
-                currency: 'INR',
-              };
-
               // Construct the payload matching the service expectation
               const dataToSubmit = {
-                ...proposalData, // Includes name, systemSize, panelCount, etc.
-                // Explicitly map equipment to match the service expectation
-                equipment: proposalData.equipment.map(
-                  ({ item, quantity, unitPrice }) => ({
-                    item,
-                    quantity,
-                    unitPrice,
-                  })
-                ),
-                pricing: {
-                  // Merge default pricing with form data
-                  ...defaultPricing,
-                  // ...(proposalData.pricing || {}), // Removed old pricing merge
-                },
-                // Map new fields from proposalData (assuming ProposalForm provides them)
+                ...proposalData, // Includes name, systemSize, panelCount, financingOptions, etc.
+                // Removed incorrect equipment mapping as it's not in ProposalFormData or the backend model
+                // Removed redundant pricing object mapping; fields are already at top level from proposalData spread
+                // Ensure required fields from proposalData are present and have defaults if needed
                 projectCostExcludingStructure:
-                  proposalData.projectCostExcludingStructure || 0,
+                  proposalData.projectCostExcludingStructure || 0, // Already spread, but explicit default is safe
                 structureCost: proposalData.structureCost || 0,
                 subsidyAmount: proposalData.subsidyAmount || 0,
                 additionalCosts: proposalData.additionalCosts || 0,
                 currency: proposalData.currency || 'INR',
                 // Pass only the lead ID string
                 lead: lead._id,
-                // Equipment array should already be in the correct { item: string, quantity: number, unitPrice?: number } format from ProposalForm's handleSubmit
                 // Add other fields required by the backend model but not directly in the form
                 status: 'draft' as const, // Use const assertion for literal type
                 validUntil: validUntilDate.toISOString(),
@@ -1596,13 +1711,20 @@ const LeadDetails = () => {
                 // financingOptions and designImages can be added later if needed
               };
 
-              const createdProposal =
+              const createdProposalResponse = // Renamed variable for clarity
                 await proposalService.createProposal(dataToSubmit);
-              console.log('Proposal created successfully:', createdProposal);
+              console.log('Proposal created successfully:', createdProposalResponse);
               setProposalDialogOpen(false);
-              // Optionally navigate to the new proposal or show a success message/snackbar
-              // navigate(`/proposals/${createdProposal.data.proposal._id}`);
-              // TODO: Add success notification (e.g., Snackbar)
+              // Add success notification
+              enqueueSnackbar('Proposal created successfully!', { variant: 'success' });
+              // Update lead status to 'proposal' (fire and forget, or handle potential error)
+              updateStatus('proposal').catch((statusErr) => {
+                console.error('Failed to auto-update lead status to proposal:', statusErr);
+                // Optionally show another snackbar for this specific error
+                enqueueSnackbar('Proposal created, but failed to update lead status.', { variant: 'warning' });
+              });
+              // Navigate to the new proposal's detail page
+              navigate(`/proposals/${createdProposalResponse.data.proposal._id}`);
             } catch (err: any) {
               console.error('Failed to create proposal:', err);
               const errorMsg =

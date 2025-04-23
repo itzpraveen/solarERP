@@ -18,6 +18,13 @@ import {
   Autocomplete,
   // Box, // Removed unused import
   IconButton,
+  Table, // Added
+  TableBody, // Added
+  TableCell, // Added
+  TableContainer, // Added
+  TableHead, // Added
+  TableRow, // Added
+  Paper, // Added
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -25,14 +32,13 @@ import leadService, { Lead } from '../../../api/leadService';
 import inventoryService, { InventoryItem } from '../../../api/inventoryService';
 import { FinancingOption } from '../../../api/proposalService'; // Import FinancingOption type
 
-// Define structure for equipment line items in the form
-interface EquipmentLineItem {
-  item: string; // Inventory item ID
+// Interface for line items
+interface LineItem {
+  itemId: string; // Store the ID of the inventory item
+  name: string; // Store name for display
+  modelNumber?: string; // Store model for display
   quantity: number;
-  unitPrice?: number; // Optional: capture price at time of adding
-  // Add temporary fields for display if needed, like name/category
-  itemName?: string;
-  itemCategory?: string;
+  // Add unitPrice if needed, or fetch on backend
 }
 
 // Updated structure for the form data to match new model
@@ -42,7 +48,8 @@ export interface ProposalFormData {
   proposalId?: string; // Added proposalId
   systemSize: number;
   panelCount: number; // Keep or remove based on final decision
-  equipment: EquipmentLineItem[];
+  panelModel?: string; // Store selected panel model name/ID
+  inverterModel?: string; // Store selected inverter model name/ID
   projectCostExcludingStructure: number; // New field
   structureCost: number; // New field
   subsidyAmount: number; // New field
@@ -51,6 +58,7 @@ export interface ProposalFormData {
   financingOptions: FinancingOption[]; // Added financing options
   energyMeter?: string; // Added energy meter field
   notes: string;
+  lineItems: LineItem[]; // Added line items array
   // Removed: yearlyProductionEstimate, estimatedSavings, pricing object
 }
 
@@ -83,7 +91,8 @@ const ProposalForm = ({
     name: '',
     systemSize: 0,
     panelCount: 0,
-    equipment: [],
+    panelModel: '', // Initialize
+    inverterModel: '', // Initialize
     // yearlyProductionEstimate: 0, // Removed
     // estimatedSavings: { firstYear: 0, twentyFiveYear: 0 }, // Removed
     // pricing: { ... }, // Removed old pricing object
@@ -96,7 +105,13 @@ const ProposalForm = ({
     energyMeter: '', // Initialize energy meter
     notes: '',
     proposalId: '', // Initialize proposalId
+    lineItems: [], // Initialize line items
   });
+
+  // State for the temporary item selection before adding to list
+  const [selectedInventoryItem, setSelectedInventoryItem] =
+    useState<InventoryItem | null>(null);
+  const [selectedItemQuantity, setSelectedItemQuantity] = useState<number>(1);
 
   const [leads, setLeads] = useState<Lead[]>([]);
   const [leadsLoading, setLeadsLoading] = useState(false);
@@ -186,51 +201,59 @@ const ProposalForm = ({
     // Only re-run if open status or initialLeadId changes
   }, [open, initialLeadId]);
 
-  // Removed useEffect for pricing calculation as it's handled by backend pre-save hook
+  // --- Handlers for Autocomplete ---
+  const handleAutocompleteChange = (name: string, newValue: InventoryItem | null) => {
+    setFormData((prev) => ({
+      ...prev,
+      // Store the name and model number
+      [name]: newValue ? `${newValue.name} (${newValue.modelNumber || 'No model'})` : '',
+      // Optionally update panelCount or systemSize based on selection? Needs logic.
+    }));
+  };
 
-  // --- Handlers for Equipment Array ---
 
-  const handleEquipmentChange = (
-    index: number,
-    field: keyof EquipmentLineItem,
-    value: string | number | InventoryItem | null
-  ) => {
-    const updatedEquipment = [...formData.equipment];
+  // --- Handlers for Line Items ---
 
-    if (field === 'item' && value && typeof value === 'object') {
-      // Handling Autocomplete change where value is the InventoryItem object
-      const selectedItem = value as InventoryItem;
-      updatedEquipment[index] = {
-        ...updatedEquipment[index],
-        item: selectedItem._id, // Store the ID
-        unitPrice: selectedItem.unitPrice, // Capture current price
-        itemName: selectedItem.name, // Store name for display
-        itemCategory: selectedItem.category, // Store category for display
-      };
-    } else if (field === 'quantity') {
-      updatedEquipment[index] = {
-        ...updatedEquipment[index],
-        quantity: Number(value) || 0,
-      };
+  const handleAddLineItem = () => {
+    if (selectedInventoryItem && selectedItemQuantity > 0) {
+      // Check if item already exists in lineItems
+      const existingItemIndex = formData.lineItems.findIndex(
+        (item) => item.itemId === selectedInventoryItem._id
+      );
+
+      if (existingItemIndex > -1) {
+        // Update quantity if item exists
+        const updatedLineItems = [...formData.lineItems];
+        updatedLineItems[existingItemIndex].quantity += selectedItemQuantity;
+        setFormData((prev) => ({ ...prev, lineItems: updatedLineItems }));
+      } else {
+        // Add new item if it doesn't exist
+        const newLineItem: LineItem = {
+          itemId: selectedInventoryItem._id,
+          name: selectedInventoryItem.name,
+          modelNumber: selectedInventoryItem.modelNumber,
+          quantity: selectedItemQuantity,
+        };
+        setFormData((prev) => ({
+          ...prev,
+          lineItems: [...prev.lineItems, newLineItem],
+        }));
+      }
+
+      // Reset selection
+      setSelectedInventoryItem(null);
+      setSelectedItemQuantity(1);
     }
-    // Add handling for other fields if necessary
-
-    setFormData((prev) => ({ ...prev, equipment: updatedEquipment }));
   };
 
-  const addEquipmentItem = () => {
+  const handleRemoveLineItem = (itemIdToRemove: string) => {
     setFormData((prev) => ({
       ...prev,
-      equipment: [...prev.equipment, { item: '', quantity: 1 }], // Add a new empty item
+      lineItems: prev.lineItems.filter((item) => item.itemId !== itemIdToRemove),
     }));
   };
 
-  const removeEquipmentItem = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      equipment: prev.equipment.filter((_, i) => i !== index),
-    }));
-  };
+  // Removed useEffect for pricing calculation as it's handled by backend pre-save hook
 
   // --- Handlers for Financing Options Array ---
 
@@ -358,13 +381,6 @@ const ProposalForm = ({
       name: formData.name,
       systemSize: Number(formData.systemSize) || 0,
       panelCount: Number(formData.panelCount) || 0,
-      equipment: formData.equipment
-        .filter((eq) => eq.item && eq.quantity > 0) // Filter out incomplete items before mapping
-        .map(({ item, quantity, unitPrice }) => ({
-          item, // Already the ID string
-          quantity: Number(quantity) || 1, // Ensure quantity is a number >= 1
-          unitPrice: unitPrice !== undefined ? Number(unitPrice) : undefined, // Ensure unitPrice is number or undefined
-        })),
       projectCostExcludingStructure:
         Number(formData.projectCostExcludingStructure) || 0,
       structureCost: Number(formData.structureCost) || 0,
@@ -374,9 +390,13 @@ const ProposalForm = ({
       financingOptions: formData.financingOptions, // Add financing options to payload
       energyMeter: formData.energyMeter || '', // Add energy meter to payload
       notes: formData.notes || '',
+      lineItems: formData.lineItems, // Add line items to payload
       // proposalId is optional and might not be part of the initial creation payload structure expected by backend
       // Only include if it's explicitly part of the creation API contract
       // proposalId: formData.proposalId,
+      // Include selected models if needed (e.g., in notes or if backend is updated)
+      // panelModel: formData.panelModel,
+      // inverterModel: formData.inverterModel,
     };
 
     // Remove proposalId if it's empty or not intended for creation payload
@@ -387,20 +407,6 @@ const ProposalForm = ({
     // Basic client-side check before submitting
     if (!dataToSubmit.lead) {
       console.error('Submission Error: Lead ID is missing.');
-      // Optionally show a user-friendly error message here
-      return; // Prevent submission
-    }
-    if (dataToSubmit.equipment.length === 0) {
-      console.error(
-        'Submission Error: At least one valid equipment item is required.'
-      );
-      // Optionally show a user-friendly error message here
-      return; // Prevent submission
-    }
-    if (dataToSubmit.equipment.some((eq) => !eq.item)) {
-      console.error('Submission Error: An equipment item is missing its ID.');
-      // Optionally show a user-friendly error message here
-      return; // Prevent submission
     }
 
     onSubmit(dataToSubmit);
@@ -495,104 +501,70 @@ const ProposalForm = ({
                 onChange={handleNumberChange}
               />
             </Grid>
-            <Grid item xs={12} md={4}>
-              <TextField
-                fullWidth
-                label="Energy Meter Details"
-                name="energyMeter"
-                value={formData.energyMeter || ''}
-                onChange={handleChange}
-                helperText="e.g., L&T Schneider elect, Single directional meter"
-              />
-            </Grid>
-            {/* Removed Panel Type, Inverter Type, Battery Type/Count/Checkbox */}
-
-            {/* Equipment Selection Section */}
-            <Grid item xs={12}>
-              <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                Equipment
-              </Typography>
-            </Grid>
-            {formData.equipment.map((equipItem, index) => (
-              <Grid
-                container
-                item
-                spacing={2}
-                key={index}
-                xs={12}
-                alignItems="center"
-              >
-                <Grid item xs={12} sm={6}>
-                  <Autocomplete
-                    options={allInventoryItems}
-                    getOptionLabel={(option) =>
-                      `${option.name} (${option.category}) - ${option.modelNumber || 'N/A'}`
-                    }
-                    value={
-                      allInventoryItems.find(
-                        (inv) => inv._id === equipItem.item
-                      ) || null
-                    }
-                    onChange={(_, newValue) =>
-                      handleEquipmentChange(index, 'item', newValue)
-                    }
-                    loading={inventoryLoading}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Select Equipment"
-                        variant="outlined"
-                        InputProps={{
-                          ...params.InputProps,
-                          endAdornment: (
-                            <>
-                              {inventoryLoading ? (
-                                <CircularProgress color="inherit" size={20} />
-                              ) : null}
-                              {params.InputProps.endAdornment}
-                            </>
-                          ),
-                        }}
-                      />
-                    )}
-                    isOptionEqualToValue={(option, value) =>
-                      option._id === value._id
-                    }
-                  />
-                </Grid>
-                <Grid item xs={8} sm={4}>
-                  <TextField
-                    fullWidth
-                    label="Quantity"
-                    type="number"
-                    inputProps={{ min: 1 }}
-                    value={equipItem.quantity}
-                    onChange={(e) =>
-                      handleEquipmentChange(index, 'quantity', e.target.value)
-                    }
-                  />
-                </Grid>
-                <Grid item xs={4} sm={2}>
-                  <IconButton
-                    onClick={() => removeEquipmentItem(index)}
-                    color="error"
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                </Grid>
-              </Grid>
-            ))}
-            <Grid item xs={12}>
-              <Button
-                startIcon={<AddIcon />}
-                onClick={addEquipmentItem}
-                disabled={inventoryLoading}
-              >
-                Add Equipment Item
-              </Button>
-            </Grid>
-
-            {/* Removed Production & Savings Estimates */}
+             {/* Panel Selection */}
+             <Grid item xs={12} md={6}>
+               <Autocomplete
+                 options={inventory.panel}
+                 // Use name, modelNumber, and specifications.power_output
+                 getOptionLabel={(option) => `${option.name} (${option.modelNumber || 'N/A'}) - ${option.specifications?.power_output || 'N/A'}W`}
+                 value={inventory.panel.find(p => `${p.name} (${p.modelNumber || 'N/A'})` === formData.panelModel) || null}
+                 onChange={(_, newValue) => handleAutocompleteChange('panelModel', newValue)}
+                 loading={inventoryLoading}
+                 renderInput={(params) => (
+                   <TextField
+                     {...params}
+                     label="Select Panel Model"
+                     InputProps={{
+                       ...params.InputProps,
+                       endAdornment: (
+                         <>
+                           {inventoryLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                           {params.InputProps.endAdornment}
+                         </>
+                       ),
+                     }}
+                   />
+                 )}
+               />
+             </Grid>
+             {/* Inverter Selection */}
+             <Grid item xs={12} md={6}>
+               <Autocomplete
+                 options={inventory.inverter}
+                 // Use name, modelNumber, and specifications.type
+                 getOptionLabel={(option) => `${option.name} (${option.modelNumber || 'N/A'}) - ${option.specifications?.type || 'N/A'}`}
+                 value={inventory.inverter.find(inv => `${inv.name} (${inv.modelNumber || 'N/A'})` === formData.inverterModel) || null}
+                 onChange={(_, newValue) => handleAutocompleteChange('inverterModel', newValue)}
+                 loading={inventoryLoading}
+                 renderInput={(params) => (
+                   <TextField
+                     {...params}
+                     label="Select Inverter Model"
+                     InputProps={{
+                       ...params.InputProps,
+                       endAdornment: (
+                         <>
+                           {inventoryLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                           {params.InputProps.endAdornment}
+                         </>
+                       ),
+                     }}
+                   />
+                 )}
+               />
+             </Grid>
+             {/* Energy Meter (Kept as TextField for now) */}
+             <Grid item xs={12} md={4}>
+               <TextField
+                 fullWidth
+                 label="Energy Meter Details"
+                 name="energyMeter"
+                 value={formData.energyMeter || ''}
+                 onChange={handleChange}
+                 helperText="e.g., L&T Schneider elect, Single directional meter"
+               />
+             </Grid>
+             {/* Removed Production & Savings Estimates */}
 
             {/* New Pricing Structure */}
             <Grid item xs={12}>
@@ -813,8 +785,100 @@ const ProposalForm = ({
               </Button>
             </Grid>
 
-            {/* Notes */}
+            {/* Line Items Section */}
             <Grid item xs={12}>
+              <Typography variant="subtitle1" sx={{ mb: 1, mt: 2 }}>
+                Line Items
+              </Typography>
+            </Grid>
+            {/* Item Selection Row */}
+            <Grid container item spacing={2} xs={12} alignItems="flex-end">
+              <Grid item xs={12} sm={6}>
+                <Autocomplete
+                  options={allInventoryItems} // Use the combined list
+                  getOptionLabel={(option) => `${option.name} (${option.modelNumber || 'N/A'}) - ${option.category}`}
+                  value={selectedInventoryItem}
+                  onChange={(_, newValue) => setSelectedInventoryItem(newValue)}
+                  loading={inventoryLoading}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Select Inventory Item"
+                      InputProps={{
+                        ...params.InputProps,
+                        endAdornment: (
+                          <>
+                            {inventoryLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                            {params.InputProps.endAdornment}
+                          </>
+                        ),
+                      }}
+                    />
+                  )}
+                />
+              </Grid>
+              <Grid item xs={6} sm={3}>
+                <TextField
+                  fullWidth
+                  label="Quantity"
+                  type="number"
+                  inputProps={{ min: 1 }}
+                  value={selectedItemQuantity}
+                  onChange={(e) => setSelectedItemQuantity(Number(e.target.value) || 1)}
+                />
+              </Grid>
+              <Grid item xs={6} sm={3}>
+                <Button
+                  variant="outlined"
+                  startIcon={<AddIcon />}
+                  onClick={handleAddLineItem}
+                  disabled={!selectedInventoryItem || selectedItemQuantity <= 0}
+                  fullWidth
+                >
+                  Add Item
+                </Button>
+              </Grid>
+            </Grid>
+
+            {/* Added Items Table */}
+            {formData.lineItems.length > 0 && (
+              <Grid item xs={12} sx={{ mt: 2 }}>
+                <TableContainer component={Paper}>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Item Name</TableCell>
+                        <TableCell>Model</TableCell>
+                        <TableCell align="right">Quantity</TableCell>
+                        <TableCell align="center">Actions</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {formData.lineItems.map((item) => (
+                        <TableRow key={item.itemId}>
+                          <TableCell>{item.name}</TableCell>
+                          <TableCell>{item.modelNumber || 'N/A'}</TableCell>
+                          <TableCell align="right">{item.quantity}</TableCell>
+                          <TableCell align="center">
+                            <IconButton
+                              size="small"
+                              onClick={() => handleRemoveLineItem(item.itemId)}
+                              color="error"
+                              title="Remove Item"
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Grid>
+            )}
+
+            {/* Notes */}
+            <Grid item xs={12} sx={{ mt: 2 }}> {/* Added margin top */}
               <TextField
                 fullWidth
                 label="Notes"

@@ -35,6 +35,7 @@ exports.createTask = catchAsync(async (req, res, next) => {
       task: newTask,
     },
   });
+  // No return needed here as it's the main function body
 });
 
 // Update an existing task within a project
@@ -67,6 +68,7 @@ exports.updateTask = catchAsync(async (req, res, next) => {
       task,
     },
   });
+  // No return needed here as it's the main function body
 });
 
 // Delete a task from a project
@@ -100,4 +102,5 @@ exports.deleteTask = catchAsync(async (req, res, next) => {
     status: 'success',
     data: null,
   });
+  // No return needed for 204 status
 });

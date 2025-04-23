@@ -9,22 +9,18 @@ import {
   TableRow,
   TablePagination,
   TableSortLabel,
-  Paper,
   Typography,
-  CircularProgress,
   useTheme,
   alpha,
   Checkbox,
   IconButton,
   Tooltip,
-  Chip,
   Skeleton,
 } from '@mui/material';
 import {
   Refresh as RefreshIcon,
   FilterList as FilterIcon,
   Search as SearchIcon,
-  MoreVert as MoreVertIcon,
 } from '@mui/icons-material';
 
 // Define column interface
@@ -180,35 +176,6 @@ function DataTable<T extends Record<string, any>>({
   const isSelected = (row: T) =>
     selected.findIndex((item) => item[keyField] === row[keyField]) !== -1;
 
-  // Render loading state
-  const renderLoading = () => (
-    <TableRow>
-      <TableCell
-        colSpan={selectable ? columns.length + 1 : columns.length}
-        sx={{
-          height: 300,
-          textAlign: 'center',
-          border: 'none',
-        }}
-      >
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 2,
-          }}
-        >
-          <CircularProgress size={40} />
-          <Typography variant="body2" color="text.secondary">
-            Loading data...
-          </Typography>
-        </Box>
-      </TableCell>
-    </TableRow>
-  );
-
   // Render loading skeleton
   const renderSkeleton = () => {
     return Array.from(new Array(5)).map((_, index) => (
@@ -293,13 +260,12 @@ function DataTable<T extends Record<string, any>>({
       : data;
 
   return (
-    <Paper
-      elevation={0}
+    // Replaced Paper with Box and removed border/borderRadius styling
+    <Box
       sx={{
         width: '100%',
-        overflow: 'hidden',
-        borderRadius: theme.shape.borderRadius * 1.5,
-        border: `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+        overflow: 'hidden', // Keep overflow hidden for potential internal scrolling
+        // Removed borderRadius and border from here
       }}
     >
       {/* Optional header component */}
@@ -315,6 +281,9 @@ function DataTable<T extends Record<string, any>>({
         sx={{
           maxHeight: stickyHeader ? maxHeight : undefined,
           overflow: 'auto',
+          // Explicitly remove border and rounding from TableContainer
+          border: 'none',
+          borderRadius: 0,
         }}
       >
         <Table
@@ -495,7 +464,7 @@ function DataTable<T extends Record<string, any>>({
           {footerComponent}
         </>
       )}
-    </Paper>
+    </Box> // Changed closing tag from </Paper> to </Box>
   );
 }
 

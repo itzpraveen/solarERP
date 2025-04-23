@@ -32,10 +32,14 @@ const validateProposal = [
     .isNumeric()
     .toFloat(),
   check('subsidyAmount', 'Subsidy amount is required and must be a number')
+    .optional({ checkFalsy: true }) // Match model (optional)
     .isNumeric()
     .toFloat(),
-  check('currency', 'Currency code is required')
-    .optional()
+  check('subsidyAmount', 'Subsidy amount must be a number')
+    .optional({ checkFalsy: true }) // Match model (optional)
+    .isNumeric()
+    .toFloat(),
+  check('currency', 'Currency code is required') // Match model (required)
     .not()
     .isEmpty()
     .trim(),
@@ -52,32 +56,27 @@ const validateProposal = [
     .toFloat({ min: 0.0 })
     .withMessage('Additional costs cannot be negative'),
   check('notes', 'Notes must be a string').optional().isString().trim(),
-  check('equipment', 'Equipment list cannot be empty') // Changed message slightly
-    .isArray({ min: 1 })
-    .withMessage('At least one equipment item is required.'),
-  // Validate each item within the equipment array
+  // Use lineItems instead of equipment
+  check('lineItems', 'Line items list must be an array')
+    .optional() // Make the array itself optional, matching the model
+    .isArray(),
+  // Validate each item within the lineItems array if it exists
   check(
-    'equipment.*.item',
-    'Each equipment item must have a valid Item ID selected.'
+    'lineItems.*.itemId', // Use itemId instead of item
+    'Each line item must have a valid Item ID selected.'
   )
-    .notEmpty() // Ensure it's not an empty string before checking if it's a MongoId
+    .if((value, { req }) => req.body.lineItems && req.body.lineItems.length > 0) // Only validate if lineItems array is present and not empty
+    .notEmpty()
     .isMongoId()
-    .withMessage('Invalid Item ID format for equipment.'),
+    .withMessage('Invalid Item ID format for line item.'),
   check(
-    'equipment.*.quantity',
-    'Quantity for each equipment item must be a positive whole number.'
+    'lineItems.*.quantity', // Use lineItems
+    'Quantity for each line item must be a positive whole number.'
   )
-    .isInt({ min: 1 }) // Use isInt directly for positive integers
-    .toInt(), // Convert to integer
-  check(
-    'equipment.*.unitPrice',
-    'Unit price for equipment must be a non-negative number.'
-  )
-    .optional({ checkFalsy: true }) // Allow 0, null, undefined, ''
-    .isNumeric()
-    .withMessage('Equipment unit price must be numeric if provided.')
-    .toFloat({ min: 0.0 })
-    .withMessage('Equipment unit price cannot be negative.'),
+    .if((value, { req }) => req.body.lineItems && req.body.lineItems.length > 0) // Only validate if lineItems array is present and not empty
+    .isInt({ min: 1 })
+    .toInt(),
+  // Removed validation for unitPrice as it's not in the lineItems model/payload
   // Optional validation for financing options array
   check('financingOptions', 'Financing options must be an array')
     .optional()

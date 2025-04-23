@@ -78,23 +78,19 @@ const ContentCard: React.FC<ContentCardProps> = ({
   return (
     <Paper
       elevation={elevation}
+      style={{ borderRadius: 0 }} // Add inline style override as a final attempt
       sx={{
-        borderRadius: theme.shape.borderRadius * 1.5,
+        borderRadius: 0, // Keep sx prop override
         overflow: 'hidden',
         backgroundColor: theme.palette.background.paper,
         boxShadow:
-          elevation === 0 ? '0 4px 20px rgba(0, 0, 0, 0.03)' : undefined,
-        border:
-          elevation === 0
-            ? `1px solid ${alpha(theme.palette.divider, 0.5)}`
-            : 'none',
+          elevation === 0 ? '0 2px 8px rgba(0, 0, 0, 0.05)' : undefined, // Softened shadow
+        border: 'none', // Removed border to match dashboard style
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
         transition: 'all 0.2s ease-in-out',
-        '&:hover': {
-          boxShadow: '0 6px 25px rgba(0, 0, 0, 0.05)',
-        },
+        // Removed hover effect
       }}
     >
       {/* Card Header */}

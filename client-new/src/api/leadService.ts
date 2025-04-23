@@ -46,6 +46,13 @@ export interface Lead {
   createdAt: string;
   updatedAt: string;
   converted?: boolean; // Flag indicating if the lead has been converted to a customer
+  // Add proposals field (populated by backend virtual populate)
+  proposals?: Array<{
+    _id: string;
+    name: string;
+    status: string; // Include status for context
+    createdAt: string; // Include date for context
+  }>;
 }
 
 export interface LeadFilter {

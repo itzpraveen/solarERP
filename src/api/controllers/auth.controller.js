@@ -58,7 +58,7 @@ exports.signup = catchAsync(async (req, res, _next) => {
     permissions: defaultPermissions, // Assign default permissions
   });
 
-  createSendToken(newUser, 201, res);
+  return createSendToken(newUser, 201, res); // Added return
 });
 
 // Login user
@@ -79,7 +79,7 @@ exports.login = catchAsync(async (req, res, next) => {
   }
 
   // 3) If everything ok, send token to client
-  createSendToken(user, 200, res);
+  return createSendToken(user, 200, res); // Added return
 });
 
 // Protect routes
@@ -147,7 +147,7 @@ exports.restrictTo = (...roles) => {
       );
     }
 
-    next();
+    return next(); // Added return
   };
 };
 
@@ -181,6 +181,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
       status: 'success',
       message: 'Token sent to email!',
     });
+    // No return needed here as it's inside a try block, error path handles return
   } catch (err) {
     user.passwordResetToken = undefined;
     user.passwordResetExpires = undefined;
@@ -220,7 +221,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
   // This is done in the model with a pre save middleware
 
   // 4) Log the user in, send JWT
-  createSendToken(user, 200, res);
+  return createSendToken(user, 200, res); // Added return
 });
 
 // Update password
@@ -238,7 +239,7 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
   await user.save();
 
   // 4) Log user in, send JWT
-  createSendToken(user, 200, res);
+  return createSendToken(user, 200, res); // Added return
 });
 
 // Get current user
@@ -248,6 +249,7 @@ exports.getMe = catchAsync(async (req, res, _next) => {
     status: 'success',
     data: req.user,
   });
+  // No return needed here as it's the main function body
 });
 
 // Create demo user (only for development)
@@ -288,4 +290,5 @@ exports.createDemoUser = catchAsync(async (req, res, _next) => {
       password: 'password123',
     },
   });
+  // No return needed here as it's the main function body
 });

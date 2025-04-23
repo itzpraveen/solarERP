@@ -36,7 +36,7 @@ const Profile = () => {
   useEffect(() => {
     if (user) {
       setFormData({
-        name: user.name || '',
+        name: `${user.firstName || ''} ${user.lastName || ''}`.trim(), // Combine first/last for the 'name' field
         email: user.email || '',
         role: user.role || '',
         avatar: user.avatar || '',
@@ -96,7 +96,7 @@ const Profile = () => {
         });
         // Note: Name/email changes won't be saved here by the backend.
       } else if (
-        formData.name !== user?.name ||
+        formData.name !== `${user?.firstName || ''} ${user?.lastName || ''}`.trim() || // Compare combined name
         formData.email !== user?.email
       ) {
         // Trying to update name/email without password change
@@ -118,12 +118,14 @@ const Profile = () => {
         axios.defaults.headers.common.Authorization = `Bearer ${res.token}`;
       }
 
-      // Update user in context
+      // Update user in context - derive first/last from formData.name as API doesn't support name update yet
+      const nameParts = formData.name.trim().split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
       updateUser({
-        // Only update context if name/email *could* have been updated (even though backend doesn't support it yet)
-        // Or better, update context based on the actual API response if it returned the updated user
-        name: res?.data?.user?.name || formData.name, // Example if API returned updated user
-        email: res?.data?.user?.email || formData.email,
+        firstName: firstName,
+        lastName: lastName,
+        email: formData.email, // Assume email update might be reflected if password changed, though backend note says otherwise
       });
 
       setSuccess('Profile updated successfully');
@@ -166,10 +168,10 @@ const Profile = () => {
           >
             <Avatar
               src={user?.avatar}
-              alt={user?.name}
+              alt={`${user?.firstName || ''} ${user?.lastName || ''}`.trim()} // Combine first/last for alt text
               sx={{ width: 150, height: 150, mb: 2 }}
             >
-              {!user?.avatar && (user?.name?.charAt(0) || 'U')}
+              {!user?.avatar && (user?.firstName?.charAt(0) || 'U')} {/* Use first initial */}
             </Avatar>
             <Typography variant="body1" gutterBottom>
               {user?.role}
@@ -202,7 +204,7 @@ const Profile = () => {
                 <Grid item xs={12}>
                   <TextField
                     fullWidth
-                    label="Name"
+                    label="Full Name" // Update label for clarity
                     name="name"
                     value={formData.name}
                     onChange={handleChange}

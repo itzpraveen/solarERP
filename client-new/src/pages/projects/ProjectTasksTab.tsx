@@ -4,10 +4,6 @@ import {
   Typography,
   Paper,
   Button,
-  List, // Keep List for dialogs if needed, but not for main layout
-  ListItem, // Keep for dialogs
-  ListItemText, // Keep for dialogs
-  ListItemSecondaryAction, // Keep for dialogs
   IconButton,
   CircularProgress,
   Alert,
@@ -35,14 +31,12 @@ import {
   DragEndEvent,
   DragOverlay,
   DragStartEvent,
-  UniqueIdentifier,
 } from '@dnd-kit/core';
 import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
-  rectSortingStrategy, // Use for columns
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -75,16 +69,6 @@ interface TaskFormData {
 type TaskStatus = 'todo' | 'in_progress' | 'done' | 'blocked';
 
 // --- Constants ---
-
-const taskStatusColors: Record<
-  TaskStatus,
-  'default' | 'info' | 'success' | 'error'
-> = {
-  todo: 'default',
-  in_progress: 'info',
-  done: 'success',
-  blocked: 'error',
-};
 
 const columnOrder: TaskStatus[] = ['todo', 'in_progress', 'done', 'blocked'];
 
@@ -175,8 +159,9 @@ const TaskCard: React.FC<TaskCardProps> = ({
     }
 
     if (!id) return 'Unassigned';
-    const user = users.find((u) => u.id === id);
-    return name || user?.name || 'Unknown';
+    const user = users.find((u) => u._id === id); // Use _id
+    const fullName = user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : 'Unknown';
+    return name || fullName || 'Unknown'; // Use combined first/last name
   };
 
   const assigneeName = getUserFullName(task.assignedTo);

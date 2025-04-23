@@ -27,14 +27,13 @@ import Proposals from './pages/proposals/Proposals';
 import ProposalDetails from './pages/proposals/ProposalDetails';
 import Settings from './pages/settings/Settings';
 import Profile from './pages/Profile';
-import Equipment from './pages/equipment/Equipment';
-import EquipmentDetails from './pages/equipment/EquipmentDetails';
 import Documents from './pages/documents/Documents';
 import Reports from './pages/reports/Reports';
 import InventoryList from './pages/inventory/InventoryList';
 // import InventoryForm from './features/inventory/components/InventoryForm'; // No longer needed directly here
 import InventoryAdd from './pages/inventory/InventoryAdd'; // Import Add page
 import InventoryEdit from './pages/inventory/InventoryEdit'; // Import Edit page
+import ProjectAdd from './pages/projects/ProjectAdd'; // Import Project Add page
 
 // Service Request Module
 import ServiceRequests from './pages/services/ServiceRequests';
@@ -77,11 +76,10 @@ function App() {
               <Route path="customers" element={<Customers />} />
               <Route path="customers/:id" element={<CustomerDetails />} />
               <Route path="projects" element={<Projects />} />
+              <Route path="projects/add" element={<ProjectAdd />} /> {/* Add route for ProjectAdd */}
               <Route path="projects/:id" element={<ProjectDetails />} />
               <Route path="proposals" element={<Proposals />} />
               <Route path="proposals/:id" element={<ProposalDetails />} />
-              <Route path="equipment" element={<Equipment />} />
-              <Route path="equipment/:id" element={<EquipmentDetails />} />
               <Route path="documents" element={<Documents />} />
               <Route path="reports" element={<Reports />} />
               {/* Inventory Routes */}

@@ -3,10 +3,10 @@
  * This module handles HTTP requests and responses for authentication
  */
 
+const { validationResult } = require('express-validator');
 const authService = require('./auth.service');
 const catchAsync = require('../../common/utils/catchAsync');
 const { ValidationError } = require('../../common/utils/errors');
-const { validationResult } = require('express-validator');
 
 /**
  * Auth Controller
@@ -67,7 +67,7 @@ class AuthController {
       req.headers.authorization &&
       req.headers.authorization.startsWith('Bearer')
     ) {
-      token = req.headers.authorization.split(' ')[1];
+      [, token] = req.headers.authorization.split(' '); // Use array destructuring
     }
     if (!token) {
       return next(
@@ -78,7 +78,7 @@ class AuthController {
     }
     const currentUser = await authService.protect(token);
     req.user = currentUser;
-    next();
+    return next(); // Added return
   }
 
   /**
@@ -94,7 +94,7 @@ class AuthController {
           )
         );
       }
-      next();
+      return next(); // Added return
     };
   }
 
@@ -108,6 +108,7 @@ class AuthController {
       status: 'success',
       message,
     });
+    // No return needed here as it's the main function body
   }
 
   /**
@@ -127,6 +128,7 @@ class AuthController {
       token,
       data: { user },
     });
+    // No return needed here as it's the main function body
   }
 
   /**
@@ -147,6 +149,7 @@ class AuthController {
       token,
       data: { user },
     });
+    // No return needed here as it's the main function body
   }
 
   /**
@@ -157,6 +160,7 @@ class AuthController {
       status: 'success',
       data: req.user,
     });
+    // No return needed here as it's the main function body
   }
 
   /**
@@ -169,6 +173,7 @@ class AuthController {
       message: result.message,
       data: result.credentials,
     });
+    // No return needed here as it's the main function body
   }
 }
 

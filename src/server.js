@@ -21,7 +21,6 @@ const leadRoutes = require('./api/routes/lead.routes');
 const proposalRoutes = require('./api/routes/proposal.routes');
 const customerRoutes = require('./api/routes/customer.routes');
 const projectRoutes = require('./api/routes/project.routes');
-const equipmentRoutes = require('./api/routes/equipment.routes');
 const documentRoutes = require('./api/routes/document.routes');
 const reportRoutes = require('./api/routes/report.routes');
 const serviceRequestRoutes = require('./api/routes/service-request.routes');
@@ -47,6 +46,7 @@ const limiter = rateLimit({
 });
 
 // Apply rate limiting to all API routes except authentication
+/* Development: Temporarily disable rate limiting to avoid 429 errors during debugging
 app.use('/api', (req, res, next) => {
   // Skip rate limiting for authentication routes
   if (req.path.startsWith('/auth/')) {
@@ -54,6 +54,7 @@ app.use('/api', (req, res, next) => {
   }
   limiter(req, res, next);
 });
+*/
 
 // Body parser
 app.use(express.json({ limit: '10kb' }));
@@ -62,12 +63,20 @@ app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 // Data sanitization against NoSQL query injection
 app.use(mongoSanitize());
 
-// CORS with more permissive settings for production
+// CORS configuration for development
 app.use(
   cors({
-    origin: '*', // In production you might want to restrict this
+    origin(origin, callback) {
+      // Allow requests from localhost:3000 and localhost:3001
+      const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001'];
+      if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-    credentials: true,
+    credentials: true, // Allow cookies/authorization headers
     exposedHeaders: ['Content-Disposition'], // Expose header for filename access
   })
 );
@@ -76,7 +85,7 @@ app.use(
 app.use((req, res, next) => {
   res.setHeader(
     'Content-Security-Policy',
-    "default-src 'self'; connect-src 'self' https://solarerp-production.up.railway.app http://localhost:5002; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:"
+    "default-src 'self'; connect-src 'self' https://solarerp-production.up.railway.app http://localhost:5002 http://localhost:5003; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:"
   );
   next();
 });
@@ -87,7 +96,6 @@ app.use('/api/leads', leadRoutes);
 app.use('/api/proposals', proposalRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/projects', projectRoutes);
-app.use('/api/equipment', equipmentRoutes);
 app.use('/api/documents', documentRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/service-requests', serviceRequestRoutes);
@@ -111,7 +119,9 @@ if (process.env.NODE_ENV === 'production') {
     if (req.url.startsWith('/api')) {
       return next();
     }
-    res.sendFile(path.resolve(__dirname, '../client-new/build', 'index.html'));
+    return res.sendFile(
+      path.resolve(__dirname, '../client-new/build', 'index.html')
+    ); // Added return
   });
 } else {
   // For development - respond with API information at root

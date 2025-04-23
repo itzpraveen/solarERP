@@ -78,6 +78,7 @@ exports.getAllProposals = catchAsync(async (req, res, _next) => {
       proposals,
     },
   });
+  // No return needed here as it's the main function body, not inside a conditional path like others
 });
 
 // Get proposal by ID
@@ -88,7 +89,8 @@ exports.getProposal = catchAsync(async (req, res, next) => {
     return next(new AppError('No proposal found with that ID', 404)); // Added return
   }
 
-  res.status(200).json({
+  return res.status(200).json({
+    // Added return
     status: 'success',
     data: {
       proposal,
@@ -114,7 +116,8 @@ exports.createProposal = catchAsync(async (req, res, next) => {
     await Lead.findByIdAndUpdate(lead.id, { status: 'proposal' }); // Use lead.id
   }
 
-  res.status(201).json({
+  return res.status(201).json({
+    // Added return
     status: 'success',
     data: {
       proposal: newProposal,
@@ -151,7 +154,8 @@ exports.updateProposal = catchAsync(async (req, res, next) => {
     return next(new AppError('No proposal found with that ID', 404)); // Added return
   }
 
-  res.status(200).json({
+  return res.status(200).json({
+    // Added return
     status: 'success',
     data: {
       proposal,
@@ -173,6 +177,7 @@ exports.deleteProposal = catchAsync(async (req, res, next) => {
     status: 'success',
     data: null,
   });
+  // No return needed for 204 status
 });
 
 // Update proposal status
@@ -196,7 +201,8 @@ exports.updateProposalStatus = catchAsync(async (req, res, next) => {
     await Lead.findByIdAndUpdate(proposal.lead.id, { status: 'lost' }); // Use proposal.lead.id
   }
 
-  res.status(200).json({
+  return res.status(200).json({
+    // Added return
     status: 'success',
     data: {
       proposal,
@@ -223,17 +229,17 @@ exports.sendProposal = catchAsync(async (req, res, next) => {
   // Create view link with tracking capability
   const viewLink = `${req.protocol}://${req.get('host')}/proposals/view/${proposal.id}`; // Use proposal.id
 
-  // Populate equipment details if not already populated (might be needed if proposal was fetched without pre-find hook)
+  // Populate line item details if not already populated
   await proposal.populate({
-    path: 'equipment.item',
-    select: 'name category modelNumber',
+    path: 'lineItems.itemId', // Populate the referenced InventoryItem
+    select: 'name category modelNumber', // Select fields needed for display
   });
 
-  // Generate equipment list for email
-  const equipmentListHtml = proposal.equipment
+  // Generate line items list for email
+  const lineItemsListHtml = proposal.lineItems
     .map(
-      (eq) =>
-        `<li>${eq.quantity} x ${eq.item.name} (${eq.item.category}${eq.item.modelNumber ? ` - ${eq.item.modelNumber}` : ''})</li>`
+      (item) =>
+        `<li>${item.quantity} x ${item.itemId.name} (${item.itemId.category}${item.itemId.modelNumber ? ` - ${item.itemId.modelNumber}` : ''})</li>`
     )
     .join('');
 
@@ -247,7 +253,7 @@ exports.sendProposal = catchAsync(async (req, res, next) => {
     email: lead.email,
     subject: `Your Solar Proposal: ${proposal.name}`,
     // Update plain text message as well
-    message: `Dear ${lead.firstName} ${lead.lastName},\n\nThank you for your interest in our solar solutions. We're excited to share your custom proposal with you.\n\nYou can view your proposal at: ${viewLink}\n\nThis proposal includes a ${proposal.systemSize}kW solar system.\n\nKey Financials:\n- Final Project Cost: ${formatCurrency(proposal.finalProjectCost)}\n- Subsidy: ${formatCurrency(proposal.subsidyAmount)}\n- Net Investment: ${formatCurrency(proposal.netInvestment)}\n\nEquipment:\n${proposal.equipment.map((eq) => `- ${eq.quantity} x ${eq.item.name} (${eq.item.category})`).join('\n')}\n\nThis proposal is valid until ${new Date(proposal.validUntil).toLocaleDateString()}.\n\nIf you have any questions, please don't hesitate to contact us.\n\nBest regards,\nYour Solar Team`,
+    message: `Dear ${lead.firstName} ${lead.lastName},\n\nThank you for your interest in our solar solutions. We're excited to share your custom proposal with you.\n\nYou can view your proposal at: ${viewLink}\n\nThis proposal includes a ${proposal.systemSize}kW solar system.\n\nKey Financials:\n- Final Project Cost: ${formatCurrency(proposal.finalProjectCost)}\n- Subsidy: ${formatCurrency(proposal.subsidyAmount)}\n- Net Investment: ${formatCurrency(proposal.netInvestment)}\n\nLine Items:\n${proposal.lineItems.map((item) => `- ${item.quantity} x ${item.itemId.name} (${item.itemId.category})`).join('\n')}\n\nThis proposal is valid until ${new Date(proposal.validUntil).toLocaleDateString()}.\n\nIf you have any questions, please don't hesitate to contact us.\n\nBest regards,\nYour Solar Team`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2>Your Solar Proposal is Ready</h2>
@@ -264,9 +270,9 @@ exports.sendProposal = catchAsync(async (req, res, next) => {
           <li>Net Investment: ${formatCurrency(proposal.netInvestment)}</li>
           ${proposal.additionalCosts > 0 ? `<li>Additional Costs (Registration, etc.): ${formatCurrency(proposal.additionalCosts)}</li>` : ''}
         </ul>
-        <p><strong>Equipment Included:</strong></p>
+        <p><strong>Line Items Included:</strong></p>
         <ul>
-          ${equipmentListHtml || '<li>Details available in the full proposal.</li>'}
+          ${lineItemsListHtml || '<li>Details available in the full proposal.</li>'}
         </ul>
         <p>This proposal is valid until <strong>${new Date(proposal.validUntil).toLocaleDateString()}</strong>.</p>
         <p>If you have any questions, please don't hesitate to contact us.</p>
@@ -282,6 +288,7 @@ exports.sendProposal = catchAsync(async (req, res, next) => {
       proposal,
     },
   });
+  // No return needed here as it's the main function body, not inside a conditional path like others
 });
 
 // Track proposal view
@@ -300,7 +307,8 @@ exports.trackProposalView = catchAsync(async (req, res, next) => {
   }
 
   // Don't send proposal data, just success status
-  res.status(200).json({
+  return res.status(200).json({
+    // Added return
     status: 'success',
   });
 });
@@ -309,7 +317,7 @@ exports.trackProposalView = catchAsync(async (req, res, next) => {
 exports.downloadProposalPdf = catchAsync(async (req, res, next) => {
   console.log(
     `Entering downloadProposalPdf for ID: ${req.params.id} by User: ${req.user?.id}`
-  ); // <-- Add logging
+  );
 
   // Use findOne to explicitly include inactive proposals for download
   const proposal = await Proposal.findOne({
@@ -317,25 +325,39 @@ exports.downloadProposalPdf = catchAsync(async (req, res, next) => {
     active: { $in: [true, false] }, // Bypass the pre-find hook filtering active=false
   })
     .populate('lead')
-    .populate('equipment.item'); // Ensure necessary fields are populated
+    .populate('lineItems.itemId'); // Populate the inventory item details for each line item
 
   if (!proposal) {
     // This 404 is now only triggered if the ID truly doesn't exist at all
-    return next(new AppError('No proposal found with that ID', 404)); // Added return
+    return next(new AppError('No proposal found with that ID', 404));
   }
 
   try {
     const pdfBuffer = await generateProposalPdf(proposal.toObject()); // Pass plain object
 
+    // Validate that we have a proper PDF buffer
+    if (!pdfBuffer || !Buffer.isBuffer(pdfBuffer) || pdfBuffer.length === 0) {
+      console.error('Invalid PDF buffer generated:', pdfBuffer);
+      return next(new AppError('Failed to generate a valid PDF.', 500));
+    }
+
+    // Check if buffer starts with PDF signature (%PDF-)
+    if (pdfBuffer.length < 5 || pdfBuffer.toString('ascii', 0, 5) !== '%PDF-') {
+      console.error('Generated buffer is not a valid PDF');
+      return next(new AppError('Generated file is not a valid PDF.', 500));
+    }
+
     res.setHeader('Content-Type', 'application/pdf');
     // Use proposal name or ID for the filename
     const filename = `Proposal-${proposal.name || proposal.id}.pdf`
       .replace(/[^a-z0-9]/gi, '_')
-      .toLowerCase(); // Use proposal.id
+      .toLowerCase();
     res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
-    res.send(pdfBuffer);
+
+    // Send the buffer as binary data
+    return res.send(pdfBuffer); // Added return
   } catch (error) {
     console.error('PDF Generation Error in Controller:', error);
-    return next(new AppError('Failed to generate PDF.', 500));
+    return next(new AppError(`Failed to generate PDF: ${error.message}`, 500));
   }
 });

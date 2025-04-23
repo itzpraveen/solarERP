@@ -488,7 +488,7 @@ const Dashboard = () => {
             Dashboard
           </Typography>
           <Typography variant="subtitle1" color="text.secondary">
-            Welcome back, {user?.name || 'User'}! Here's what's happening today.
+            Welcome back, {user?.firstName || 'User'}! Here's what's happening today.
           </Typography>
         </Box>
         <Box

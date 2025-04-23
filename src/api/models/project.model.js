@@ -147,38 +147,6 @@ const projectSchema = new mongoose.Schema(
         },
       ],
     },
-    equipment: [
-      {
-        type: {
-          type: String,
-          required: [true, 'Equipment type is required'],
-          enum: [
-            'panel',
-            'inverter',
-            'battery',
-            'optimizers',
-            'racking',
-            'monitoring',
-            'other',
-          ],
-        },
-        manufacturer: {
-          type: String,
-          required: [true, 'Manufacturer is required'],
-        },
-        model: {
-          type: String,
-          required: [true, 'Model is required'],
-        },
-        serialNumber: String,
-        quantity: {
-          type: Number,
-          required: [true, 'Quantity is required'],
-          min: 1,
-        },
-        notes: String,
-      },
-    ],
     documents: [
       {
         type: {

@@ -28,7 +28,7 @@ exports.handleValidationErrors = (req, res, next) => {
     // return res.status(400).json({ status: 'fail', errors: formattedErrors });
   }
   // No validation errors, proceed to the next middleware/controller
-  next();
+  return next(); // Added return
 };
 
 // Removed unused sendErrorDev function
@@ -110,24 +110,27 @@ const handleCastErrorDB = (err) => {
  */
 const globalErrorHandler = (err, req, res, _next) => {
   // Rename next to _next
-  err.statusCode = err.statusCode || 500;
-  err.status = err.status || 'error';
+  // Create a copy to work with, avoiding param reassignment
+  const errorToHandle = { ...err, message: err.message };
+  errorToHandle.statusCode = errorToHandle.statusCode || 500;
+  errorToHandle.status = errorToHandle.status || 'error';
 
   if (config.server.env === 'development') {
     // Include validation errors array in dev response if present
     const response = {
-      status: err.status,
-      error: err,
-      message: err.message,
-      stack: err.stack,
+      status: errorToHandle.status,
+      error: errorToHandle, // Send the copied error object
+      message: errorToHandle.message,
+      stack: errorToHandle.stack,
     };
-    if (err.errors) {
+    if (errorToHandle.errors) {
       // Check if the error object has an 'errors' property (from handleValidationErrors)
-      response.validationErrors = err.errors;
+      response.validationErrors = errorToHandle.errors;
     }
-    res.status(err.statusCode).json(response);
-  } else if (config.server.env === 'production') {
-    let handledError = { ...err, message: err.message }; // Create a copy to avoid param reassignment
+    return res.status(errorToHandle.statusCode).json(response); // Added return
+  }
+  if (config.server.env === 'production') {
+    let handledError = errorToHandle; // Use the copied error
 
     // Handle specific operational errors first
     if (handledError.message === 'Validation failed' && handledError.errors) {

@@ -106,7 +106,7 @@ const UserManagementPanel = () => {
     try {
       if (isEditMode && editingUser) {
         // Update existing user (ensure ID is included if needed by API)
-        await userService.updateUser(editingUser.id, userData);
+        await userService.updateUser(editingUser._id, userData); // Use _id
       } else {
         // Create new user (API expects password here)
         // Ensure required fields for creation are present
@@ -189,8 +189,8 @@ const UserManagementPanel = () => {
           </TableHead>
           <TableBody>
             {users.map((user) => (
-              <TableRow hover key={user.id}>
-                <TableCell>{user.name}</TableCell>
+              <TableRow hover key={user._id}> {/* Use _id */}
+                <TableCell>{`${user.firstName || ''} ${user.lastName || ''}`.trim()}</TableCell> {/* Combine first/last name */}
                 <TableCell>{user.email}</TableCell>
                 <TableCell>
                   <Chip
@@ -223,7 +223,7 @@ const UserManagementPanel = () => {
                     </IconButton>
                     <IconButton
                       size="small"
-                      onClick={() => handleDeleteUser(user.id)}
+                      onClick={() => handleDeleteUser(user._id)} // Use _id
                       title="Delete User"
                       color="error"
                     >

@@ -60,11 +60,20 @@ const generateProposalPdf = async (proposalData) => {
   console.log('generateProposalPdf: Starting PDF generation...'); // Log start
   try {
     console.log('generateProposalPdf: Launching Puppeteer...'); // Log before launch
-    // Launch Puppeteer
-    // Add '--no-sandbox' flag for compatibility in certain environments (like Docker)
+
+    // Launch Puppeteer with more robust options
     browser = await puppeteer.launch({
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-accelerated-2d-canvas',
+        '--disable-gpu',
+        '--window-size=1280,720',
+      ],
+      headless: 'new', // Use new headless mode if available
     });
+
     console.log('generateProposalPdf: Puppeteer launched.'); // Log after launch
     const page = await browser.newPage();
     console.log('generateProposalPdf: New page created.'); // Log after new page
@@ -84,41 +93,84 @@ const generateProposalPdf = async (proposalData) => {
     console.log('generateProposalPdf: Added page error listeners.');
 
     console.log('generateProposalPdf: Navigating to data URI...'); // Log before goto
+
+    // Set viewport to ensure consistent rendering
+    await page.setViewport({ width: 1280, height: 720 });
+
     // Navigate to a data URI containing the HTML content
     await page.goto(
       `data:text/html;charset=UTF-8,${encodeURIComponent(htmlContent)}`,
       {
         waitUntil: 'networkidle0', // Wait for network activity to cease
+        timeout: 30000, // Increase timeout to 30 seconds
       }
     );
     console.log('generateProposalPdf: Navigation to data URI complete.'); // Log after goto
 
+    // Wait a moment to ensure everything is rendered
+    await new Promise((resolve) => {
+      setTimeout(resolve, 1000);
+    });
+
     console.log('generateProposalPdf: Generating PDF buffer...'); // Log before page.pdf
 
-    // Correctly restored original PDF generation code:
+    // Generate PDF with more specific options
     const pdfBuffer = await page.pdf({
       format: 'A4',
-      printBackground: true, // Restore
-      margin: { top: '20mm', right: '20mm', bottom: '20mm', left: '20mm' }, // Restore
+      printBackground: true,
+      margin: { top: '20mm', right: '20mm', bottom: '20mm', left: '20mm' },
+      preferCSSPageSize: true,
+      displayHeaderFooter: false,
     });
+
+    // Verify the PDF buffer
+    if (!pdfBuffer || pdfBuffer.length === 0) {
+      throw new Error('Generated PDF buffer is empty');
+    }
+
+    // Log the string being compared for debugging
+    const pdfStartString = pdfBuffer.toString('ascii', 0, 5);
     console.log(
-      `generateProposalPdf: PDF buffer generated (Size: ${pdfBuffer.length} bytes).`
-    ); // Restore original log message
+      `Checking PDF signature. String found: "${pdfStartString}" (Length: ${pdfStartString.length})`
+    );
+
+    // Check if buffer starts with PDF signature
+    if (pdfStartString !== '%PDF-') {
+      // Log the beginning of the invalid buffer for debugging
+      const invalidBufferStart = pdfBuffer.slice(0, 100).toString('utf8'); // Log first 100 chars
+      console.error(
+        `Generated buffer does not start with %PDF-. Start of buffer: ${invalidBufferStart}`
+      );
+      throw new Error(
+        'Generated buffer is not a valid PDF (missing PDF signature)'
+      );
+    }
+
+    console.log(
+      `generateProposalPdf: PDF buffer generated successfully (Size: ${pdfBuffer.length} bytes).`
+    );
+
     return pdfBuffer;
   } catch (error) {
     console.error(
       'Error during PDF generation steps inside generateProposalPdf:',
-      error
-    ); // More specific log
+      error.message, // Log only the message for clarity unless more detail needed
+      error.stack // Optionally log stack if needed for deeper debugging
+    );
     // Ensure the error is re-thrown to be caught by the controller
+    // Keep the original error message structure for consistency upstream
     throw new Error(`Failed to generate proposal PDF: ${error.message}`);
   } finally {
     console.log('generateProposalPdf: Entering finally block...'); // Log finally
     // Ensure browser is closed
     if (browser) {
-      console.log('generateProposalPdf: Closing browser...'); // Log before close
-      await browser.close();
-      console.log('generateProposalPdf: Browser closed.'); // Log after close
+      try {
+        console.log('generateProposalPdf: Closing browser...'); // Log before close
+        await browser.close();
+        console.log('generateProposalPdf: Browser closed.'); // Log after close
+      } catch (closeError) {
+        console.error('Error closing browser:', closeError);
+      }
     }
     console.log('generateProposalPdf: PDF generation process finished.'); // Log end
   }

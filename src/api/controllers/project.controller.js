@@ -5,7 +5,7 @@ const AppError = require('../../utils/appError');
 const catchAsync = require('../../utils/catchAsync');
 
 // Get all projects with filtering, sorting, and pagination
-exports.getAllProjects = catchAsync(async (req, res, next) => {
+exports.getAllProjects = catchAsync(async (req, res, _next) => {
   // BUILD FILTER CONDITIONS
   const filterConditions = {};
 
@@ -82,6 +82,7 @@ exports.getAllProjects = catchAsync(async (req, res, next) => {
       projects, // Return projects for the current page
     },
   });
+  // No return needed here as it's the main function body
 });
 
 // Get project by ID
@@ -111,6 +112,7 @@ exports.getProject = catchAsync(async (req, res, next) => {
       project,
     },
   });
+  // No return needed here as it's the main function body
 });
 
 // Create new project
@@ -205,7 +207,7 @@ exports.createProject = catchAsync(async (req, res, next) => {
   if (req.body.systemSize)
     req.body.systemSize = parseFloat(req.body.systemSize);
   if (req.body.panelCount)
-    req.body.panelCount = parseInt(req.body.panelCount, 10);
+    req.body.panelCount = parseInt(req.body.panelCount, 10); // Added radix 10
   if (req.body.financials && req.body.financials.totalContractValue) {
     req.body.financials.totalContractValue = parseFloat(
       req.body.financials.totalContractValue
@@ -228,7 +230,8 @@ exports.createProject = catchAsync(async (req, res, next) => {
     return next(new AppError(`Project creation failed: ${error.message}`, 400));
   }
 
-  res.status(201).json({
+  return res.status(201).json({
+    // Added return
     status: 'success',
     data: {
       project: newProject,
@@ -264,6 +267,7 @@ exports.updateProject = catchAsync(async (req, res, next) => {
       project,
     },
   });
+  // No return needed here as it's the main function body
 });
 
 // Delete project (soft delete)
@@ -280,6 +284,7 @@ exports.deleteProject = catchAsync(async (req, res, next) => {
     status: 'success',
     data: null,
   });
+  // No return needed for 204 status
 });
 
 // Update project status
@@ -302,6 +307,7 @@ exports.updateProjectStatus = catchAsync(async (req, res, next) => {
       project,
     },
   });
+  // No return needed here as it's the main function body
 });
 
 // Update project stage
@@ -324,6 +330,7 @@ exports.updateProjectStage = catchAsync(async (req, res, next) => {
       project,
     },
   });
+  // No return needed here as it's the main function body
 });
 
 // Add note to project
@@ -347,6 +354,7 @@ exports.addProjectNote = catchAsync(async (req, res, next) => {
       project,
     },
   });
+  // No return needed here as it's the main function body
 });
 
 // Add issue to project
@@ -370,6 +378,7 @@ exports.addProjectIssue = catchAsync(async (req, res, next) => {
       project,
     },
   });
+  // No return needed here as it's the main function body
 });
 
 // Update project issue
@@ -397,6 +406,7 @@ exports.updateProjectIssue = catchAsync(async (req, res, next) => {
       project,
     },
   });
+  // No return needed here as it's the main function body
 });
 
 // Add document to project
@@ -420,6 +430,7 @@ exports.addProjectDocument = catchAsync(async (req, res, next) => {
       project,
     },
   });
+  // No return needed here as it's the main function body
 });
 
 // Add equipment to project
@@ -440,6 +451,7 @@ exports.addProjectEquipment = catchAsync(async (req, res, next) => {
       project,
     },
   });
+  // No return needed here as it's the main function body
 });
 
 // Update project team
@@ -460,6 +472,7 @@ exports.updateProjectTeam = catchAsync(async (req, res, next) => {
       project,
     },
   });
+  // No return needed here as it's the main function body
 });
 
 // Add expense to project
@@ -483,6 +496,7 @@ exports.addProjectExpense = catchAsync(async (req, res, next) => {
       project,
     },
   });
+  // No return needed here as it's the main function body
 });
 
 // Add payment to project
@@ -503,10 +517,11 @@ exports.addProjectPayment = catchAsync(async (req, res, next) => {
       project,
     },
   });
+  // No return needed here as it's the main function body
 });
 
 // Get project statistics
-exports.getProjectStats = catchAsync(async (req, res, next) => {
+exports.getProjectStats = catchAsync(async (req, res, _next) => {
   const stats = await Project.aggregate([
     {
       $match: { active: true },
@@ -529,6 +544,7 @@ exports.getProjectStats = catchAsync(async (req, res, next) => {
       stats,
     },
   });
+  // No return needed here as it's the main function body
 });
 
 // --- Task Management ---
@@ -566,6 +582,7 @@ exports.addTask = catchAsync(async (req, res, next) => {
       task: newTask, // Return the newly created task object
     },
   });
+  // No return needed here as it's the main function body
 });
 
 // Update a specific task within a project using findOneAndUpdate for atomicity
@@ -666,6 +683,7 @@ exports.updateTask = catchAsync(async (req, res, next) => {
       task: updatedTask, // Return the updated task object
     },
   });
+  // No return needed here as it's the main function body
 });
 
 // Delete a specific task from a project
@@ -699,4 +717,5 @@ exports.deleteTask = catchAsync(async (req, res, next) => {
     status: 'success',
     data: null,
   });
+  // No return needed for 204 status
 });

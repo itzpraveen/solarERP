@@ -106,6 +106,7 @@ exports.getAllLeads = catchAsync(async (req, res, _next) => {
       leads,
     },
   });
+  // No return needed here as it's the main function body
 });
 
 // Get lead by ID
@@ -121,12 +122,13 @@ exports.getLead = catchAsync(async (req, res, next) => {
     return next(new AppError('No lead found with that ID', 404)); // Added return
   }
 
-  res.status(200).json({
+  return res.status(200).json({
     status: 'success',
     data: {
       lead,
     },
   });
+  // No return needed here as it's the main function body
 });
 
 // Create new lead
@@ -165,6 +167,7 @@ exports.createLead = catchAsync(async (req, res, _next) => {
       lead: newLead,
     },
   });
+  // No return needed here as it's the main function body
 });
 
 // Update lead
@@ -223,12 +226,13 @@ exports.updateLead = catchAsync(async (req, res, next) => {
     return next(new AppError('No lead found with that ID', 404)); // Added return
   }
 
-  res.status(200).json({
+  return res.status(200).json({
     status: 'success',
     data: {
       lead,
     },
   });
+  // No return needed here as it's the main function body
 });
 
 // Delete lead (soft delete)
@@ -239,10 +243,11 @@ exports.deleteLead = catchAsync(async (req, res, next) => {
     return next(new AppError('No lead found with that ID', 404)); // Added return
   }
 
-  res.status(204).json({
+  return res.status(204).json({
     status: 'success',
     data: null,
   });
+  // No return needed for 204 status
 });
 
 // Add note to lead
@@ -260,12 +265,13 @@ exports.addLeadNote = catchAsync(async (req, res, next) => {
     return next(new AppError('No lead found with that ID', 404)); // Added return
   }
 
-  res.status(200).json({
+  return res.status(200).json({
     status: 'success',
     data: {
       lead,
     },
   });
+  // No return needed here as it's the main function body
 });
 
 // Add interaction to lead
@@ -283,12 +289,13 @@ exports.addLeadInteraction = catchAsync(async (req, res, next) => {
     return next(new AppError('No lead found with that ID', 404)); // Added return
   }
 
-  res.status(200).json({
+  return res.status(200).json({
     status: 'success',
     data: {
       lead,
     },
   });
+  // No return needed here as it's the main function body
 });
 
 // Assign lead to user
@@ -303,12 +310,13 @@ exports.assignLead = catchAsync(async (req, res, next) => {
     return next(new AppError('No lead found with that ID', 404)); // Added return
   }
 
-  res.status(200).json({
+  return res.status(200).json({
     status: 'success',
     data: {
       lead,
     },
   });
+  // No return needed here as it's the main function body
 });
 
 // Update lead status
@@ -323,12 +331,13 @@ exports.updateLeadStatus = catchAsync(async (req, res, next) => {
     return next(new AppError('No lead found with that ID', 404)); // Added return
   }
 
-  res.status(200).json({
+  return res.status(200).json({
     status: 'success',
     data: {
       lead,
     },
   });
+  // No return needed here as it's the main function body
 });
 
 // Get lead stats
@@ -356,4 +365,5 @@ exports.getLeadStats = catchAsync(async (req, res, _next) => {
       stats,
     },
   });
+  // No return needed here as it's the main function body
 });
