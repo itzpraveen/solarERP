@@ -169,7 +169,7 @@ proposalSchema.index({ createdBy: 1 });
 proposalSchema.index({ createdAt: -1 });
 
 // Only query active proposals
-proposalSchema.pre(/^find/, function (next) {
+proposalSchema.pre(/^find/, function addActiveFilter(next) {
   // Ensure the active filter is added without overwriting other conditions
   const currentQuery = this.getQuery();
   if (currentQuery.active === undefined) {
@@ -187,7 +187,7 @@ proposalSchema.pre(/^find/, function (next) {
 });
 
 // Populate references
-proposalSchema.pre(/^find/, function (next) {
+proposalSchema.pre(/^find/, function populateReferences(next) {
   this.populate({
     path: 'lead',
     select: 'firstName lastName email phone address',
@@ -200,7 +200,7 @@ proposalSchema.pre(/^find/, function (next) {
 });
 
 // Calculate derived values and enforce subsidy rule before saving
-proposalSchema.pre('save', function (next) {
+proposalSchema.pre('save', function calculateDerivedValues(next) {
   // Enforce subsidy rule: Commercial projects must have 0 subsidy
   if (this.projectType === 'Commercial') {
     this.subsidyAmount = 0;
@@ -226,7 +226,7 @@ proposalSchema.pre('save', function (next) {
 });
 
 // Update status dates automatically
-proposalSchema.pre('save', function (next) {
+proposalSchema.pre('save', function updateStatusDates(next) {
   if (this.isModified('status')) {
     switch (this.status) {
       case 'sent':

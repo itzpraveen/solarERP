@@ -51,12 +51,16 @@ app.use(compression());
 app.use(morgan('dev'));
 
 // Rate limiting
+// Define rate limiter but don't use it in development for ease of debugging
+// Comment out the variable declaration since it's not used currently
+/*
 const limiter = rateLimit({
   windowMs: config.security.rateLimitWindowMs,
   max: config.security.rateLimitMax,
   standardHeaders: true,
   legacyHeaders: false,
 });
+*/
 
 // Apply rate limiting to all API routes except authentication
 /* Development: Temporarily disable rate limiting to avoid 429 errors during debugging

@@ -67,7 +67,7 @@ const leadSchema = new mongoose.Schema(
       type: mongoose.Schema.ObjectId,
       ref: 'Dealer',
       required: [
-        function () {
+        function requireReferringDealer() {
           return this.source === 'dealer_referral';
         },
         'Dealer reference is required for dealer referrals.',
@@ -77,7 +77,7 @@ const leadSchema = new mongoose.Schema(
       type: mongoose.Schema.ObjectId,
       ref: 'Customer',
       required: [
-        function () {
+        function requireReferringCustomer() {
           return this.source === 'customer_referral';
         },
         'Customer reference is required for customer referrals.',
@@ -88,7 +88,7 @@ const leadSchema = new mongoose.Schema(
       type: mongoose.Schema.ObjectId,
       ref: 'User',
       required: [
-        function () {
+        function requireReferringUser() {
           return this.source === 'staff_referral';
         },
         'User reference is required for staff referrals.',
@@ -251,7 +251,7 @@ leadSchema.index({ createdAt: -1 });
 
 // Query middleware to only find active leads
 // Query middleware to only find active leads
-leadSchema.pre(/^find/, function (next) {
+leadSchema.pre(/^find/, function addActiveFilter(next) {
   // Ensure the active filter is added without overwriting other conditions
   // Check if 'active' is already part of the query explicitly
   const currentQuery = this.getQuery();
@@ -271,7 +271,7 @@ leadSchema.pre(/^find/, function (next) {
 });
 
 // Automatically populate assigned user
-leadSchema.pre(/^find/, function (next) {
+leadSchema.pre(/^find/, function populateAssignedUser(next) {
   this.populate({
     path: 'assignedTo',
     select: 'firstName lastName email',

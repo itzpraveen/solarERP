@@ -179,7 +179,7 @@ exports.deleteProposal = catchAsync(async (req, res, next) => {
     return next(new AppError('No proposal found with that ID', 404)); // Added return
   }
 
-  res.status(204).json({
+  return res.status(204).json({
     status: 'success',
     data: null,
   });
@@ -288,14 +288,13 @@ exports.sendProposal = catchAsync(async (req, res, next) => {
     `,
   });
 
-  res.status(200).json({
+  return res.status(200).json({
     status: 'success',
     message: 'Proposal sent successfully',
     data: {
       proposal,
     },
   });
-  // No return needed here as it's the main function body, not inside a conditional path like others
 });
 
 // Track proposal view
