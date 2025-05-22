@@ -125,7 +125,6 @@ const validateProposal = [
 router
   .route('/')
   .get(
-    cacheMiddleware,
     authController.restrictTo('admin', 'manager', 'sales'),
     proposalController.getAllProposals
   )
