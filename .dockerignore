@@ -48,7 +48,6 @@ LICENSE
 jest.config.js
 client-new/.eslintrc.js
 client-new/.prettierrc.js
-client-new/tsconfig.json
 
 # Test files
 src/api/tests/
