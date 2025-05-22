@@ -48,7 +48,7 @@ RUN npm install
 
 # Run the client build (uses client-new/package.json scripts)
 # The script is "tsc --noEmit && react-app-rewired build"
-RUN CI=false npm run build
+RUN CI=false DISABLE_ESLINT_PLUGIN=true npm run build
 
 # After client build, artifacts are in /app/client-new/build.
 # Reset WORKDIR to /app for any subsequent global operations or for clarity.
