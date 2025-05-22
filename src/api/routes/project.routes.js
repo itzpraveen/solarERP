@@ -202,6 +202,32 @@ router
     projectController.addProjectExpense
   );
 
+// --- DEBUGGING LOGS for /:id/payments route ---
+console.log('--- Debugging project.routes.js for /:id/payments ---');
+console.log('Type of projectController:', typeof projectController);
+if (projectController) {
+  console.log(
+    'Type of projectController.addProjectPayment:',
+    typeof projectController.addProjectPayment
+  );
+}
+console.log('Type of authController:', typeof authController);
+if (authController) {
+  console.log(
+    'Type of authController.restrictTo:',
+    typeof authController.restrictTo
+  );
+  if (typeof authController.restrictTo === 'function') {
+    console.log(
+      'Type of authController.restrictTo() result:',
+      typeof authController.restrictTo('admin', 'manager', 'finance')
+    );
+  }
+}
+console.log('Type of express-validator check:', typeof check);
+console.log('--- End Debugging project.routes.js for /:id/payments ---');
+// --- END DEBUGGING LOGS ---
+
 // Project payments
 router
   .route('/:id/payments')
