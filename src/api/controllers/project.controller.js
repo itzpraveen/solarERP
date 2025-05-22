@@ -710,7 +710,7 @@ exports.addProjectDocument = catchAsync(async (req, res, next) => {
 
 // Add equipment to project (manual addition, distinct from proposal-driven equipment)
 // This now uses the equipmentUsed field.
-exports.addProjectEquipmentManually = catchAsync(async (req, res, next) => {
+exports.addProjectEquipment = catchAsync(async (req, res, next) => {
   const { itemId, quantityUsed, notes, serialNumbersUsed } = req.body;
   const userId = req.user.id;
 
