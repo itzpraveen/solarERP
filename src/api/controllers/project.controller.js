@@ -90,6 +90,28 @@ const _updateProjectStageAndManageStock = async (
   return projectDocument;
 };
 
+// Add payment to project's payment schedule
+exports.addProjectPayment = catchAsync(async (req, res, next) => {
+  const project = await Project.findById(req.params.id);
+  if (!project) {
+    return next(new AppError('No project found with that ID', 404));
+  }
+  project.financials.paymentSchedule.push(req.body);
+  await project.save();
+
+  const newPayment =
+    project.financials.paymentSchedule[
+      project.financials.paymentSchedule.length - 1
+    ];
+  return res.status(201).json({
+    status: 'success',
+    data: {
+      payment: newPayment,
+      project, // Return the updated project
+    },
+  });
+});
+
 // Get all projects with filtering, sorting, and pagination
 exports.getAllProjects = catchAsync(async (req, res, _next) => {
   // BUILD FILTER CONDITIONS
@@ -862,28 +884,6 @@ exports.addProjectExpense = catchAsync(async (req, res, next) => {
     data: {
       expense: newExpense, // Return the specific expense
       project: updatedProject, // Return the updated project with new financials
-    },
-  });
-});
-
-// Add payment to project's payment schedule
-exports.addProjectPayment = catchAsync(async (req, res, next) => {
-  const project = await Project.findById(req.params.id);
-  if (!project) {
-    return next(new AppError('No project found with that ID', 404));
-  }
-  project.financials.paymentSchedule.push(req.body);
-  await project.save();
-
-  const newPayment =
-    project.financials.paymentSchedule[
-      project.financials.paymentSchedule.length - 1
-    ];
-  return res.status(201).json({
-    status: 'success',
-    data: {
-      payment: newPayment,
-      project, // Return the updated project
     },
   });
 });
