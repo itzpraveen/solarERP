@@ -53,22 +53,45 @@ axios.interceptors.request.use(
 );
 // --- End Interceptor ---
 
+// Cache control helper function
+const shouldUseCache = (endpoint: string): boolean => {
+  // Don't cache auth, reports, or rapidly changing data
+  return !(
+    endpoint.includes('/auth') ||
+    endpoint.includes('/reports') ||
+    endpoint.includes('no-cache=true')
+  );
+};
+
 // Create reusable API service with common methods
 const apiService = {
-  // Generic GET request
+  // Generic GET request with caching optimization
   get: async (endpoint: string, config?: AxiosRequestConfig) => {
     try {
-      // Add cache-busting parameter to prevent 304 responses
-      const cacheBuster = `_cb=${new Date().getTime()}`;
-      const separator = endpoint.includes('?') ? '&' : '?';
-      const url = `${endpoint}${separator}${cacheBuster}`;
+      // Only add cache-busting parameter when we don't want to use the cache
+      let url = endpoint;
+      if (!shouldUseCache(endpoint)) {
+        const cacheBuster = `_cb=${new Date().getTime()}`;
+        const separator = endpoint.includes('?') ? '&' : '?';
+        url = `${endpoint}${separator}${cacheBuster}`;
+      }
 
-      console.log('Making GET request to:', url, 'with config:', config);
-      const response = await axios.get(url, config);
-      console.log('GET response status:', response.status);
+      // Configure request to optimize for speed and caching
+      const requestConfig: AxiosRequestConfig = {
+        ...config,
+        headers: {
+          ...config?.headers,
+          // Add cache control headers
+          'Cache-Control': shouldUseCache(endpoint)
+            ? 'max-age=300' // 5 minutes for cacheable endpoints
+            : 'no-cache, no-store',
+        },
+      };
+
+      const response = await axios.get(url, requestConfig);
+
       // If responseType is blob, return the full response object for header access
       if (config?.responseType === 'blob') {
-        console.log('Returning full response object for blob');
         return response;
       }
       // Otherwise, return only the data as before

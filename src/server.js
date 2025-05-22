@@ -14,6 +14,11 @@ const config = require('./common/config');
 
 // Import error handler middleware
 const errorHandler = require('./common/middleware/errorHandler');
+const cacheMiddleware = require('./common/middleware/cacheMiddleware');
+const {
+  performanceMonitoring,
+} = require('./common/middleware/performanceMonitoring');
+const AppError = require('./utils/appError');
 
 // --- Preload Mongoose Models ---
 // Ensure all models are registered before routes that might use them
@@ -45,12 +50,30 @@ const invoiceRoutes = require('./api/routes/invoice.routes'); // Import invoice 
 // Create Express app
 const app = express();
 
+// Performance monitoring middleware
+app.use(performanceMonitoring);
+
 // Set security HTTP headers
 app.use(helmet());
-app.use(compression());
 
-// Logger middleware
-app.use(morgan('dev'));
+// Apply compression to all responses
+app.use(
+  compression({
+    level: 6, // Higher compression level (default is 6, max is 9)
+    threshold: 0, // Compress all responses
+    filter: (req, res) => {
+      // Don't compress responses with Content-Type containing 'image' or 'pdf'
+      const contentType = res.getHeader('Content-Type') || '';
+      if (contentType.includes('image') || contentType.includes('pdf')) {
+        return false;
+      }
+      return true;
+    },
+  })
+);
+
+// Logger middleware - use 'combined' format in production for more details
+app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
 // Rate limiting
 // Define rate limiter but don't use it in development for ease of debugging
@@ -75,9 +98,9 @@ app.use('/api', (req, res, next) => {
 });
 */
 
-// Body parser
-app.use(express.json({ limit: '10kb' }));
-app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+// Body parser with increased limits for larger requests
+app.use(express.json({ limit: '50kb' }));
+app.use(express.urlencoded({ extended: true, limit: '50kb' }));
 
 // Data sanitization against NoSQL query injection
 app.use(mongoSanitize());
@@ -113,18 +136,34 @@ app.use((req, res, next) => {
   next();
 });
 
+// Apply cache middleware to API routes
+const apiCache = cacheMiddleware.middleware;
+
+// Add performance monitoring endpoint
+const {
+  getPerformanceStats,
+} = require('./common/middleware/performanceMonitoring');
+
+app.get('/api/admin/performance', (req, res, next) => {
+  // Only allow authenticated admin users to access performance stats
+  if (req.user && req.user.role === 'admin') {
+    return getPerformanceStats(req, res);
+  }
+  return next(new AppError('Not authorized to access performance data', 403));
+});
+
 // API routes
-app.use('/api/auth', authRoutes);
-app.use('/api/leads', leadRoutes);
-app.use('/api/proposals', proposalRoutes);
-app.use('/api/customers', customerRoutes);
-app.use('/api/projects', projectRoutes);
-app.use('/api/documents', documentRoutes);
-app.use('/api/reports', reportRoutes);
-app.use('/api/service-requests', serviceRequestRoutes);
-app.use('/api/users', userRoutes); // Mount user routes
-app.use('/api/inventory', inventoryRoutes); // Mount inventory routes
-app.use('/api/invoices', invoiceRoutes); // Mount invoice routes
+app.use('/api/auth', authRoutes); // No caching for auth routes
+app.use('/api/leads', apiCache, leadRoutes);
+app.use('/api/proposals', apiCache, proposalRoutes);
+app.use('/api/customers', apiCache, customerRoutes);
+app.use('/api/projects', apiCache, projectRoutes);
+app.use('/api/documents', apiCache, documentRoutes);
+app.use('/api/reports', reportRoutes); // No caching for reports as they need real-time data
+app.use('/api/service-requests', apiCache, serviceRequestRoutes);
+app.use('/api/users', apiCache, userRoutes);
+app.use('/api/inventory', apiCache, inventoryRoutes);
+app.use('/api/invoices', apiCache, invoiceRoutes);
 
 // Serve static assets in production
 if (process.env.NODE_ENV === 'production') {
@@ -181,6 +220,17 @@ process.on('unhandledRejection', (err) => {
   if (config.server.env === 'production') {
     process.exit(1);
   }
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received. Shutting down gracefully...');
+  cacheMiddleware.closeRedisConnections();
+});
+
+process.on('SIGINT', () => {
+  console.log('SIGINT received. Shutting down gracefully...');
+  cacheMiddleware.closeRedisConnections();
 });
 
 module.exports = app;

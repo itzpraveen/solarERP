@@ -2,16 +2,25 @@ const app = require('./server');
 
 // Start the server
 const DEFAULT_PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 5002;
+// Performance monitoring initialization
 let server; // Declare server variable here
 
 const startServer = (portArg) => {
   const port = Number(portArg);
+
+  // Set maximum number of listeners to improve event handling
+  process.setMaxListeners(20);
+
+  // Initialize HTTP server with proper settings
   server = app.listen(port, () => {
     // Assign to the outer server variable
     console.log(
       `Server running in ${process.env.NODE_ENV || 'development'} mode on port ${port}`
     );
   });
+
+  // Set higher timeout for long-running requests
+  server.timeout = 120000; // 2 minutes
 
   // Handle listen errors (e.g., port in use)
   server.on('error', (err) => {
