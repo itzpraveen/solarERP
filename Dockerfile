@@ -25,25 +25,40 @@ RUN npm ci
 # ---- Builder Stage ----
 # Build the client application
 FROM base AS builder
-# Set to production for the build script if it respects it
 ENV NODE_ENV=production
-# Attempt to help module resolution within client-new/src
-ENV NODE_PATH=src
 
-# Copy dependencies from the 'deps' stage
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/client-new/node_modules ./client-new/node_modules
+# Create client app directory and set as WORKDIR
+WORKDIR /app/client-new
 
-# Copy client source code
-COPY client-new/ ./client-new/
-# Copy server source code and root package.json (needed for the "build" script)
-COPY src/ ./src/
-COPY common/ ./common/
-COPY package.json ./
+# Copy client package files
+COPY client-new/package.json client-new/package-lock.json* ./ 
+# Copy client-specific config files that might be needed at client-new root for build
+COPY client-new/tsconfig.json ./
+COPY client-new/config-overrides.js ./
+# Copy client source code and public assets
+COPY client-new/src/ ./src/
+COPY client-new/public/ ./public/
 
-# Run the build script from root package.json
-# This script is "cd client-new && CI=false npm run build"
-RUN npm run build
+# Copy shared common code. Relative path from /app/client-new to /app/common is ../common
+# Ensure the tsconfig/webpack alias `solarerp: '../common'` resolves correctly.
+COPY common/ ../common/ 
+
+# Copy client node_modules from deps stage
+COPY --from=deps /app/client-new/node_modules ./node_modules/
+
+# Run the client build (uses client-new/package.json scripts)
+RUN CI=false npm run build
+
+# After client build, artifacts are in /app/client-new/build.
+# Reset WORKDIR to /app for any subsequent global operations or for clarity.
+WORKDIR /app
+
+# Ensure the root package.json is available in /app if needed by other parts of multi-stage build,
+# though it's not directly used by this client-focused builder stage anymore.
+COPY package.json ./package.json 
+# The production stage will copy its own package.json from the build context.
+
+# The primary output of this stage is /app/client-new/build
 
 
 # ---- Production Stage ----
