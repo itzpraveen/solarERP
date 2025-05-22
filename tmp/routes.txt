@@ -1,0 +1,12 @@
+src/api/routes/document.routes.js:router.get('/public/:token', documentController.getPublicDocument);
+src/api/routes/document.routes.js:router.get(
+src/api/routes/document.routes.js:router.get(
+src/api/routes/auth.routes.js:router.get('/me', authController.getMe);
+src/api/routes/report.routes.js:router.get('/sales-pipeline', reportController.getSalesPipeline);
+src/api/routes/report.routes.js:router.get('/project-status', reportController.getProjectStatus);
+src/api/routes/report.routes.js:router.get('/financial', reportController.getFinancialReport);
+src/api/routes/report.routes.js:router.get('/customer', reportController.getCustomerReport);
+src/api/routes/report.routes.js:router.get(
+src/api/routes/proposal.routes.js:router.get('/view/:id/track', proposalController.trackProposalView);
+src/api/routes/project.routes.js:router.get(
+src/api/routes/lead.routes.js:router.get(

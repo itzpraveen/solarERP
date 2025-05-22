@@ -282,7 +282,7 @@ const proposalService = {
   downloadProposalPdf: async (id: string) => {
     try {
       console.log('Downloading PDF for proposal:', id);
-      
+
       // apiService.get returns the full AxiosResponse when responseType is 'blob'
       const response: any = await apiService.get(
         `/api/proposals/${id}/download`,
@@ -294,10 +294,10 @@ const proposalService = {
       // Verify we received a valid PDF blob
       const contentType = response.headers?.['content-type'];
       console.log('Response content type:', contentType);
-      
+
       if (contentType !== 'application/pdf') {
         console.error('Received non-PDF content type:', contentType);
-        
+
         // If we received a JSON error response instead of a PDF, parse it
         if (contentType?.includes('application/json')) {
           const reader = new FileReader();
@@ -305,16 +305,19 @@ const proposalService = {
             reader.onload = () => {
               try {
                 const errorJson = JSON.parse(reader.result as string);
-                reject(new Error(errorJson.message || 'Failed to download PDF'));
+                reject(
+                  new Error(errorJson.message || 'Failed to download PDF')
+                );
               } catch (e) {
                 reject(new Error('Invalid response format'));
               }
             };
-            reader.onerror = () => reject(new Error('Failed to read error response'));
+            reader.onerror = () =>
+              reject(new Error('Failed to read error response'));
             reader.readAsText(response.data);
           });
         }
-        
+
         // For other non-PDF content types
         throw new Error(`Received invalid content type: ${contentType}`);
       }
@@ -330,15 +333,18 @@ const proposalService = {
       }
 
       console.log('Creating download for file:', filename);
-      
+
       // Verify the blob size is reasonable for a PDF
-      if (response.data.size < 100) { // A valid PDF should be larger than 100 bytes
+      if (response.data.size < 100) {
+        // A valid PDF should be larger than 100 bytes
         console.error('PDF blob size too small:', response.data.size);
         throw new Error('Generated PDF is invalid or empty');
       }
 
       // Create a download link for the blob
-      const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/pdf' }));
+      const url = window.URL.createObjectURL(
+        new Blob([response.data], { type: 'application/pdf' })
+      );
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', filename);
@@ -355,16 +361,35 @@ const proposalService = {
       return { success: true, filename };
     } catch (error: any) {
       console.error('Error downloading proposal PDF:', error);
-      
+
       // Provide a more specific error message if available
       if (error.response) {
         const status = error.response.status;
-        const message = error.response.data?.message || `Server error (${status})`;
+        const message =
+          error.response.data?.message || `Server error (${status})`;
         throw new Error(`Failed to download PDF: ${message}`);
       }
-      
+
       // Re-throw the error so the component can handle it
       throw error.message ? error : new Error('Failed to download PDF');
+    }
+  },
+
+  // Upload a proposal PDF for ingestion
+  uploadProposal: async (file: File) => {
+    try {
+      const formData = new FormData();
+      formData.append('proposalFile', file); // 'proposalFile' should match backend multer field name
+
+      // The response type might be the ingested Proposal object or a success message
+      return await apiService.post('/api/proposals/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+    } catch (error) {
+      console.error('Error uploading proposal PDF:', error);
+      throw error;
     }
   },
 };

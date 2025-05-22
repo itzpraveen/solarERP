@@ -1,0 +1,67 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SolarProposal",
+  "type": "object",
+  "required": ["header", "cost_breakup", "regulatory_fees", "timeline"],
+  "properties": {
+    "header": {
+      "type": "object",
+      "required": [
+        "client_name",
+        "site_address",
+        "capacity_kw",
+        "inverter_kw",
+        "proposal_date",
+        "doc_ref_no",
+        "company_name"
+      ],
+      "properties": {
+        "client_name": { "type": "string" },
+        "site_address": { "type": "string" },
+        "capacity_kw": { "type": "number" },
+        "inverter_kw": { "type": "number" },
+        "proposal_date": { "type": "string", "format": "date" },
+        "doc_ref_no": { "type": "string" },
+        "company_name": { "type": "string" }
+      }
+    },
+    "cost_breakup": {
+      "type": "object",
+      "required": [
+        "project_cost_excl_structure",
+        "structure_cost",
+        "final_project_cost",
+        "eligible_subsidy",
+        "net_investment_after_subsidy"
+      ],
+      "properties": {
+        "project_cost_excl_structure": { "type": "number" },
+        "structure_cost": { "type": "number" },
+        "final_project_cost": { "type": "number" },
+        "eligible_subsidy": { "type": "number" },
+        "net_investment_after_subsidy": { "type": "number" }
+      }
+    },
+    "regulatory_fees": {
+      "type": "object",
+      "required": ["kseb_fee_quoted", "kseb_fee_refundable"],
+      "properties": {
+        "kseb_fee_quoted": { "type": "number" },
+        "kseb_fee_refundable": { "type": "number" },
+        "kseb_formula": { "type": "string" }
+      }
+    },
+    "timeline": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["step", "week_no"],
+        "properties": {
+          "step": { "type": "string" },
+          "week_no": { "type": "integer" }
+        }
+      }
+    },
+    "raw_text_excerpt": { "type": "string", "maxLength": 500 }
+  }
+}
