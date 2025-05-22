@@ -251,10 +251,30 @@ const projectSchema = new mongoose.Schema(
         min: 0,
       },
       totalContractValueCurrency: {
+        // Currency for all financial amounts in this project
         type: String,
         default: 'INR',
         required: true,
       },
+      // GST related fields, mirrored from Proposal
+      taxableAmount: { type: Number, min: 0 },
+      cgstRate: { type: Number, default: 0.09, min: 0 },
+      sgstRate: { type: Number, default: 0.09, min: 0 },
+      igstRate: { type: Number, default: 0, min: 0 },
+      cgstAmount: { type: Number, default: 0, min: 0 },
+      sgstAmount: { type: Number, default: 0, min: 0 },
+      igstAmount: { type: Number, default: 0, min: 0 },
+      totalGstAmount: { type: Number, default: 0, min: 0 },
+      totalAmountWithGST: { type: Number, min: 0 }, // totalContractValue (pre-GST) + totalGstAmount
+
+      // Subsidy can be part of proposal, but also good to store at project level if it affects final payment
+      subsidyAmount: { type: Number, default: 0, min: 0 },
+
+      // Net amount payable by customer after GST and subsidy
+      // This might be totalAmountWithGST - subsidyAmount (if subsidy is post-tax)
+      // Or if subsidy was pre-tax, this is effectively totalAmountWithGST
+      netCustomerPayable: { type: Number, min: 0 },
+
       paymentSchedule: [
         {
           name: {
@@ -346,6 +366,30 @@ const projectSchema = new mongoose.Schema(
   }
 );
 
+// Sub-schema for equipment used in the project
+const equipmentUsedSchema = new mongoose.Schema(
+  {
+    item: {
+      type: mongoose.Schema.ObjectId,
+      ref: 'Inventory',
+      required: true,
+    },
+    quantityUsed: {
+      type: Number,
+      required: true,
+      min: 1,
+    },
+    // Optional: Store specific serial numbers used for this project if item is serial tracked
+    serialNumbersUsed: [String],
+    notes: String,
+  },
+  { _id: false }
+); // No separate _id for subdocuments unless needed
+
+projectSchema.add({
+  equipmentUsed: [equipmentUsedSchema],
+});
+
 // Indexes for common queries
 projectSchema.index({ customer: 1 });
 projectSchema.index({ status: 1 });
@@ -355,6 +399,7 @@ projectSchema.index({ createdAt: -1 });
 projectSchema.index({ 'dates.scheduledInstallation': 1 });
 
 // Query middleware to only find active projects
+// eslint-disable-next-line func-names
 projectSchema.pre(/^find/, function (next) {
   // Ensure the active filter is added without overwriting other conditions
   const currentQuery = this.getQuery();
@@ -373,6 +418,7 @@ projectSchema.pre(/^find/, function (next) {
 });
 
 // Populate references
+// eslint-disable-next-line func-names
 projectSchema.pre(/^find/, function (next) {
   this.populate({
     path: 'customer',
@@ -386,34 +432,77 @@ projectSchema.pre(/^find/, function (next) {
 });
 
 // Calculate project financials before saving
+// eslint-disable-next-line func-names
 projectSchema.pre('save', function (next) {
   // Ensure financials object exists
   if (!this.financials) {
     this.financials = {};
   }
-  // Ensure expenses array exists and initialize totalExpenses
+
+  // Calculate totalExpenses
   if (!this.financials.expenses) {
     this.financials.expenses = [];
   }
   this.financials.totalExpenses = this.financials.expenses.reduce(
-    (total, expense) => total + (expense.amount || 0), // Add safety check for expense.amount
+    (total, expense) => total + (expense.amount || 0),
     0
   );
 
+  // Calculate totalAmountWithGST if not directly set (e.g. from proposal)
+  // This assumes totalContractValue is pre-GST base.
+  if (
+    this.financials.totalContractValue &&
+    (this.financials.cgstAmount !== undefined ||
+      this.financials.sgstAmount !== undefined ||
+      this.financials.igstAmount !== undefined)
+  ) {
+    if (
+      this.financials.totalGstAmount === undefined ||
+      this.financials.totalGstAmount === 0
+    ) {
+      // Recalculate if not set
+      this.financials.totalGstAmount =
+        (this.financials.cgstAmount || 0) +
+        (this.financials.sgstAmount || 0) +
+        (this.financials.igstAmount || 0);
+    }
+    if (
+      this.financials.totalAmountWithGST === undefined ||
+      this.financials.totalAmountWithGST === 0
+    ) {
+      this.financials.totalAmountWithGST =
+        (this.financials.totalContractValue || 0) +
+        (this.financials.totalGstAmount || 0);
+    }
+  }
+
+  // Calculate netCustomerPayable
+  // Assuming subsidy is a reduction from the total amount with GST.
+  // This logic should align with how netInvestment is calculated in Proposal.
+  if (this.financials.totalAmountWithGST !== undefined) {
+    this.financials.netCustomerPayable =
+      (this.financials.totalAmountWithGST || 0) -
+      (this.financials.subsidyAmount || 0);
+  }
+
   // Calculate project profit if possible
+  // Profit = (Net Revenue from Customer) - Total Expenses
+  // Net Revenue could be (totalContractValue - discount) or (totalAmountWithGST - subsidy - GST paid by company if not passed on)
+  // For simplicity: (totalContractValue or taxableAmount if that's what company receives) - totalExpenses
+  // Let's use totalContractValue (pre-GST base) as revenue for profit calculation against expenses.
   if (typeof this.financials.totalContractValue === 'number') {
-    // Use the just-calculated totalExpenses
     this.financials.projectedProfit =
-      this.financials.totalContractValue - this.financials.totalExpenses;
+      (this.financials.totalContractValue || 0) -
+      (this.financials.totalExpenses || 0);
   } else {
-    // Ensure projectedProfit is not left undefined if calculation can't happen
-    this.financials.projectedProfit = undefined; // Or 0, depending on desired behavior
+    this.financials.projectedProfit = undefined;
   }
 
   next();
 });
 
 // Auto-update stage dates
+// eslint-disable-next-line func-names
 projectSchema.pre('save', function (next) {
   // Ensure dates object exists before trying to access properties
   if (!this.dates) {

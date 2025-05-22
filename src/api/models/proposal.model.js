@@ -50,41 +50,66 @@ const proposalSchema = new mongoose.Schema(
     // Removed yearlyProductionEstimate, estimatedSavings
     // Restructured pricing to match PDF
     projectCostExcludingStructure: {
-      // Renamed from grossCost
+      // Base cost of system + installation
       type: Number,
-      // required: [true, 'Project cost (excluding structure) is required'], // Made optional
       min: 0,
     },
     structureCost: {
-      // Added structure cost
+      // Cost for mounting structure if applicable
       type: Number,
       default: 0,
       min: 0,
     },
+    // finalProjectCost is now pre-GST cost
     finalProjectCost: {
-      // Added calculated field
+      // (projectCostExcludingStructure + structureCost)
+      type: Number,
+      min: 0,
+    },
+    // GST Fields
+    // Assuming intra-state for now (Kerala company, Kerala customer)
+    // For solar components, GST might be complex (e.g. 70% components, 30% service, different rates)
+    // Simplified: Apply a flat rate on (finalProjectCost - subsidyAmount) if subsidy is pre-tax
+    // Or apply on finalProjectCost, then deduct subsidy. Let's assume subsidy is deducted from taxable value.
+    taxableAmount: {
+      // (finalProjectCost + additionalCosts) - subsidyAmount (if subsidy is pre-tax)
+      type: Number,
+      min: 0,
+    },
+    cgstRate: { type: Number, default: 0.09, min: 0 }, // Central GST Rate (e.g., 9%)
+    sgstRate: { type: Number, default: 0.09, min: 0 }, // State GST Rate (e.g., 9%)
+    igstRate: { type: Number, default: 0, min: 0 }, // Integrated GST Rate (for inter-state)
+    cgstAmount: { type: Number, default: 0, min: 0 },
+    sgstAmount: { type: Number, default: 0, min: 0 },
+    igstAmount: { type: Number, default: 0, min: 0 },
+    totalGstAmount: { type: Number, default: 0, min: 0 },
+
+    totalAmountWithGST: {
+      // finalProjectCost + totalGstAmount + additionalCosts (if additional costs are post-GST or non-taxable)
+      // OR taxableAmount + totalGstAmount (if additional costs are part of taxable amount)
+      // Let's assume additionalCosts are part of the taxable base for simplicity before subsidy.
       type: Number,
       min: 0,
     },
     subsidyAmount: {
-      // Renamed from centralSubsidy
+      // Subsidy from government (e.g., PM Surya Ghar)
       type: Number,
-      // required: [true, 'Subsidy amount is required'], // Made optional
       min: 0,
+      default: 0,
     },
     netInvestment: {
-      // Added calculated field
+      // Final amount payable by customer: totalAmountWithGST - subsidyAmount (if subsidy is post-tax)
+      // OR taxableAmount (after subsidy) + totalGstAmount
       type: Number,
       min: 0,
     },
     additionalCosts: {
-      // Added additional costs field
+      // Costs like registration, specific fees not part of main system cost
       type: Number,
       default: 0,
       min: 0,
     },
     currency: {
-      // Moved currency to top level
       type: String,
       default: 'INR',
       required: true,
@@ -210,16 +235,58 @@ proposalSchema.pre('save', function calculateDerivedValues(next) {
   if (
     this.isModified('projectCostExcludingStructure') ||
     this.isModified('structureCost') ||
+    this.isModified('additionalCosts') ||
     this.isModified('subsidyAmount') ||
-    this.isModified('projectType') // Recalculate if type changes
+    this.isModified('cgstRate') || // if rates can change per proposal
+    this.isModified('sgstRate') ||
+    this.isModified('igstRate') ||
+    this.isModified('projectType')
   ) {
     const costA = this.projectCostExcludingStructure || 0;
     const costB = this.structureCost || 0;
-    // Use the potentially modified subsidyAmount
-    const subsidy = this.subsidyAmount || 0;
+    const additional = this.additionalCosts || 0;
 
-    this.finalProjectCost = costA + costB;
-    this.netInvestment = this.finalProjectCost - subsidy;
+    this.finalProjectCost = costA + costB; // This is pre-GST, pre-additional cost project value
+
+    // Determine taxable amount. Let's assume subsidy reduces the base price before GST.
+    // And additional costs are part of the taxable base.
+    // This logic can be very specific to business rules.
+    // Scenario 1: GST on (Project Cost + Additional Costs - Subsidy)
+    let baseForTax = this.finalProjectCost + additional;
+    if (this.subsidyAmount && this.subsidyAmount > 0) {
+      // Option A: Subsidy reduces taxable value
+      baseForTax -= this.subsidyAmount;
+      // Option B: Subsidy is a post-tax deduction (would change logic below)
+    }
+    this.taxableAmount = Math.max(0, baseForTax); // Ensure non-negative
+
+    // Calculate GST amounts
+    // For now, assume intra-state (CGST+SGST). Logic for IGST vs CGST/SGST would depend on customer/company location.
+    if (this.igstRate > 0) {
+      // Inter-state
+      this.cgstAmount = 0;
+      this.sgstAmount = 0;
+      this.igstAmount = this.taxableAmount * this.igstRate;
+    } else {
+      // Intra-state
+      this.cgstAmount = this.taxableAmount * this.cgstRate;
+      this.sgstAmount = this.taxableAmount * this.sgstRate;
+      this.igstAmount = 0;
+    }
+    this.totalGstAmount = this.cgstAmount + this.sgstAmount + this.igstAmount;
+
+    // Calculate total amount with GST
+    this.totalAmountWithGST = this.taxableAmount + this.totalGstAmount;
+
+    // Calculate Net Investment by customer
+    // If subsidy was pre-tax (reduced taxableAmount), then netInvestment is totalAmountWithGST.
+    // If subsidy is post-tax, then netInvestment is totalAmountWithGST - subsidy.
+    // Assuming pre-tax subsidy for this calculation:
+    this.netInvestment = this.totalAmountWithGST;
+    // If subsidy was post-tax, it would be:
+    // this.netInvestment = this.totalAmountWithGST - (this.subsidyAmount || 0);
+    // This needs clarification based on actual business practice for solar subsidies in Kerala.
+    // For PM Surya Ghar, subsidy is typically on system cost, so pre-tax reduction seems more likely.
   }
 
   next();

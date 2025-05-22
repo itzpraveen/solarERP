@@ -5,7 +5,7 @@ const helmet = require('helmet');
 const compression = require('compression');
 const mongoSanitize = require('express-mongo-sanitize'); // Import mongo-sanitize
 const morgan = require('morgan');
-const rateLimit = require('express-rate-limit');
+// const rateLimit = require('express-rate-limit'); // Commented out as not used
 const path = require('path');
 require('dotenv').config();
 
@@ -26,6 +26,7 @@ require('./api/models/proposal.model');
 require('./api/models/project.model');
 require('./api/models/document.model');
 require('./api/models/ServiceRequest'); // Assuming ServiceRequest model exists
+require('./api/models/invoice.model'); // Register Invoice model
 // Add any other models here if created later
 
 // Import routes
@@ -39,6 +40,7 @@ const reportRoutes = require('./api/routes/report.routes');
 const serviceRequestRoutes = require('./api/routes/service-request.routes');
 const userRoutes = require('./api/routes/user.routes'); // Import user routes
 const inventoryRoutes = require('./api/routes/inventory.routes'); // Import inventory routes
+const invoiceRoutes = require('./api/routes/invoice.routes'); // Import invoice routes
 
 // Create Express app
 const app = express();
@@ -122,6 +124,7 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/service-requests', serviceRequestRoutes);
 app.use('/api/users', userRoutes); // Mount user routes
 app.use('/api/inventory', inventoryRoutes); // Mount inventory routes
+app.use('/api/invoices', invoiceRoutes); // Mount invoice routes
 
 // Serve static assets in production
 if (process.env.NODE_ENV === 'production') {
