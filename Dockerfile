@@ -43,10 +43,11 @@ COPY client-new/public/ ./public/
 # Ensure the tsconfig/webpack alias `solarerp: '../common'` resolves correctly.
 COPY common/ ../common/ 
 
-# Copy client node_modules from deps stage
-COPY --from=deps /app/client-new/node_modules ./node_modules/
+# Install client dependencies directly in this stage to ensure freshness
+RUN npm install
 
 # Run the client build (uses client-new/package.json scripts)
+# The script is "tsc --noEmit && react-app-rewired build"
 RUN CI=false npm run build
 
 # After client build, artifacts are in /app/client-new/build.
