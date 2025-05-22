@@ -4,13 +4,14 @@ import {
   Route,
   Navigate,
 } from 'react-router-dom';
-import { CssBaseline, ThemeProvider } from '@mui/material';
+import { CssBaseline, ThemeProvider, useMediaQuery } from '@mui/material';
 import { AuthProvider } from './features/auth/context/AuthContext';
 import { ProjectProvider } from './context/ProjectContext';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { clearDummyData } from './utils/clearDummyData';
 import PrivateRoute from './components/routing/PrivateRoute';
 import MainLayout from './components/Layout/MainLayout';
+import MobileFieldLayout from './components/Layout/MobileFieldLayout';
 import theme from './theme';
 
 // Pages
@@ -35,6 +36,10 @@ import InventoryAdd from './pages/inventory/InventoryAdd'; // Import Add page
 import InventoryEdit from './pages/inventory/InventoryEdit'; // Import Edit page
 import ProjectAdd from './pages/projects/ProjectAdd'; // Import Project Add page
 
+// Field-specific pages for mobile view
+import ProjectTasksField from './pages/field/ProjectTasksField';
+import FieldPhotoCaptureView from './pages/field/FieldPhotoCaptureView';
+
 // Service Request Module
 import ServiceRequests from './pages/services/ServiceRequests';
 import ServiceRequestForm from './pages/services/ServiceRequestForm';
@@ -46,6 +51,19 @@ function App() {
   if (clearResult.cleared) {
     console.log('Cleared dummy data from localStorage:', clearResult.items);
   }
+
+  // Detect if we're on a mobile device
+  const isMobile = useMediaQuery('(max-width:600px)');
+
+  // Check if user is a field technician based on role in localStorage
+  const isFieldTechnician = () => {
+    try {
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      return user.role === 'technician' || user.role === 'installer';
+    } catch (e) {
+      return false;
+    }
+  };
 
   return (
     <ThemeProvider theme={theme}>
@@ -62,8 +80,12 @@ function App() {
               element={
                 <PrivateRoute>
                   <ProjectProvider>
-                    {/* Wrap MainLayout */}
-                    <MainLayout />
+                    {/* Show MobileFieldLayout for field technicians on mobile, otherwise show MainLayout */}
+                    {isMobile && isFieldTechnician() ? (
+                      <MobileFieldLayout />
+                    ) : (
+                      <MainLayout />
+                    )}
                   </ProjectProvider>
                 </PrivateRoute>
               }
@@ -76,8 +98,18 @@ function App() {
               <Route path="customers" element={<Customers />} />
               <Route path="customers/:id" element={<CustomerDetails />} />
               <Route path="projects" element={<Projects />} />
-              <Route path="projects/add" element={<ProjectAdd />} /> {/* Add route for ProjectAdd */}
-              <Route path="projects/:id" element={<ProjectDetails />} />
+              <Route path="projects/add" element={<ProjectAdd />} />{' '}
+              {/* Add route for ProjectAdd */}
+              <Route
+                path="projects/:id"
+                element={
+                  isMobile && isFieldTechnician() ? (
+                    <ProjectTasksField />
+                  ) : (
+                    <ProjectDetails />
+                  )
+                }
+              />
               <Route path="proposals" element={<Proposals />} />
               <Route path="proposals/:id" element={<ProposalDetails />} />
               <Route path="documents" element={<Documents />} />
@@ -102,6 +134,15 @@ function App() {
               {/* Profile & Settings */}
               <Route path="profile" element={<Profile />} />
               <Route path="settings" element={<Settings />} />
+              {/* Field-specific routes */}
+              <Route
+                path="photos/capture"
+                element={<FieldPhotoCaptureView />}
+              />
+              <Route
+                path="photos/capture/:projectId"
+                element={<FieldPhotoCaptureView />}
+              />
             </Route>
 
             {/* 404 Route */}

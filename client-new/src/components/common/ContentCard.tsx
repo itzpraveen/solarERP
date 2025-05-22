@@ -9,6 +9,7 @@ import {
   IconButton,
   Collapse,
   Tooltip,
+  useMediaQuery,
 } from '@mui/material';
 import {
   ExpandMore as ExpandMoreIcon,
@@ -44,6 +45,7 @@ const ContentCard: React.FC<ContentCardProps> = ({
   children,
 }) => {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [expanded, setExpanded] = React.useState(defaultExpanded);
 
   const toggleExpanded = () => {
@@ -98,15 +100,23 @@ const ContentCard: React.FC<ContentCardProps> = ({
         <>
           <Box
             sx={{
-              p: 2,
+              p: isMobile ? 1.5 : 2,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
               background: getHeaderBgColor(),
               color: getHeaderTextColor(),
+              flexWrap: isMobile ? 'wrap' : 'nowrap',
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: isMobile ? 1 : 1.5,
+                flexWrap: 'wrap',
+              }}
+            >
               {icon && (
                 <Box
                   sx={{
@@ -128,7 +138,7 @@ const ContentCard: React.FC<ContentCardProps> = ({
                     component="h2"
                     sx={{
                       fontWeight: 600,
-                      fontSize: '1.1rem',
+                      fontSize: isMobile ? '1rem' : '1.1rem',
                       lineHeight: 1.3,
                     }}
                   >
@@ -212,7 +222,7 @@ const ContentCard: React.FC<ContentCardProps> = ({
       >
         <Box
           sx={{
-            p: noPadding ? 0 : 2,
+            p: noPadding ? 0 : isMobile ? 1.5 : 2,
             height: '100%',
           }}
         >

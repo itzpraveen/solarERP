@@ -10,8 +10,20 @@ declare module '@mui/material/styles' {
   }
 }
 
-// Create a base theme with professional colors and enhanced styling
+// Create responsive breakpoints that better match common mobile devices
+const breakpoints = {
+  values: {
+    xs: 0, // Mobile phones (portrait)
+    sm: 600, // Mobile phones (landscape) and small tablets
+    md: 960, // Tablets and small laptops
+    lg: 1280, // Desktops and larger laptops
+    xl: 1920, // Large desktop monitors
+  },
+};
+
+// Create a base theme with professional colors, enhanced styling, and responsive breakpoints
 let theme = createTheme({
+  breakpoints,
   palette: {
     primary: {
       main: '#C0392B', // Updated primary red from image
