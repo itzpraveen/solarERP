@@ -27,6 +27,8 @@ RUN npm ci
 FROM base AS builder
 # Set to production for the build script if it respects it
 ENV NODE_ENV=production
+# Attempt to help module resolution within client-new/src
+ENV NODE_PATH=src
 
 # Copy dependencies from the 'deps' stage
 COPY --from=deps /app/node_modules ./node_modules
@@ -40,7 +42,7 @@ COPY common/ ./common/
 COPY package.json ./
 
 # Run the build script from root package.json
-# This script is "cd client-new && CI=false npm install && CI=false npm run build"
+# This script is "cd client-new && CI=false npm run build"
 RUN npm run build
 
 
