@@ -159,28 +159,43 @@ if (process.env.NODE_ENV === 'production') {
 // Global error handler - Use the correct function from the imported object
 app.use(errorHandler.globalErrorHandler);
 
-// Database connection
-mongoose
-  .connect(config.database.uri, config.database.options)
-  .then(() => {
-    console.log('Connected to MongoDB');
-  })
-  .catch((err) => {
-    console.error('MongoDB connection error:', err);
-    console.log('Running in development mode without MongoDB connection');
-    // Don't exit the process in development mode
-    if (config.server.env === 'production') {
-      process.exit(1);
-    }
+// Database connection function
+const connectDB = () => {
+  return new Promise((resolve, reject) => {
+    // Use MONGODB_URI from process.env if available (set by jest.setup.js for tests),
+    // otherwise fall back to config.database.uri
+    const dbUri = process.env.MONGODB_URI || config.database.uri;
+    mongoose
+      .connect(dbUri, config.database.options)
+      .then(() => {
+        console.log(`Connected to MongoDB at ${dbUri}`);
+        resolve(mongoose.connection);
+      })
+      .catch((err) => {
+        console.error(`MongoDB connection error to ${dbUri}:`, err);
+        if (config.server.env === 'production') {
+          // In production, a DB connection failure is critical
+          process.exit(1); // Exit as per original logic for production
+        }
+        // For dev/test, reject the promise so the caller can handle it
+        // (e.g., Jest will fail the setup, server startup will abort)
+        reject(err);
+      });
   });
+};
 
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err) => {
   console.error('UNHANDLED REJECTION! Shutting down...');
   console.error(err.name, err.message);
+  // In production, an unhandled rejection should cause the process to exit
   if (config.server.env === 'production') {
     process.exit(1);
   }
+  // For tests or development, it might be preferable to not exit immediately
+  // or to let the test runner handle it. However, consistency with prod is good.
+  // Consider if tests should also exit or if Jest handles this.
+  // For now, retain original production behavior.
 });
 
-module.exports = app;
+module.exports = { app, connectDB };

@@ -2,7 +2,7 @@ const request = require('supertest');
 const path = require('path');
 const mongoose = require('mongoose');
 const fs = require('fs'); // Moved fs require to top
-const app = require('../../server'); // Assuming your Express app is exported from server.js
+const { app } = require('../../server'); // Destructure app from server exports
 const parserClient = require('../../../.cline/tools/solarProposalParser/client');
 
 // --- Test Suite for Proposal Ingestion ---
