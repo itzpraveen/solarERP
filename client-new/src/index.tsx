@@ -12,7 +12,7 @@ const queryClient = new QueryClient({
     queries: {
       refetchOnWindowFocus: false, // Don't refetch when window regains focus
       staleTime: 1000 * 60 * 5, // Data is considered fresh for 5 minutes
-      cacheTime: 1000 * 60 * 30, // Cache will be garbage collected after 30 minutes
+      gcTime: 1000 * 60 * 30, // Cache will be garbage collected after 30 minutes
       retry: 1, // Only retry failed requests once
       retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff with max of 30s
     },
