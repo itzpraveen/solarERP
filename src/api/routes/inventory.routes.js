@@ -15,8 +15,8 @@ router
 
 router
   .route('/:id')
-  .get(inventoryController.getInventory)
-  .patch(inventoryController.updateInventory)
-  .delete(inventoryController.deleteInventory);
+  .get(inventoryController.getInventoryItem) // Renamed from getInventory
+  .patch(inventoryController.updateInventoryDetails) // Renamed from updateInventory
+  .delete(inventoryController.deactivateInventory); // Renamed from deleteInventory, assuming soft delete is preferred
 
 module.exports = router;

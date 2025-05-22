@@ -1,0 +1,63 @@
+# Git
+.git
+.gitignore
+
+# Node
+node_modules
+client-new/node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json # If not committed or managed by the build process itself
+client-new/package-lock.json # If not committed
+
+# IDEs and editors
+.vscode
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Build artifacts (if not needed in the final image or handled by multi-stage)
+client-new/build
+coverage
+
+# Environment files
+.env
+*.env.*
+!*.env.example
+
+# Documentation / Config (usually not needed in prod image)
+README.md
+LICENSE
+*.md
+.eslintignore
+.eslintrc.js
+.prettierrc.js
+jest.config.js
+client-new/.eslintrc.js
+client-new/.prettierrc.js
+client-new/tsconfig.json
+
+# Test files
+src/api/tests/
+client-new/src/**/*.test.tsx
+client-new/src/**/*.spec.tsx
+
+# Other
+uploads/ # If these are not meant to be part of the base image
+clear-storage.html
+test-login.html
+fix-linting.sh
+Procfile # Heroku specific, not for Docker usually
