@@ -8,7 +8,12 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=5002
-      - DATABASE_URI=${DATABASE_URI:-mongodb://mongo:27017/solarerp}
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=${DB_NAME:-solarerp}
+      - DB_USERNAME=${DB_USERNAME:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_SSL=${DB_SSL:-false}
       - JWT_SECRET=${JWT_SECRET}
       - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-7d}
       - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:3000}
@@ -24,16 +29,21 @@ services:
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - ADMIN_NAME=${ADMIN_NAME:-System Administrator}
     depends_on:
-      - mongo
+      - postgres
     restart: always
+    command: sh -c "npx sequelize-cli db:migrate && npm start"
 
-  mongo:
-    image: mongo:latest
+  postgres:
+    image: postgres:15-alpine
     ports:
-      - "27017:27017"
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=${DB_USERNAME:-postgres}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}
+      - POSTGRES_DB=${DB_NAME:-solarerp}
     volumes:
-      - mongodb_data:/data/db
+      - postgres_data:/var/lib/postgresql/data
     restart: always
 
 volumes:
-  mongodb_data:
+  postgres_data:

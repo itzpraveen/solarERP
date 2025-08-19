@@ -150,15 +150,23 @@ This application is configured for deployment on Railway:
 
 #### Docker Deployment
 
-The application includes a Dockerfile for containerized deployment:
+The application includes PostgreSQL database in Docker:
 
 ```bash
-# Build the Docker image
-docker build -t solarerp .
+# Start the application with PostgreSQL
+docker-compose up -d
 
-# Run the container
-docker run -p 5002:5002 --env-file .env solarerp
+# View logs
+docker-compose logs -f
+
+# Stop the application
+docker-compose down
 ```
+
+The application will automatically:
+- Create the PostgreSQL database
+- Run migrations to set up tables
+- Create an admin user (if configured)
 
 #### Security Features
 

@@ -1,42 +1,21 @@
 require('dotenv').config();
 const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 
-// Exit gracefully if running in a container during build/install phase
-if (!process.env.DATABASE_URI && !process.env.MONGODB_URI) {
-  console.log('Skipping admin user creation: No database connection string provided');
+// Exit gracefully if database configuration is not provided
+if (!process.env.DB_HOST && !process.env.DB_NAME) {
+  console.log('Skipping admin user creation: No database configuration provided');
   process.exit(0);
 }
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
-const path = require('path');
 
-// Check if user model is available in the current path
-const userModelPath = path.join(__dirname, '../api/models/user.model');
-let User;
-try {
-  User = require(userModelPath);
-} catch (err) {
-  console.error(`Error loading user model from ${userModelPath}:`, err);
-  console.log('Attempting to load from alternative path...');
-  try {
-    User = require('../models/user.model');
-  } catch (err) {
-    console.error('Error loading user model from alternative path:', err);
-    process.exit(1);
-  }
-}
+const db = require('../models');
+const User = db.User;
 
 const createAdminUser = async () => {
   try {
-    // Connect to MongoDB
-    const mongoUri = process.env.DATABASE_URI || process.env.MONGODB_URI;
-    if (!mongoUri) {
-      console.log('No database URI found. Please set DATABASE_URI or MONGODB_URI environment variable.');
-      process.exit(1);
-    }
-    
-    await mongoose.connect(mongoUri);
-    console.log('Connected to MongoDB');
+    // Connect to PostgreSQL
+    await db.sequelize.authenticate();
+    console.log('Connected to PostgreSQL');
 
     // Get admin credentials from environment variables
     const adminEmail = process.env.ADMIN_EMAIL;
@@ -86,10 +65,10 @@ const createAdminUser = async () => {
     const lastName = lastNameParts.join(' ') || 'Administrator';
 
     // Check if admin user already exists
-    const existingAdmin = await User.findOne({ email: adminEmail });
+    const existingAdmin = await User.findOne({ where: { email: adminEmail } });
     if (existingAdmin) {
       console.log(`Admin user with email ${adminEmail} already exists`);
-      await mongoose.disconnect();
+      await db.sequelize.close();
       return;
     }
 
@@ -99,18 +78,16 @@ const createAdminUser = async () => {
       process.exit(1);
     }
 
-    // Create admin user
-    const hashedPassword = await bcrypt.hash(adminPassword, 12);
-    const newAdmin = new User({
+    // Create admin user (password will be hashed by the model hook)
+    const newAdmin = await User.create({
       email: adminEmail,
-      password: hashedPassword,
+      password: adminPassword,
       firstName,
       lastName,
       role: 'admin',
-      isActive: true
+      active: true,
+      isVerified: true
     });
-
-    await newAdmin.save();
     console.log(`Admin user created successfully with email: ${adminEmail}`);
     
     // Security notice
@@ -118,9 +95,9 @@ const createAdminUser = async () => {
       console.log('\nIMPORTANT: Please change the admin password after first login!');
     }
 
-    // Disconnect from MongoDB
-    await mongoose.disconnect();
-    console.log('Disconnected from MongoDB');
+    // Disconnect from PostgreSQL
+    await db.sequelize.close();
+    console.log('Disconnected from PostgreSQL');
   } catch (err) {
     console.error('Error creating admin user:', err);
     process.exit(1);

@@ -1,5 +1,4 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
@@ -164,24 +163,25 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Database connection with better configuration
-const mongoUri = process.env.DATABASE_URI || process.env.MONGODB_URI;
+// Database connection (PostgreSQL via Sequelize)
+const db = require('./models');
 
-if (!mongoUri) {
-  console.error('CRITICAL: DATABASE_URI or MONGODB_URI environment variable is not set!');
-  process.exit(1);
-}
-
-mongoose.connect(mongoUri, {
-  maxPoolSize: 10,
-  serverSelectionTimeoutMS: 5000,
-  socketTimeoutMS: 45000,
-})
+// Sync database
+db.sequelize
+  .authenticate()
   .then(() => {
-    console.log('Connected to MongoDB');
+    console.log('PostgreSQL connection has been established successfully.');
+    
+    // Sync models with database (use migrations in production)
+    if (process.env.NODE_ENV !== 'production') {
+      return db.sequelize.sync({ alter: true });
+    }
+  })
+  .then(() => {
+    console.log('Database models synchronized.');
   })
   .catch(err => {
-    console.error('MongoDB connection error:', err);
+    console.error('Unable to connect to the PostgreSQL database:', err);
     process.exit(1);
   });
 
