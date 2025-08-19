@@ -66,7 +66,7 @@ router.route('/:id/interactions')
 // Lead assignment
 router.route('/:id/assign')
   .patch(
-    check('userId', 'User ID is required').isMongoId(),
+    check('userId', 'User ID is required').isUUID(),
     leadController.assignLead
   );
 

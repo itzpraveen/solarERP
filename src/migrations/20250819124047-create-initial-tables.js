@@ -3,8 +3,10 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up (queryInterface, Sequelize) {
-    // Enable UUID extension for PostgreSQL
+    // Enable UUID/crypto extensions for PostgreSQL
+    // uuid-ossp provides uuid_generate_v4(); pgcrypto provides gen_random_uuid()
     await queryInterface.sequelize.query('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";');
+    await queryInterface.sequelize.query('CREATE EXTENSION IF NOT EXISTS "pgcrypto";');
 
     // Create ENUM types
     await queryInterface.sequelize.query('CREATE TYPE "enum_users_role" AS ENUM(\'user\', \'admin\', \'manager\', \'sales\', \'installer\', \'finance\');');

@@ -57,7 +57,7 @@ router.route('/:id/suppliers/:supplierId')
 // Compatible products
 router.route('/:id/compatible-products')
   .post([
-    check('compatibleProductId', 'Compatible product ID is required').isMongoId()
+    check('compatibleProductId', 'Compatible product ID is required').isUUID()
   ], equipmentController.addCompatibleProduct);
 
 // Discontinue equipment

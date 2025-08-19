@@ -37,7 +37,7 @@ const validateDocument = [
     'user',
     'other'
   ]),
-  check('relatedTo.entityId', 'Valid entity ID is required').isMongoId()
+  check('relatedTo.entityId', 'Valid entity ID is required').isUUID()
 ];
 
 // Search documents

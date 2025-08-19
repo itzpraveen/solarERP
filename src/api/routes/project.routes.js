@@ -10,7 +10,7 @@ router.use(authController.protect);
 // Input validation
 const validateProject = [
   check('name', 'Project name is required').not().isEmpty(),
-  check('customer', 'Customer ID is required').isMongoId(),
+  check('customer', 'Customer ID is required').isUUID(),
   check('systemSize', 'System size is required').isNumeric(),
   check('panelCount', 'Panel count is required').isNumeric(),
   check('panelType', 'Panel type is required').not().isEmpty(),

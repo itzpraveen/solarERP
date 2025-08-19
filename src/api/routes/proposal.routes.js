@@ -12,7 +12,7 @@ router.use(authController.protect);
 
 // Input validation
 const validateProposal = [
-  check('lead', 'Lead ID is required').isMongoId(),
+  check('lead', 'Lead ID is required').isUUID(),
   check('name', 'Proposal name is required').not().isEmpty(),
   check('systemSize', 'System size is required').isNumeric(),
   check('panelCount', 'Panel count is required').isNumeric(),
