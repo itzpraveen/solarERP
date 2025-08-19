@@ -2,51 +2,51 @@ const Equipment = require('../models/equipment.model');
 const Project = require('../models/project.model');
 const AppError = require('../../utils/appError');
 const catchAsync = require('../../utils/catchAsync');
+const {
+  sanitizePagination,
+  sanitizeSort,
+  sanitizeFields,
+  buildSafeQuery,
+  buildAdvancedFilter,
+  validateRequiredFields,
+  sanitizeBody,
+  isValidObjectId,
+  createErrorResponse
+} = require('../../utils/validationHelper');
 
 // Get all equipment with filtering, sorting, and pagination
 exports.getAllEquipment = catchAsync(async (req, res, next) => {
-  // BUILD QUERY
-  // 1) Filtering
-  const queryObj = { ...req.query };
-  const excludedFields = ['page', 'sort', 'limit', 'fields'];
-  excludedFields.forEach(el => delete queryObj[el]);
+  // 1) Build safe query with sanitization and soft delete filtering
+  const sanitizedQuery = buildSafeQuery(req.query, ['page', 'sort', 'limit', 'fields'], true);
+  const advancedQuery = buildAdvancedFilter(sanitizedQuery);
   
-  // 2) Advanced filtering
-  let queryStr = JSON.stringify(queryObj);
-  queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, match => `$${match}`);
+  let query = Equipment.find(advancedQuery);
   
-  let query = Equipment.find(JSON.parse(queryStr));
+  // 2) Safe sorting with allowed fields
+  const allowedSortFields = ['name', 'manufacturer', 'model', 'type', 'price', 'createdAt', 'inventory.inStock'];
+  const sortBy = sanitizeSort(req.query.sort, allowedSortFields, '-createdAt');
+  query = query.sort(sortBy);
   
-  // 3) Sorting
-  if (req.query.sort) {
-    const sortBy = req.query.sort.split(',').join(' ');
-    query = query.sort(sortBy);
-  } else {
-    query = query.sort('-createdAt');
-  }
+  // 3) Safe field limiting
+  const allowedFields = ['name', 'manufacturer', 'model', 'type', 'price', 'specifications', 'inventory', 'discontinued', 'createdAt'];
+  const fields = sanitizeFields(req.query.fields, allowedFields);
+  query = query.select(fields);
   
-  // 4) Field limiting
-  if (req.query.fields) {
-    const fields = req.query.fields.split(',').join(' ');
-    query = query.select(fields);
-  } else {
-    query = query.select('-__v');
-  }
-  
-  // 5) Pagination
-  const page = req.query.page * 1 || 1;
-  const limit = req.query.limit * 1 || 100;
-  const skip = (page - 1) * limit;
-  
+  // 4) Safe pagination with limits
+  const { page, limit, skip } = sanitizePagination(req.query);
   query = query.skip(skip).limit(limit);
   
   // EXECUTE QUERY
   const equipment = await query;
+  const total = await Equipment.countDocuments(advancedQuery);
   
   // SEND RESPONSE
   res.status(200).json({
     status: 'success',
     results: equipment.length,
+    total,
+    page,
+    pages: Math.ceil(total / limit),
     data: {
       equipment
     }
@@ -55,7 +55,12 @@ exports.getAllEquipment = catchAsync(async (req, res, next) => {
 
 // Get equipment by ID
 exports.getEquipment = catchAsync(async (req, res, next) => {
-  const equipment = await Equipment.findById(req.params.id)
+  // Validate ObjectId
+  if (!isValidObjectId(req.params.id)) {
+    return next(new AppError('Invalid equipment ID format', 400));
+  }
+  
+  const equipment = await Equipment.findOne({ _id: req.params.id, active: { $ne: false } })
     .populate({
       path: 'compatibleProducts',
       select: 'name manufacturer model type'
@@ -66,7 +71,7 @@ exports.getEquipment = catchAsync(async (req, res, next) => {
     });
   
   if (!equipment) {
-    return next(new AppError('No equipment found with that ID', 404));
+    return next(new AppError('Equipment not found', 404));
   }
   
   res.status(200).json({
@@ -79,10 +84,37 @@ exports.getEquipment = catchAsync(async (req, res, next) => {
 
 // Create new equipment
 exports.createEquipment = catchAsync(async (req, res, next) => {
-  // Set the creator to the current user
-  req.body.createdBy = req.user.id;
+  // Validate required fields
+  const requiredFields = ['name', 'manufacturer', 'model', 'type'];
+  const missingFields = validateRequiredFields(req.body, requiredFields);
   
-  const newEquipment = await Equipment.create(req.body);
+  if (missingFields.length > 0) {
+    return next(new AppError(`Missing required fields: ${missingFields.join(', ')}`, 400));
+  }
+  
+  // Sanitize input body
+  const sanitizedBody = sanitizeBody(req.body);
+  
+  // Validate numeric fields if provided
+  if (sanitizedBody.price && (isNaN(sanitizedBody.price) || sanitizedBody.price < 0)) {
+    return next(new AppError('Price must be a non-negative number', 400));
+  }
+  
+  // Validate inventory fields if provided
+  if (sanitizedBody.inventory) {
+    const inventoryFields = ['inStock', 'allocated', 'onOrder', 'minimumStock'];
+    for (const field of inventoryFields) {
+      if (sanitizedBody.inventory[field] !== undefined && 
+          (isNaN(sanitizedBody.inventory[field]) || sanitizedBody.inventory[field] < 0)) {
+        return next(new AppError(`${field} must be a non-negative number`, 400));
+      }
+    }
+  }
+  
+  // Set the creator to the current user
+  sanitizedBody.createdBy = req.user.id;
+  
+  const newEquipment = await Equipment.create(sanitizedBody);
   
   res.status(201).json({
     status: 'success',
@@ -94,13 +126,46 @@ exports.createEquipment = catchAsync(async (req, res, next) => {
 
 // Update equipment
 exports.updateEquipment = catchAsync(async (req, res, next) => {
-  const equipment = await Equipment.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-    runValidators: true
-  });
+  // Validate ObjectId
+  if (!isValidObjectId(req.params.id)) {
+    return next(new AppError('Invalid equipment ID format', 400));
+  }
+  
+  // Sanitize input body
+  const sanitizedBody = sanitizeBody(req.body);
+  
+  // Remove fields that shouldn't be updated
+  delete sanitizedBody.createdBy;
+  delete sanitizedBody.createdAt;
+  delete sanitizedBody._id;
+  
+  // Validate numeric fields if provided
+  if (sanitizedBody.price && (isNaN(sanitizedBody.price) || sanitizedBody.price < 0)) {
+    return next(new AppError('Price must be a non-negative number', 400));
+  }
+  
+  // Validate inventory fields if provided
+  if (sanitizedBody.inventory) {
+    const inventoryFields = ['inStock', 'allocated', 'onOrder', 'minimumStock'];
+    for (const field of inventoryFields) {
+      if (sanitizedBody.inventory[field] !== undefined && 
+          (isNaN(sanitizedBody.inventory[field]) || sanitizedBody.inventory[field] < 0)) {
+        return next(new AppError(`${field} must be a non-negative number`, 400));
+      }
+    }
+  }
+  
+  const equipment = await Equipment.findOneAndUpdate(
+    { _id: req.params.id, active: { $ne: false } },
+    sanitizedBody,
+    {
+      new: true,
+      runValidators: true
+    }
+  );
   
   if (!equipment) {
-    return next(new AppError('No equipment found with that ID', 404));
+    return next(new AppError('Equipment not found', 404));
   }
   
   res.status(200).json({
@@ -113,10 +178,19 @@ exports.updateEquipment = catchAsync(async (req, res, next) => {
 
 // Delete equipment (soft delete)
 exports.deleteEquipment = catchAsync(async (req, res, next) => {
-  const equipment = await Equipment.findByIdAndUpdate(req.params.id, { active: false });
+  // Validate ObjectId
+  if (!isValidObjectId(req.params.id)) {
+    return next(new AppError('Invalid equipment ID format', 400));
+  }
+  
+  const equipment = await Equipment.findOneAndUpdate(
+    { _id: req.params.id, active: { $ne: false } },
+    { active: false },
+    { new: true }
+  );
   
   if (!equipment) {
-    return next(new AppError('No equipment found with that ID', 404));
+    return next(new AppError('Equipment not found', 404));
   }
   
   res.status(204).json({
@@ -127,18 +201,35 @@ exports.deleteEquipment = catchAsync(async (req, res, next) => {
 
 // Update inventory levels
 exports.updateInventory = catchAsync(async (req, res, next) => {
-  const equipment = await Equipment.findById(req.params.id);
+  // Validate ObjectId
+  if (!isValidObjectId(req.params.id)) {
+    return next(new AppError('Invalid equipment ID format', 400));
+  }
+  
+  const equipment = await Equipment.findOne({ _id: req.params.id, active: { $ne: false } });
   
   if (!equipment) {
-    return next(new AppError('No equipment found with that ID', 404));
+    return next(new AppError('Equipment not found', 404));
+  }
+  
+  // Sanitize inventory update body
+  const sanitizedBody = sanitizeBody(req.body);
+  
+  // Validate inventory fields
+  const inventoryFields = ['inStock', 'allocated', 'onOrder', 'minimumStock'];
+  for (const field of inventoryFields) {
+    if (sanitizedBody[field] !== undefined && 
+        (isNaN(sanitizedBody[field]) || sanitizedBody[field] < 0)) {
+      return next(new AppError(`${field} must be a non-negative number`, 400));
+    }
   }
   
   // Update inventory values
-  if (req.body.inStock !== undefined) equipment.inventory.inStock = req.body.inStock;
-  if (req.body.allocated !== undefined) equipment.inventory.allocated = req.body.allocated;
-  if (req.body.onOrder !== undefined) equipment.inventory.onOrder = req.body.onOrder;
-  if (req.body.minimumStock !== undefined) equipment.inventory.minimumStock = req.body.minimumStock;
-  if (req.body.location !== undefined) equipment.inventory.location = req.body.location;
+  if (sanitizedBody.inStock !== undefined) equipment.inventory.inStock = sanitizedBody.inStock;
+  if (sanitizedBody.allocated !== undefined) equipment.inventory.allocated = sanitizedBody.allocated;
+  if (sanitizedBody.onOrder !== undefined) equipment.inventory.onOrder = sanitizedBody.onOrder;
+  if (sanitizedBody.minimumStock !== undefined) equipment.inventory.minimumStock = sanitizedBody.minimumStock;
+  if (sanitizedBody.location !== undefined) equipment.inventory.location = sanitizedBody.location;
   
   await equipment.save();
   
@@ -152,14 +243,35 @@ exports.updateInventory = catchAsync(async (req, res, next) => {
 
 // Add supplier to equipment
 exports.addSupplier = catchAsync(async (req, res, next) => {
-  const equipment = await Equipment.findByIdAndUpdate(
-    req.params.id,
-    { $push: { suppliers: req.body } },
+  // Validate ObjectId
+  if (!isValidObjectId(req.params.id)) {
+    return next(new AppError('Invalid equipment ID format', 400));
+  }
+  
+  // Validate required fields
+  const requiredFields = ['name', 'contactInfo'];
+  const missingFields = validateRequiredFields(req.body, requiredFields);
+  
+  if (missingFields.length > 0) {
+    return next(new AppError(`Missing required fields: ${missingFields.join(', ')}`, 400));
+  }
+  
+  // Sanitize supplier body
+  const sanitizedSupplier = sanitizeBody(req.body);
+  
+  // Validate price if provided
+  if (sanitizedSupplier.price && (isNaN(sanitizedSupplier.price) || sanitizedSupplier.price < 0)) {
+    return next(new AppError('Price must be a non-negative number', 400));
+  }
+  
+  const equipment = await Equipment.findOneAndUpdate(
+    { _id: req.params.id, active: { $ne: false } },
+    { $push: { suppliers: sanitizedSupplier } },
     { new: true, runValidators: true }
   );
   
   if (!equipment) {
-    return next(new AppError('No equipment found with that ID', 404));
+    return next(new AppError('Equipment not found', 404));
   }
   
   res.status(200).json({
@@ -172,14 +284,34 @@ exports.addSupplier = catchAsync(async (req, res, next) => {
 
 // Update supplier for equipment
 exports.updateSupplier = catchAsync(async (req, res, next) => {
+  // Validate ObjectIds
+  if (!isValidObjectId(req.params.id)) {
+    return next(new AppError('Invalid equipment ID format', 400));
+  }
+  
+  if (!isValidObjectId(req.params.supplierId)) {
+    return next(new AppError('Invalid supplier ID format', 400));
+  }
+  
+  // Sanitize supplier update body
+  const sanitizedSupplier = sanitizeBody(req.body);
+  
+  // Validate price if provided
+  if (sanitizedSupplier.price && (isNaN(sanitizedSupplier.price) || sanitizedSupplier.price < 0)) {
+    return next(new AppError('Price must be a non-negative number', 400));
+  }
+  
+  // Preserve the supplier ID
+  sanitizedSupplier._id = req.params.supplierId;
+  
   const equipment = await Equipment.findOneAndUpdate(
-    { _id: req.params.id, 'suppliers._id': req.params.supplierId },
-    { $set: { 'suppliers.$': req.body } },
+    { _id: req.params.id, 'suppliers._id': req.params.supplierId, active: { $ne: false } },
+    { $set: { 'suppliers.$': sanitizedSupplier } },
     { new: true, runValidators: true }
   );
   
   if (!equipment) {
-    return next(new AppError('No equipment or supplier found with that ID', 404));
+    return next(new AppError('Equipment or supplier not found', 404));
   }
   
   res.status(200).json({
@@ -192,22 +324,36 @@ exports.updateSupplier = catchAsync(async (req, res, next) => {
 
 // Add compatible product
 exports.addCompatibleProduct = catchAsync(async (req, res, next) => {
-  const { compatibleProductId } = req.body;
-  
-  // Check if the compatible product exists
-  const compatibleProduct = await Equipment.findById(compatibleProductId);
-  if (!compatibleProduct) {
-    return next(new AppError('No compatible product found with that ID', 404));
+  // Validate ObjectIds
+  if (!isValidObjectId(req.params.id)) {
+    return next(new AppError('Invalid equipment ID format', 400));
   }
   
-  const equipment = await Equipment.findByIdAndUpdate(
-    req.params.id,
+  const { compatibleProductId } = req.body;
+  
+  if (!compatibleProductId || !isValidObjectId(compatibleProductId)) {
+    return next(new AppError('Valid compatible product ID is required', 400));
+  }
+  
+  // Prevent self-compatibility
+  if (compatibleProductId === req.params.id) {
+    return next(new AppError('Equipment cannot be compatible with itself', 400));
+  }
+  
+  // Check if the compatible product exists and is active
+  const compatibleProduct = await Equipment.findOne({ _id: compatibleProductId, active: { $ne: false } });
+  if (!compatibleProduct) {
+    return next(new AppError('Compatible product not found', 404));
+  }
+  
+  const equipment = await Equipment.findOneAndUpdate(
+    { _id: req.params.id, active: { $ne: false } },
     { $addToSet: { compatibleProducts: compatibleProductId } },
     { new: true, runValidators: true }
   );
   
   if (!equipment) {
-    return next(new AppError('No equipment found with that ID', 404));
+    return next(new AppError('Equipment not found', 404));
   }
   
   // Add reciprocal compatibility
@@ -226,6 +372,9 @@ exports.addCompatibleProduct = catchAsync(async (req, res, next) => {
 
 // Get low stock equipment
 exports.getLowStockEquipment = catchAsync(async (req, res, next) => {
+  // Safe pagination even for this endpoint
+  const { page, limit, skip } = sanitizePagination(req.query);
+  
   const equipment = await Equipment.find({
     $expr: {
       $lte: [
@@ -233,12 +382,30 @@ exports.getLowStockEquipment = catchAsync(async (req, res, next) => {
         '$inventory.minimumStock'
       ]
     },
-    discontinued: false
-  }).sort('inventory.inStock');
+    discontinued: false,
+    active: { $ne: false }
+  })
+  .sort('inventory.inStock')
+  .skip(skip)
+  .limit(limit);
+  
+  const total = await Equipment.countDocuments({
+    $expr: {
+      $lte: [
+        { $subtract: ['$inventory.inStock', '$inventory.allocated'] },
+        '$inventory.minimumStock'
+      ]
+    },
+    discontinued: false,
+    active: { $ne: false }
+  });
   
   res.status(200).json({
     status: 'success',
     results: equipment.length,
+    total,
+    page,
+    pages: Math.ceil(total / limit),
     data: {
       equipment
     }
@@ -247,14 +414,19 @@ exports.getLowStockEquipment = catchAsync(async (req, res, next) => {
 
 // Set equipment as discontinued
 exports.discontinueEquipment = catchAsync(async (req, res, next) => {
-  const equipment = await Equipment.findByIdAndUpdate(
-    req.params.id,
+  // Validate ObjectId
+  if (!isValidObjectId(req.params.id)) {
+    return next(new AppError('Invalid equipment ID format', 400));
+  }
+  
+  const equipment = await Equipment.findOneAndUpdate(
+    { _id: req.params.id, active: { $ne: false } },
     { discontinued: true },
     { new: true }
   );
   
   if (!equipment) {
-    return next(new AppError('No equipment found with that ID', 404));
+    return next(new AppError('Equipment not found', 404));
   }
   
   res.status(200).json({
@@ -267,21 +439,42 @@ exports.discontinueEquipment = catchAsync(async (req, res, next) => {
 
 // Get equipment usage in projects
 exports.getEquipmentUsage = catchAsync(async (req, res, next) => {
-  const equipment = await Equipment.findById(req.params.id);
+  // Validate ObjectId
+  if (!isValidObjectId(req.params.id)) {
+    return next(new AppError('Invalid equipment ID format', 400));
+  }
+  
+  const equipment = await Equipment.findOne({ _id: req.params.id, active: { $ne: false } });
   
   if (!equipment) {
-    return next(new AppError('No equipment found with that ID', 404));
+    return next(new AppError('Equipment not found', 404));
   }
+  
+  // Safe pagination for project results
+  const { page, limit, skip } = sanitizePagination(req.query);
   
   // Find projects that use this equipment
   const projects = await Project.find({
     'equipment.manufacturer': equipment.manufacturer,
-    'equipment.model': equipment.model
-  }).select('name customer stage');
+    'equipment.model': equipment.model,
+    active: { $ne: false }
+  })
+  .select('name customer stage')
+  .skip(skip)
+  .limit(limit);
+  
+  const total = await Project.countDocuments({
+    'equipment.manufacturer': equipment.manufacturer,
+    'equipment.model': equipment.model,
+    active: { $ne: false }
+  });
   
   res.status(200).json({
     status: 'success',
     results: projects.length,
+    total,
+    page,
+    pages: Math.ceil(total / limit),
     data: {
       projects
     }

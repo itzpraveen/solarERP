@@ -1,6 +1,6 @@
-# SolarERP - Solar Business Management System
+# SolarERP - Solar Installation Management System
 
-A comprehensive ERP system designed specifically for solar installation companies to manage leads, proposals, customers, projects, equipment, and documents.
+A comprehensive ERP solution for managing solar installation projects, customer relationships, and business operations. Built with security-first approach and modern web technologies.
 
 ## Features
 
@@ -41,19 +41,28 @@ A comprehensive ERP system designed specifically for solar installation companie
 
 ## Tech Stack
 
-- **Backend**: Node.js, Express
-- **Database**: MongoDB with Mongoose ODM
-- **Authentication**: JWT-based authentication with role-based access control
-- **File Storage**: Local file storage with multer (configurable for cloud storage)
-- **Security**: Implemented with helmet, rate limiting, and input validation
+### Backend
+- **Runtime**: Node.js 16+ with Express.js framework
+- **Database**: MongoDB 5.0+ with Mongoose ODM
+- **Authentication**: JWT with account locking and brute force protection
+- **Security**: Helmet, CORS, rate limiting, input validation & sanitization
+- **File Storage**: Multer with size validation (configurable for cloud storage)
+
+### Frontend
+- **Framework**: React 19 with TypeScript
+- **UI Components**: Material-UI (MUI)
+- **State Management**: React Context API
+- **HTTP Client**: Axios with interceptors
+- **Routing**: React Router v7
+- **Charts**: Recharts for data visualization
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js (v14+)
-- MongoDB (local or cloud instance)
-- npm or yarn
+- Node.js 16+ and npm
+- MongoDB 5.0+ (local or cloud instance)
+- Git
 
 ### Installation
 
@@ -68,24 +77,66 @@ cd solarERP
 npm install
 ```
 
-3. Create a .env file in the root directory with the following variables:
-```
-NODE_ENV=development
-PORT=5000
-MONGODB_URI=mongodb://localhost:27017/solarERP (or your MongoDB connection string)
-JWT_SECRET=your_secure_jwt_secret
-JWT_EXPIRES_IN=7d
-EMAIL_HOST=your_email_smtp_host
-EMAIL_PORT=587
-EMAIL_USERNAME=your_email@example.com
-EMAIL_PASSWORD=your_email_password
-REDIS_URL=redis://localhost:6379
+3. Set up environment variables:
+```bash
+cp .env.example .env
 ```
 
-4. Start the development server
-```bash
-npm run dev
+Edit `.env` with your configuration:
+```env
+# Database
+DATABASE_URI=mongodb://localhost:27017/solarerp
+
+# Security (Generate a secure 32+ character string)
+JWT_SECRET=your-very-secure-random-string-minimum-32-chars
+JWT_EXPIRES_IN=7d
+
+# Server
+NODE_ENV=development
+PORT=5000
+
+# Client
+CLIENT_URL=http://localhost:3000
+CORS_ORIGIN=http://localhost:3000
+
+# Admin Account (for initial setup)
+ADMIN_EMAIL=admin@yourcompany.com
+ADMIN_PASSWORD=SecurePassword123!
+ADMIN_NAME=System Administrator
+
+# Email (Optional)
+EMAIL_HOST=smtp.example.com
+EMAIL_PORT=587
+EMAIL_USERNAME=your-email@example.com
+EMAIL_PASSWORD=your-email-password
+EMAIL_FROM=noreply@solarerp.com
 ```
+
+4. Install frontend dependencies:
+```bash
+cd client-new
+npm install
+cd ..
+```
+
+5. Create admin user:
+```bash
+npm run create-admin
+```
+
+6. Start the development servers:
+```bash
+# Terminal 1 - Backend
+npm run dev
+
+# Terminal 2 - Frontend
+cd client-new
+npm start
+```
+
+Access the application at:
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:5000
 
 ### Deployment
 
@@ -109,16 +160,18 @@ docker build -t solarerp .
 docker run -p 5002:5002 --env-file .env solarerp
 ```
 
-#### Admin User Creation
+#### Security Features
 
-An admin user is automatically created during installation. You can customize the admin credentials by setting these environment variables:
-
-```
-ADMIN_EMAIL=admin@solarerp.com
-ADMIN_PASSWORD=Admin@123
-ADMIN_FIRST_NAME=Admin
-ADMIN_LAST_NAME=User
-```
+- **JWT Authentication**: Secure token-based authentication with issuer/audience validation
+- **Password Security**: Minimum 8 characters with complexity requirements (uppercase, lowercase, number)
+- **Account Locking**: Automatic lock after 5 failed login attempts (2-hour lockout)
+- **Rate Limiting**: Protection against brute force attacks (5 attempts per 15 minutes for auth endpoints)
+- **Input Validation**: All inputs validated and sanitized to prevent XSS and injection attacks
+- **CORS Protection**: Configurable CORS with strict origin validation
+- **NoSQL Injection Prevention**: Query sanitization and parameterized queries
+- **File Upload Security**: Size limits (5MB default) and type validation
+- **CSP Headers**: Content Security Policy to prevent XSS attacks
+- **HTTPS Enforcement**: Secure cookie flags and HSTS headers in production
 
 ### API Documentation
 
@@ -133,9 +186,88 @@ API endpoints are organized by resource:
 - **Documents**: `/api/documents` - Document storage and sharing
 - **Reports**: `/api/reports` - Analytics and reporting
 
+## Production Deployment
+
+### Environment Variables for Production
+
+Ensure all sensitive variables are properly set:
+- Use strong, unique JWT_SECRET (minimum 32 characters)
+- Set NODE_ENV=production
+- Configure proper CORS_ORIGIN for your domain
+- Use secure database connection strings with authentication
+- Enable SSL/TLS for database connections
+- Configure email service for password resets
+
+### Health Check Endpoints
+
+- `GET /` - Basic health check
+- `GET /api/health` - Detailed health status (if implemented)
+
+## Troubleshooting
+
+### Common Issues
+
+1. **MongoDB Connection Failed**
+   - Ensure MongoDB is running: `mongosh --eval "db.adminCommand('ping')"`
+   - Check connection string format
+   - Verify network access to MongoDB
+
+2. **JWT Secret Error**
+   - Ensure JWT_SECRET is set in environment variables
+   - Secret must be at least 32 characters long
+
+3. **CORS Errors**
+   - Update CORS_ORIGIN in .env to match your frontend URL
+   - Ensure credentials are included in requests
+
+4. **Build Errors**
+   ```bash
+   # Clear cache and reinstall
+   rm -rf node_modules package-lock.json
+   npm install
+   cd client-new
+   rm -rf node_modules package-lock.json
+   npm install
+   ```
+
+## Testing
+
+```bash
+# Run backend tests
+npm test
+
+# Run frontend tests
+cd client-new
+npm test
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## Changelog
+
+### v1.1.0 - Security & Performance Update
+- Enhanced JWT security with issuer/audience validation
+- Added account locking after failed login attempts
+- Implemented comprehensive input validation and sanitization
+- Added rate limiting on sensitive endpoints
+- Fixed NoSQL injection vulnerabilities
+- Added pagination limits to prevent DoS
+- Implemented proper CORS configuration
+- Added file upload size validation
+- Enhanced password complexity requirements
+- Improved error handling without information leakage
+- Added database indexes for better performance
+- Fixed all critical security vulnerabilities identified in code review
+
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the ISC License - see the LICENSE file for details.
 
 ## Acknowledgments
 

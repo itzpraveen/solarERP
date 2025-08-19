@@ -8,13 +8,21 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=5002
-      - MONGODB_URI=${MONGODB_URI}
+      - DATABASE_URI=${DATABASE_URI:-mongodb://mongo:27017/solarerp}
       - JWT_SECRET=${JWT_SECRET}
-      - JWT_EXPIRES_IN=7d
-      - ADMIN_EMAIL=admin@solarerp.com
-      - ADMIN_PASSWORD=Admin@123
-      - ADMIN_FIRST_NAME=Admin
-      - ADMIN_LAST_NAME=User
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-7d}
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:3000}
+      - CLIENT_URL=${CLIENT_URL:-http://localhost:3000}
+      - RATE_LIMIT_MAX=${RATE_LIMIT_MAX:-100}
+      - RATE_LIMIT_WINDOW_MS=${RATE_LIMIT_WINDOW_MS:-900000}
+      - EMAIL_HOST=${EMAIL_HOST}
+      - EMAIL_PORT=${EMAIL_PORT}
+      - EMAIL_USERNAME=${EMAIL_USERNAME}
+      - EMAIL_PASSWORD=${EMAIL_PASSWORD}
+      - EMAIL_FROM=${EMAIL_FROM:-noreply@solarerp.com}
+      - ADMIN_EMAIL=${ADMIN_EMAIL}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD}
+      - ADMIN_NAME=${ADMIN_NAME:-System Administrator}
     depends_on:
       - mongo
     restart: always

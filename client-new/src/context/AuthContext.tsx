@@ -3,10 +3,12 @@ import axios from 'axios';
 
 interface User {
   id: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   role: string;
   avatar?: string;
+  isVerified?: boolean;
 }
 
 interface AuthContextType {
@@ -26,10 +28,10 @@ interface AuthProviderProps {
 }
 
 interface RegisterFormData {
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
   password: string;
-  role?: string;
 }
 
 export const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -43,9 +45,16 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   useEffect(() => {
     const checkLoggedIn = async () => {
       try {
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('authToken');
         
         if (!token) {
+          setLoading(false);
+          return;
+        }
+        
+        // Validate token format
+        if (!token.includes('.')) {
+          localStorage.removeItem('authToken');
           setLoading(false);
           return;
         }
@@ -57,23 +66,33 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
           // Verify token & get user data
           const res = await axios.get('/api/auth/me');
           
-          setUser(res.data.data);
-          setIsAuthenticated(true);
-          setLoading(false);
+          if (res.data?.data) {
+            setUser(res.data.data);
+            setIsAuthenticated(true);
+          } else {
+            throw new Error('Invalid user data');
+          }
         } catch (err: any) {
-          console.error('Auth verification failed:', err);
-          localStorage.removeItem('token');
+          if (process.env.NODE_ENV === 'development') {
+            console.error('Auth verification failed:', err);
+          }
+          localStorage.removeItem('authToken');
+          setAuthToken(null);
           setUser(null);
           setIsAuthenticated(false);
-          setError(err.response?.data?.message || 'Authentication failed');
-          setLoading(false);
+          if (err.response?.status !== 401) {
+            setError(err.response?.data?.message || 'Authentication failed');
+          }
         }
       } catch (err: any) {
-        console.error('Auth token error:', err);
-        localStorage.removeItem('token');
+        if (process.env.NODE_ENV === 'development') {
+          console.error('Auth token error:', err);
+        }
+        localStorage.removeItem('authToken');
+        setAuthToken(null);
         setUser(null);
         setIsAuthenticated(false);
-        setError('Authentication initialization failed');
+      } finally {
         setLoading(false);
       }
     };
@@ -93,56 +112,106 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   // Register user
   const register = async (formData: RegisterFormData) => {
     try {
-      const res = await axios.post('/api/auth/register', formData);
-      
-      localStorage.setItem('token', res.data.token);
-      setAuthToken(res.data.token);
-      
-      // Get user data
-      const userRes = await axios.get('/api/auth/me');
-      
-      setUser(userRes.data.data);
-      setIsAuthenticated(true);
-      setLoading(false);
       setError(null);
       
-      return res.data;
+      // Validate input
+      if (!formData.email || !formData.password || !formData.firstName || !formData.lastName) {
+        throw new Error('All fields are required');
+      }
+      
+      if (formData.password.length < 8) {
+        throw new Error('Password must be at least 8 characters');
+      }
+      
+      const res = await axios.post('/api/auth/signup', formData);
+      
+      if (res.data?.token) {
+        localStorage.setItem('authToken', res.data.token);
+        setAuthToken(res.data.token);
+        
+        if (res.data?.data?.user) {
+          setUser(res.data.data.user);
+          setIsAuthenticated(true);
+        }
+        
+        setError(null);
+        return { success: true, data: res.data };
+      } else {
+        throw new Error('Invalid response from server');
+      }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Registration failed');
-      return { success: false, error: err.response?.data?.message || 'Registration failed' };
+      const errorMessage = err.response?.data?.message || err.message || 'Registration failed';
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
+    } finally {
+      setLoading(false);
     }
   };
   
   // Login user
   const login = async (email: string, password: string) => {
     try {
+      setError(null);
+      setLoading(true);
+      
+      // Validate input
+      if (!email || !password) {
+        throw new Error('Email and password are required');
+      }
+      
       const res = await axios.post('/api/auth/login', { email, password });
       
-      localStorage.setItem('token', res.data.token);
-      setAuthToken(res.data.token);
-      
-      // Get user data
-      const userRes = await axios.get('/api/auth/me');
-      
-      setUser(userRes.data.data);
-      setIsAuthenticated(true);
-      setLoading(false);
-      setError(null);
-      
-      return { success: true };
+      if (res.data?.token) {
+        localStorage.setItem('authToken', res.data.token);
+        setAuthToken(res.data.token);
+        
+        if (res.data?.data?.user) {
+          setUser(res.data.data.user);
+          setIsAuthenticated(true);
+        } else {
+          // Fetch user data if not included in login response
+          const userRes = await axios.get('/api/auth/me');
+          if (userRes.data?.data) {
+            setUser(userRes.data.data);
+            setIsAuthenticated(true);
+          }
+        }
+        
+        setError(null);
+        return { success: true };
+      } else {
+        throw new Error('Invalid response from server');
+      }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Invalid credentials');
-      return { success: false, error: err.response?.data?.message || 'Invalid credentials' };
+      const errorMessage = err.response?.data?.message || err.message || 'Invalid credentials';
+      setError(errorMessage);
+      setIsAuthenticated(false);
+      setUser(null);
+      localStorage.removeItem('authToken');
+      setAuthToken(null);
+      return { success: false, error: errorMessage };
+    } finally {
+      setLoading(false);
     }
   };
   
   // Logout user
-  const logout = () => {
-    localStorage.removeItem('token');
-    setAuthToken(null);
-    setUser(null);
-    setIsAuthenticated(false);
-    setError(null);
+  const logout = async () => {
+    try {
+      // Call logout endpoint if available
+      await axios.post('/api/auth/logout').catch(() => {});
+    } catch (err) {
+      // Ignore logout endpoint errors
+    } finally {
+      localStorage.removeItem('authToken');
+      sessionStorage.clear();
+      setAuthToken(null);
+      setUser(null);
+      setIsAuthenticated(false);
+      setError(null);
+      // Redirect to login page
+      window.location.href = '/login';
+    }
   };
   
   // Update user data

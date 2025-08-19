@@ -8,16 +8,17 @@ const crypto = require('crypto');
 
 // Create JWT token
 const signToken = id => {
-  // Fallback JWT secret in case environment variable is not set
-  const jwtSecret = process.env.JWT_SECRET || '692cb33671b08ed48e58c5a70696b5cdc3038b8b919af6a83792541b1c507203df53c7ba89b3e3f5f13ae695a3a7ed608ea49a2cc111cef99d6120867553276d';
+  const jwtSecret = process.env.JWT_SECRET;
   const jwtExpiresIn = process.env.JWT_EXPIRES_IN || '7d';
   
-  if (!jwtSecret) {
-    throw new Error('JWT_SECRET is not defined. Please check your environment variables.');
+  if (!jwtSecret || jwtSecret.length < 32) {
+    throw new Error('JWT_SECRET must be defined and at least 32 characters long. Please check your environment variables.');
   }
   
   return jwt.sign({ id }, jwtSecret, {
-    expiresIn: jwtExpiresIn
+    expiresIn: jwtExpiresIn,
+    issuer: 'solarerp',
+    audience: 'solarerp-client'
   });
 };
 
@@ -39,13 +40,38 @@ const createSendToken = (user, statusCode, res) => {
 
 // Register new user
 exports.signup = catchAsync(async (req, res, next) => {
+  // Validate required fields
+  const { firstName, lastName, email, password } = req.body;
+  
+  if (!firstName || !lastName || !email || !password) {
+    return next(new AppError('Please provide all required fields', 400));
+  }
+  
+  // Check if user already exists
+  const existingUser = await User.findOne({ email });
+  if (existingUser) {
+    return next(new AppError('User with this email already exists', 409));
+  }
+  
+  // Create new user (role is always 'user' for signup)
   const newUser = await User.create({
-    firstName: req.body.firstName,
-    lastName: req.body.lastName,
-    email: req.body.email,
-    password: req.body.password,
-    role: req.body.role || 'user'
+    firstName,
+    lastName,
+    email,
+    password,
+    role: 'user' // Never allow role to be set during signup
   });
+  
+  // Send welcome email (optional - uncomment if email service is configured)
+  // try {
+  //   await sendEmail({
+  //     email: newUser.email,
+  //     subject: 'Welcome to SolarERP',
+  //     message: `Welcome ${newUser.firstName}! Your account has been created successfully.`
+  //   });
+  // } catch (err) {
+  //   console.error('Failed to send welcome email:', err);
+  // }
   
   createSendToken(newUser, 201, res);
 });
@@ -59,14 +85,30 @@ exports.login = catchAsync(async (req, res, next) => {
     return next(new AppError('Please provide email and password!', 400));
   }
   
-  // 2) Check if user exists && password is correct
-  const user = await User.findOne({ email }).select('+password');
+  // 2) Check if user exists
+  const user = await User.findOne({ email }).select('+password +loginAttempts +lockUntil');
   
-  if (!user || !(await user.correctPassword(password, user.password))) {
+  if (!user) {
     return next(new AppError('Incorrect email or password', 401));
   }
   
-  // 3) If everything ok, send token to client
+  // 3) Check if account is locked
+  if (user.isLocked) {
+    return next(new AppError('Account is locked due to too many failed login attempts. Please try again later.', 423));
+  }
+  
+  // 4) Check if password is correct
+  const isPasswordCorrect = await user.correctPassword(password, user.password);
+  
+  if (!isPasswordCorrect) {
+    await user.incLoginAttempts();
+    return next(new AppError('Incorrect email or password', 401));
+  }
+  
+  // 5) Reset login attempts and update last login
+  await user.resetLoginAttempts();
+  
+  // 6) If everything ok, send token to client
   createSendToken(user, 200, res);
 });
 
@@ -88,8 +130,25 @@ exports.protect = catchAsync(async (req, res, next) => {
   }
   
   // 2) Verification token
-  const jwtSecret = process.env.JWT_SECRET || '692cb33671b08ed48e58c5a70696b5cdc3038b8b919af6a83792541b1c507203df53c7ba89b3e3f5f13ae695a3a7ed608ea49a2cc111cef99d6120867553276d';
-  const decoded = await promisify(jwt.verify)(token, jwtSecret);
+  const jwtSecret = process.env.JWT_SECRET;
+  if (!jwtSecret) {
+    return next(new AppError('Server configuration error. Please contact administrator.', 500));
+  }
+  
+  let decoded;
+  try {
+    decoded = await promisify(jwt.verify)(token, jwtSecret, {
+      issuer: 'solarerp',
+      audience: 'solarerp-client'
+    });
+  } catch (error) {
+    if (error.name === 'JsonWebTokenError') {
+      return next(new AppError('Invalid token. Please log in again.', 401));
+    } else if (error.name === 'TokenExpiredError') {
+      return next(new AppError('Your token has expired. Please log in again.', 401));
+    }
+    return next(new AppError('Token verification failed.', 401));
+  }
   
   // 3) Check if user still exists
   const currentUser = await User.findById(decoded.id);
@@ -141,11 +200,10 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
   await user.save({ validateBeforeSave: false });
   
   // 3) Send it to user's email
-  const resetURL = `${req.protocol}://${req.get(
-    'host'
-  )}/api/auth/resetPassword/${resetToken}`;
+  const clientUrl = process.env.CLIENT_URL || `${req.protocol}://${req.get('host')}`;
+  const resetURL = `${clientUrl}/reset-password/${resetToken}`;
   
-  const message = `Forgot your password? Submit a PATCH request with your new password to: ${resetURL}.\\nIf you didn't forget your password, please ignore this email!`;
+  const message = `Hi ${user.firstName},\\n\\nYou requested a password reset for your SolarERP account.\\n\\nPlease click the following link to reset your password:\\n${resetURL}\\n\\nThis link will expire in 10 minutes.\\n\\nIf you didn't request this password reset, please ignore this email and your password will remain unchanged.\\n\\nBest regards,\\nSolarERP Team`;
   
   try {
     await sendEmail({
@@ -227,27 +285,37 @@ exports.getMe = catchAsync(async (req, res, next) => {
 
 // Create demo user (only for development)
 exports.createDemoUser = catchAsync(async (req, res, next) => {
+  // This endpoint should only be available in development
+  if (process.env.NODE_ENV === 'production') {
+    return next(new AppError('This endpoint is not available in production', 403));
+  }
+  
+  // Additional security: require a secret key
+  const demoKey = req.headers['x-demo-key'];
+  if (demoKey !== process.env.DEMO_KEY) {
+    return next(new AppError('Invalid demo key', 403));
+  }
+  
   // Check if demo user already exists
   const existingUser = await User.findOne({ email: 'demo@example.com' });
   
   if (existingUser) {
     return res.status(200).json({
       status: 'success',
-      message: 'Demo user already exists',
-      data: {
-        email: 'demo@example.com',
-        password: 'password123'
-      }
+      message: 'Demo user already exists'
     });
   }
+  
+  // Generate a random password for demo user
+  const demoPassword = crypto.randomBytes(16).toString('hex');
   
   // Create a new demo user
   const demoUser = await User.create({
     firstName: 'Demo',
     lastName: 'User',
     email: 'demo@example.com',
-    password: 'password123',
-    role: 'admin'
+    password: demoPassword,
+    role: 'user' // Demo user should have limited permissions
   });
   
   res.status(201).json({
@@ -255,7 +323,8 @@ exports.createDemoUser = catchAsync(async (req, res, next) => {
     message: 'Demo user created successfully',
     data: {
       email: 'demo@example.com',
-      password: 'password123'
+      password: demoPassword,
+      note: 'Please save this password as it will not be shown again'
     }
   });
 });

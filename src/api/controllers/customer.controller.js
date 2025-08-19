@@ -3,51 +3,53 @@ const Lead = require('../models/lead.model');
 const Proposal = require('../models/proposal.model');
 const AppError = require('../../utils/appError');
 const catchAsync = require('../../utils/catchAsync');
+const {
+  sanitizePagination,
+  sanitizeSort,
+  sanitizeFields,
+  buildSafeQuery,
+  buildAdvancedFilter,
+  validateRequiredFields,
+  sanitizeBody,
+  isValidObjectId,
+  isValidEmail,
+  isValidPhone,
+  createErrorResponse
+} = require('../../utils/validationHelper');
 
 // Get all customers with filtering, sorting, and pagination
 exports.getAllCustomers = catchAsync(async (req, res, next) => {
-  // BUILD QUERY
-  // 1) Filtering
-  const queryObj = { ...req.query };
-  const excludedFields = ['page', 'sort', 'limit', 'fields'];
-  excludedFields.forEach(el => delete queryObj[el]);
+  // 1) Build safe query with sanitization and soft delete filtering
+  const sanitizedQuery = buildSafeQuery(req.query, ['page', 'sort', 'limit', 'fields'], true);
+  const advancedQuery = buildAdvancedFilter(sanitizedQuery);
   
-  // 2) Advanced filtering
-  let queryStr = JSON.stringify(queryObj);
-  queryStr = queryStr.replace(/\b(gte|gt|lte|lt)\b/g, match => `$${match}`);
+  let query = Customer.find(advancedQuery);
   
-  let query = Customer.find(JSON.parse(queryStr));
+  // 2) Safe sorting with allowed fields
+  const allowedSortFields = ['firstName', 'lastName', 'email', 'phone', 'customerSince', 'createdAt'];
+  const sortBy = sanitizeSort(req.query.sort, allowedSortFields, '-customerSince');
+  query = query.sort(sortBy);
   
-  // 3) Sorting
-  if (req.query.sort) {
-    const sortBy = req.query.sort.split(',').join(' ');
-    query = query.sort(sortBy);
-  } else {
-    query = query.sort('-customerSince');
-  }
+  // 3) Safe field limiting
+  const allowedFields = ['firstName', 'lastName', 'email', 'phone', 'address', 'customerSince', 'originalLead', 'acceptedProposal', 'projects'];
+  const fields = sanitizeFields(req.query.fields, allowedFields);
+  query = query.select(fields);
   
-  // 4) Field limiting
-  if (req.query.fields) {
-    const fields = req.query.fields.split(',').join(' ');
-    query = query.select(fields);
-  } else {
-    query = query.select('-__v');
-  }
-  
-  // 5) Pagination
-  const page = req.query.page * 1 || 1;
-  const limit = req.query.limit * 1 || 100;
-  const skip = (page - 1) * limit;
-  
+  // 4) Safe pagination with limits
+  const { page, limit, skip } = sanitizePagination(req.query);
   query = query.skip(skip).limit(limit);
   
   // EXECUTE QUERY
   const customers = await query;
+  const total = await Customer.countDocuments(advancedQuery);
   
   // SEND RESPONSE
   res.status(200).json({
     status: 'success',
     results: customers.length,
+    total,
+    page,
+    pages: Math.ceil(total / limit),
     data: {
       customers
     }
@@ -56,7 +58,12 @@ exports.getAllCustomers = catchAsync(async (req, res, next) => {
 
 // Get customer by ID
 exports.getCustomer = catchAsync(async (req, res, next) => {
-  const customer = await Customer.findById(req.params.id)
+  // Validate ObjectId
+  if (!isValidObjectId(req.params.id)) {
+    return next(new AppError('Invalid customer ID format', 400));
+  }
+  
+  const customer = await Customer.findOne({ _id: req.params.id, active: { $ne: false } })
     .populate({
       path: 'originalLead',
       select: 'status source category'
@@ -67,7 +74,8 @@ exports.getCustomer = catchAsync(async (req, res, next) => {
     })
     .populate({
       path: 'projects',
-      select: 'name status stage'
+      select: 'name status stage',
+      match: { active: { $ne: false } }
     })
     .populate({
       path: 'notes.createdBy',
@@ -75,7 +83,7 @@ exports.getCustomer = catchAsync(async (req, res, next) => {
     });
   
   if (!customer) {
-    return next(new AppError('No customer found with that ID', 404));
+    return next(new AppError('Customer not found', 404));
   }
   
   res.status(200).json({
@@ -88,26 +96,55 @@ exports.getCustomer = catchAsync(async (req, res, next) => {
 
 // Create new customer
 exports.createCustomer = catchAsync(async (req, res, next) => {
+  // Validate required fields
+  const requiredFields = ['firstName', 'lastName', 'email', 'phone'];
+  const missingFields = validateRequiredFields(req.body, requiredFields);
+  
+  if (missingFields.length > 0) {
+    return next(new AppError(`Missing required fields: ${missingFields.join(', ')}`, 400));
+  }
+  
+  // Sanitize input body
+  const sanitizedBody = sanitizeBody(req.body);
+  
+  // Validate email format
+  if (!isValidEmail(sanitizedBody.email)) {
+    return next(new AppError('Invalid email format', 400));
+  }
+  
+  // Validate phone format
+  if (!isValidPhone(sanitizedBody.phone)) {
+    return next(new AppError('Invalid phone format', 400));
+  }
+  
   // Set the creator to the current user
-  req.body.createdBy = req.user.id;
+  sanitizedBody.createdBy = req.user.id;
   
   // Verify that the lead exists if provided
-  if (req.body.originalLead) {
-    const lead = await Lead.findById(req.body.originalLead);
+  if (sanitizedBody.originalLead) {
+    if (!isValidObjectId(sanitizedBody.originalLead)) {
+      return next(new AppError('Invalid lead ID format', 400));
+    }
+    
+    const lead = await Lead.findOne({ _id: sanitizedBody.originalLead, active: { $ne: false } });
     if (!lead) {
-      return next(new AppError('No lead found with that ID', 404));
+      return next(new AppError('Lead not found', 404));
     }
   }
   
   // Verify that the proposal exists if provided
-  if (req.body.acceptedProposal) {
-    const proposal = await Proposal.findById(req.body.acceptedProposal);
+  if (sanitizedBody.acceptedProposal) {
+    if (!isValidObjectId(sanitizedBody.acceptedProposal)) {
+      return next(new AppError('Invalid proposal ID format', 400));
+    }
+    
+    const proposal = await Proposal.findOne({ _id: sanitizedBody.acceptedProposal, active: { $ne: false } });
     if (!proposal) {
-      return next(new AppError('No proposal found with that ID', 404));
+      return next(new AppError('Proposal not found', 404));
     }
   }
   
-  const newCustomer = await Customer.create(req.body);
+  const newCustomer = await Customer.create(sanitizedBody);
   
   res.status(201).json({
     status: 'success',
@@ -119,13 +156,49 @@ exports.createCustomer = catchAsync(async (req, res, next) => {
 
 // Update customer
 exports.updateCustomer = catchAsync(async (req, res, next) => {
-  const customer = await Customer.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-    runValidators: true
-  });
+  // Validate ObjectId
+  if (!isValidObjectId(req.params.id)) {
+    return next(new AppError('Invalid customer ID format', 400));
+  }
+  
+  // Sanitize input body
+  const sanitizedBody = sanitizeBody(req.body);
+  
+  // Remove fields that shouldn't be updated
+  delete sanitizedBody.createdBy;
+  delete sanitizedBody.createdAt;
+  delete sanitizedBody._id;
+  
+  // Validate email if provided
+  if (sanitizedBody.email && !isValidEmail(sanitizedBody.email)) {
+    return next(new AppError('Invalid email format', 400));
+  }
+  
+  // Validate phone if provided
+  if (sanitizedBody.phone && !isValidPhone(sanitizedBody.phone)) {
+    return next(new AppError('Invalid phone format', 400));
+  }
+  
+  // Validate referenced IDs if provided
+  if (sanitizedBody.originalLead && !isValidObjectId(sanitizedBody.originalLead)) {
+    return next(new AppError('Invalid lead ID format', 400));
+  }
+  
+  if (sanitizedBody.acceptedProposal && !isValidObjectId(sanitizedBody.acceptedProposal)) {
+    return next(new AppError('Invalid proposal ID format', 400));
+  }
+  
+  const customer = await Customer.findOneAndUpdate(
+    { _id: req.params.id, active: { $ne: false } },
+    sanitizedBody,
+    {
+      new: true,
+      runValidators: true
+    }
+  );
   
   if (!customer) {
-    return next(new AppError('No customer found with that ID', 404));
+    return next(new AppError('Customer not found', 404));
   }
   
   res.status(200).json({
@@ -138,10 +211,19 @@ exports.updateCustomer = catchAsync(async (req, res, next) => {
 
 // Delete customer (soft delete)
 exports.deleteCustomer = catchAsync(async (req, res, next) => {
-  const customer = await Customer.findByIdAndUpdate(req.params.id, { active: false });
+  // Validate ObjectId
+  if (!isValidObjectId(req.params.id)) {
+    return next(new AppError('Invalid customer ID format', 400));
+  }
+  
+  const customer = await Customer.findOneAndUpdate(
+    { _id: req.params.id, active: { $ne: false } },
+    { active: false },
+    { new: true }
+  );
   
   if (!customer) {
-    return next(new AppError('No customer found with that ID', 404));
+    return next(new AppError('Customer not found', 404));
   }
   
   res.status(204).json({
@@ -152,17 +234,28 @@ exports.deleteCustomer = catchAsync(async (req, res, next) => {
 
 // Add note to customer
 exports.addCustomerNote = catchAsync(async (req, res, next) => {
-  // Set the creator to the current user
-  req.body.createdBy = req.user.id;
+  // Validate ObjectId
+  if (!isValidObjectId(req.params.id)) {
+    return next(new AppError('Invalid customer ID format', 400));
+  }
   
-  const customer = await Customer.findByIdAndUpdate(
-    req.params.id,
-    { $push: { notes: req.body } },
+  // Validate required fields
+  if (!req.body.text || req.body.text.trim() === '') {
+    return next(new AppError('Note text is required', 400));
+  }
+  
+  // Sanitize note body
+  const sanitizedNote = sanitizeBody(req.body);
+  sanitizedNote.createdBy = req.user.id;
+  
+  const customer = await Customer.findOneAndUpdate(
+    { _id: req.params.id, active: { $ne: false } },
+    { $push: { notes: sanitizedNote } },
     { new: true, runValidators: true }
   );
   
   if (!customer) {
-    return next(new AppError('No customer found with that ID', 404));
+    return next(new AppError('Customer not found', 404));
   }
   
   res.status(200).json({
@@ -175,18 +268,27 @@ exports.addCustomerNote = catchAsync(async (req, res, next) => {
 
 // Convert lead to customer
 exports.convertLeadToCustomer = catchAsync(async (req, res, next) => {
-  // Check if lead exists
-  const lead = await Lead.findById(req.params.leadId);
+  // Validate lead ObjectId
+  if (!isValidObjectId(req.params.leadId)) {
+    return next(new AppError('Invalid lead ID format', 400));
+  }
+  
+  // Check if lead exists and is active
+  const lead = await Lead.findOne({ _id: req.params.leadId, active: { $ne: false } });
   if (!lead) {
-    return next(new AppError('No lead found with that ID', 404));
+    return next(new AppError('Lead not found', 404));
   }
   
   // Check if proposal exists if provided
   let proposal;
   if (req.body.proposalId) {
-    proposal = await Proposal.findById(req.body.proposalId);
+    if (!isValidObjectId(req.body.proposalId)) {
+      return next(new AppError('Invalid proposal ID format', 400));
+    }
+    
+    proposal = await Proposal.findOne({ _id: req.body.proposalId, active: { $ne: false } });
     if (!proposal) {
-      return next(new AppError('No proposal found with that ID', 404));
+      return next(new AppError('Proposal not found', 404));
     }
     
     // Check if proposal belongs to the lead
