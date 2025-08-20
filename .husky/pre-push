@@ -1,0 +1,14 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+echo "Running pre-push checks..."
+
+# Run backend tests
+echo "Running backend tests..."
+npm run test:ci
+
+# Run frontend tests
+echo "Running frontend tests..."
+cd client-new && npm run test:ci
+
+echo "Pre-push checks completed successfully!"

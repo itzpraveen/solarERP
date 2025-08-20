@@ -223,9 +223,10 @@ describe('Authentication Tests', () => {
       const response = await request(app)
         .post('/api/auth/forgotPassword')
         .send({ email: 'nonexistent@example.com' })
-        .expect(404);
+        .expect(200);
 
-      expect(response.body.message).toBeDefined();
+      expect(response.body.status).toBe('success');
+      expect(response.body.message).toContain('reset link');
     });
   });
 

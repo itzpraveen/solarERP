@@ -1,5 +1,6 @@
 import { createContext, useState, useEffect, ReactNode } from 'react';
 import axios from 'axios';
+import '../api/apiService';
 
 interface User {
   id: string;
@@ -8,6 +9,7 @@ interface User {
   email: string;
   role: string;
   avatar?: string;
+  profilePicture?: string;
   isVerified?: boolean;
 }
 

@@ -43,7 +43,7 @@ A comprehensive ERP solution for managing solar installation projects, customer 
 
 ### Backend
 - **Runtime**: Node.js 16+ with Express.js framework
-- **Database**: MongoDB 5.0+ with Mongoose ODM
+- **Database**: PostgreSQL 13+ with Sequelize ORM
 - **Authentication**: JWT with account locking and brute force protection
 - **Security**: Helmet, CORS, rate limiting, input validation & sanitization
 - **File Storage**: Multer with size validation (configurable for cloud storage)
@@ -61,7 +61,7 @@ A comprehensive ERP solution for managing solar installation projects, customer 
 ### Prerequisites
 
 - Node.js 16+ and npm
-- MongoDB 5.0+ (local or cloud instance)
+- PostgreSQL 13+ (local or containerized)
 - Git
 
 ### Installation
@@ -84,8 +84,13 @@ cp .env.example .env
 
 Edit `.env` with your configuration:
 ```env
-# Database
-DATABASE_URI=mongodb://localhost:27017/solarerp
+# PostgreSQL Database Configuration
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=solarerp_dev
+DB_USERNAME=postgres
+DB_PASSWORD=postgres
+DB_SSL=false
 
 # Security (Generate a secure 32+ character string)
 JWT_SECRET=your-very-secure-random-string-minimum-32-chars
@@ -93,7 +98,7 @@ JWT_EXPIRES_IN=7d
 
 # Server
 NODE_ENV=development
-PORT=5000
+PORT=5002
 
 # Client
 CLIENT_URL=http://localhost:3000
@@ -136,7 +141,7 @@ npm start
 
 Access the application at:
 - Frontend: http://localhost:3000
-- Backend API: http://localhost:5000
+- Backend API: http://localhost:5002
 
 ### Deployment
 
@@ -208,17 +213,16 @@ Ensure all sensitive variables are properly set:
 
 ### Health Check Endpoints
 
-- `GET /` - Basic health check
-- `GET /api/health` - Detailed health status (if implemented)
+- `GET /health` - Health probe (minimal in production)
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **MongoDB Connection Failed**
-   - Ensure MongoDB is running: `mongosh --eval "db.adminCommand('ping')"`
-   - Check connection string format
-   - Verify network access to MongoDB
+1. **PostgreSQL Connection Failed**
+   - Ensure PostgreSQL is running and accessible
+   - Check host/port/user/password in `.env`
+   - Verify DB exists and migrations have run (`npm run db:migrate`)
 
 2. **JWT Secret Error**
    - Ensure JWT_SECRET is set in environment variables

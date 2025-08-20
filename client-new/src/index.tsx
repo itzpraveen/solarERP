@@ -1,6 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
+// Bootstrap axios defaults and interceptors globally
+import './api/apiService';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 

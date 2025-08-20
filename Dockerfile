@@ -1,24 +1,22 @@
-FROM node:18-alpine
+FROM node:20-alpine
 
 WORKDIR /app
 
-# Copy package.json and package-lock.json
+# Install server dependencies first for better layer caching
 COPY package*.json ./
-
-# Copy the rest of the application code first so scripts are available
-COPY . .
-
-# Set environment to production
 ENV NODE_ENV=production
-
-# Install dependencies
 RUN npm install --production
 
-# Build the client application
-RUN npm run build
+# Copy source code
+COPY . .
 
-# Expose the port the app runs on
+# Optionally build the client application (skipped by default)
+ARG SKIP_CLIENT_BUILD=true
+RUN if [ "$SKIP_CLIENT_BUILD" = "true" ]; then \
+      echo "Skipping client build"; \
+    else \
+      npm run build; \
+    fi
+
 EXPOSE 5002
-
-# Command to run the application
 CMD ["npm", "start"]

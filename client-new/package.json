@@ -2,7 +2,6 @@
   "name": "client-new",
   "version": "0.1.0",
   "private": true,
-  "proxy": "/api",
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
@@ -27,10 +26,21 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "start": "craco start",
+    "start:prod": "cross-env REACT_APP_ENV=production craco start",
+    "build": "craco build",
+    "build:analyze": "cross-env ANALYZE=true craco build",
+    "test": "craco test",
+    "test:coverage": "react-scripts test --coverage --watchAll=false",
+    "test:ci": "CI=true react-scripts test --coverage",
+    "eject": "react-scripts eject",
+    "lint": "eslint src --ext .ts,.tsx,.js,.jsx --cache",
+    "lint:fix": "eslint src --ext .ts,.tsx,.js,.jsx --fix --cache",
+    "type-check": "tsc --noEmit",
+    "type-check:watch": "tsc --noEmit --watch",
+    "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
+    "validate": "npm run type-check && npm run lint && npm run format:check && npm run test:ci"
   },
   "eslintConfig": {
     "extends": [
@@ -49,5 +59,18 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.62.0",
+    "@craco/craco": "^7.1.0",
+    "@typescript-eslint/parser": "^5.62.0",
+    "compression-webpack-plugin": "^10.0.0",
+    "cross-env": "^7.0.3",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.2.2",
+    "prettier": "^3.4.2",
+    "source-map-explorer": "^2.5.3",
+    "terser-webpack-plugin": "^5.3.10",
+    "webpack-bundle-analyzer": "^4.10.1"
   }
 }

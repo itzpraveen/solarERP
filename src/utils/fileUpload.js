@@ -5,7 +5,9 @@ const crypto = require('crypto');
 const AppError = require('./appError');
 
 // Ensure uploads directory exists
-const uploadsDir = path.join(__dirname, '../../uploads');
+const uploadsDir = process.env.UPLOAD_DIR
+  ? path.resolve(process.env.UPLOAD_DIR)
+  : path.join(__dirname, '../../uploads');
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
@@ -57,11 +59,17 @@ const fileFilter = (req, file, cb) => {
 };
 
 // Configure multer
+const maxFileSize = (() => {
+  const envVal = process.env.MAX_FILE_SIZE;
+  const parsed = envVal ? Number(envVal) : NaN;
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 10 * 1024 * 1024; // default 10MB
+})();
+
 const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 10 * 1024 * 1024 // 10 MB
+    fileSize: maxFileSize
   }
 });
 

@@ -39,8 +39,13 @@ module.exports = {
     }
   },
   production: {
-    // Railway provides DATABASE_URL
-    use_env_variable: 'DATABASE_URL',
+    // In production, prefer DATABASE_URL if provided, else fall back to discrete env vars
+    use_env_variable: process.env.DATABASE_URL ? 'DATABASE_URL' : undefined,
+    username: process.env.DB_USERNAME,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME || 'solarerp',
+    host: process.env.DB_HOST || '127.0.0.1',
+    port: process.env.DB_PORT || 5432,
     dialect: 'postgres',
     logging: false,
     pool: {
@@ -49,12 +54,13 @@ module.exports = {
       acquire: 30000,
       idle: 10000
     },
-    dialectOptions: {
+    dialectOptions: (process.env.DB_SSL || '').toString() === 'true' ? {
       ssl: {
         require: true,
-        rejectUnauthorized: false
+        rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false',
+        ca: process.env.DB_SSL_CA || undefined
       }
-    },
+    } : {},
     define: {
       timestamps: true,
       underscored: true,

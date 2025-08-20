@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Run lint-staged for automatic formatting and linting
+npx lint-staged
+
+# Run a focused unit test suite to keep commits snappy
+npm run test:unit

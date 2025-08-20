@@ -1,7 +1,11 @@
 const nodemailer = require('nodemailer');
 
 const sendEmail = async options => {
-  // 1) Create a transporter
+  // Skip real emails during tests
+  if (process.env.NODE_ENV === 'test') {
+    return true;
+  }
+
   const transporter = nodemailer.createTransport({
     host: process.env.EMAIL_HOST,
     port: process.env.EMAIL_PORT,
@@ -11,7 +15,6 @@ const sendEmail = async options => {
     }
   });
 
-  // 2) Define the email options
   const mailOptions = {
     from: 'Solar ERP <noreply@solarerp.com>',
     to: options.email,
@@ -20,7 +23,6 @@ const sendEmail = async options => {
     html: options.html
   };
 
-  // 3) Actually send the email
   await transporter.sendMail(mailOptions);
 };
 

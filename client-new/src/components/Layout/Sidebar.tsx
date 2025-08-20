@@ -235,15 +235,15 @@ const Sidebar = ({ mobileOpen, handleDrawerToggle }: SidebarProps) => {
           }}
         >
           <Avatar 
-            alt={user?.name || 'User'}
-            src={user?.avatar}
+            alt={(user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : '') || 'User'}
+            src={user?.avatar || (user as any)?.profilePicture || ''}
             sx={{ bgcolor: theme.palette.primary.main, width: 40, height: 40 }}
           >
-            {!user?.avatar && (user?.name?.charAt(0) || 'U')}
+            {!user?.avatar && !(user as any)?.profilePicture && (((user?.firstName || user?.lastName || 'U')[0]) || 'U')}
           </Avatar>
           <Box sx={{ flex: 1 }}>
             <Typography variant="body2" fontWeight={500}>
-              {user?.name || 'User'}
+              {(user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : '') || 'User'}
             </Typography>
             <Typography variant="caption" color="text.secondary">
               Administrator

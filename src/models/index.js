@@ -47,14 +47,4 @@ Object.keys(db).forEach(modelName => {
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
 
-// Test database connection
-sequelize
-  .authenticate()
-  .then(() => {
-    console.log('PostgreSQL connection has been established successfully.');
-  })
-  .catch(err => {
-    console.error('Unable to connect to the PostgreSQL database:', err);
-  });
-
 module.exports = db;

@@ -1,0 +1,14 @@
+node_modules
+build
+dist
+coverage
+client-new/build
+client-new/node_modules
+*.min.js
+public
+logs
+migrations
+seeders
+.git
+.vscode
+*.config.js

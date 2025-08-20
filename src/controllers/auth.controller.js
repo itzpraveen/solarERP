@@ -44,6 +44,13 @@ const createSendToken = (user, statusCode, res) => {
   });
 };
 
+// Stateless logout endpoint
+exports.logout = catchAsync(async (req, res, next) => {
+  // With JWT auth there is no server-side session to destroy.
+  // Clients should delete their token; optionally we can add token blacklisting.
+  res.status(200).json({ status: 'success', message: 'Logged out' });
+});
+
 // Register new user
 exports.signup = catchAsync(async (req, res, next) => {
   // Validate required fields
@@ -202,42 +209,46 @@ exports.restrictTo = (...roles) => {
 
 // Forgot password
 exports.forgotPassword = catchAsync(async (req, res, next) => {
+  const genericResponse = () =>
+    res.status(200).json({
+      status: 'success',
+      message: 'If that email exists, a reset link has been sent.'
+    });
+
   // 1) Get user based on POSTed email
-  const user = await User.findOne({ where: { email: req.body.email.toLowerCase() } });
+  const email = (req.body.email || '').toLowerCase();
+  const user = await User.findOne({ where: { email } });
+
+  // Always return a generic response to avoid user enumeration
   if (!user) {
-    return next(new AppError('There is no user with that email address.', 404));
+    return genericResponse();
   }
-  
+
   // 2) Generate the random reset token
   const resetToken = user.createPasswordResetToken();
   await user.save({ validate: false });
-  
+
   // 3) Send it to user's email
   const clientUrl = process.env.CLIENT_URL || `${req.protocol}://${req.get('host')}`;
   const resetURL = `${clientUrl}/reset-password/${resetToken}`;
-  
+
   const message = `Hi ${user.firstName},\n\nYou requested a password reset for your SolarERP account.\n\nPlease click the following link to reset your password:\n${resetURL}\n\nThis link will expire in 10 minutes.\n\nIf you didn't request this password reset, please ignore this email and your password will remain unchanged.\n\nBest regards,\nSolarERP Team`;
-  
+
   try {
     await sendEmail({
       email: user.email,
       subject: 'Your password reset token (valid for 10 min)',
       message
     });
-    
-    res.status(200).json({
-      status: 'success',
-      message: 'Token sent to email!'
-    });
   } catch (err) {
+    // Clear token fields if email failed
     user.passwordResetToken = null;
     user.passwordResetExpires = null;
     await user.save({ validate: false });
-    
-    return next(
-      new AppError('There was an error sending the email. Try again later!', 500)
-    );
   }
+
+  // Always respond generically
+  return genericResponse();
 });
 
 // Reset password
@@ -297,6 +308,41 @@ exports.getMe = catchAsync(async (req, res, next) => {
     status: 'success',
     data: user
   });
+});
+
+// Update profile (name/email). For password change, use updatePassword.
+exports.updateProfile = catchAsync(async (req, res, next) => {
+  const currentUser = await User.findByPk(req.user.id);
+  if (!currentUser) return next(new AppError('User not found', 404));
+
+  const updates = {};
+
+  // Accept either combined name or first/last
+  if (req.body.name && typeof req.body.name === 'string') {
+    const nameTrim = req.body.name.trim();
+    if (nameTrim) {
+      const [firstName, ...rest] = nameTrim.split(' ');
+      updates.firstName = firstName;
+      updates.lastName = rest.join(' ') || currentUser.lastName;
+    }
+  }
+
+  if (req.body.firstName) updates.firstName = req.body.firstName;
+  if (req.body.lastName) updates.lastName = req.body.lastName;
+  if (req.body.email) updates.email = req.body.email;
+
+  // Do not allow password changes here
+  if ('password' in req.body || 'newPassword' in req.body) {
+    return next(new AppError('Use /api/auth/updatePassword to change password', 400));
+  }
+
+  await currentUser.update(updates);
+
+  const sanitized = await User.findByPk(currentUser.id, {
+    attributes: { exclude: ['password', 'passwordResetToken', 'emailVerificationToken'] }
+  });
+
+  res.status(200).json({ status: 'success', data: { user: sanitized } });
 });
 
 // Verify email

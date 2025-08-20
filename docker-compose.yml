@@ -2,12 +2,16 @@ version: '3.8'
 
 services:
   app:
-    build: .
+    build:
+      context: .
+      args:
+        SKIP_CLIENT_BUILD: ${SKIP_CLIENT_BUILD:-true}
     ports:
       - "5002:5002"
     environment:
       - NODE_ENV=production
       - PORT=5002
+      - ENABLE_NONAUTH_ROUTES=${ENABLE_NONAUTH_ROUTES:-false}
       - DB_HOST=postgres
       - DB_PORT=5432
       - DB_NAME=${DB_NAME:-solarerp}
@@ -29,12 +33,35 @@ services:
       - ADMIN_PASSWORD=${ADMIN_PASSWORD}
       - ADMIN_NAME=${ADMIN_NAME:-System Administrator}
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     restart: always
     command: sh -c "npx sequelize-cli db:migrate && npm start"
+  frontend:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - ./client-new:/app
+    environment:
+      - REACT_APP_API_URL=${REACT_APP_API_URL:-http://localhost:5002}
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+      - WDS_SOCKET_PORT=3000
+      - HOST=0.0.0.0
+      - PORT=3000
+    command: sh -c "npm install && npm start"
+    ports:
+      - "3000:3000"
+    depends_on:
+      - app
 
   postgres:
     image: postgres:15-alpine
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     ports:
       - "5432:5432"
     environment:

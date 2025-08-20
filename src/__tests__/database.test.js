@@ -86,17 +86,19 @@ describe('PostgreSQL Database Tests', () => {
         lastName: 'Doe',
         email: 'john@example.com',
         phone: '555-1234',
+        street: '1 Main St',
+        city: 'Springfield',
+        state: 'IL',
+        zipCode: '62701',
         source: 'website',
-        status: 'new',
-        propertyType: 'residential',
-        estimatedBudget: 50000
+        status: 'new'
       };
 
       const lead = await db.Lead.create(leadData);
       
       expect(lead.id).toBeDefined();
       expect(lead.status).toBe('new');
-      expect(lead.estimatedBudget).toBe(50000);
+      expect(lead.city).toBe('Springfield');
     });
 
     test('should validate status enum values', async () => {
@@ -104,7 +106,13 @@ describe('PostgreSQL Database Tests', () => {
         firstName: 'Invalid',
         lastName: 'Status',
         email: 'invalid@example.com',
-        status: 'invalid_status'
+        phone: '555-0000',
+        street: '2 Oak St',
+        city: 'Austin',
+        state: 'TX',
+        zipCode: '73301',
+        status: 'invalid_status',
+        source: 'website'
       };
 
       await expect(db.Lead.create(leadData)).rejects.toThrow();
@@ -117,6 +125,12 @@ describe('PostgreSQL Database Tests', () => {
         firstName: 'Customer',
         lastName: 'Lead',
         email: 'customer@example.com',
+        phone: '555-1000',
+        street: '7 Elm St',
+        city: 'Denver',
+        state: 'CO',
+        zipCode: '80014',
+        source: 'website',
         status: 'qualified'
       });
 
@@ -125,14 +139,18 @@ describe('PostgreSQL Database Tests', () => {
         lastName: 'Name',
         email: 'customer@example.com',
         phone: '555-5678',
-        leadId: lead.id,
-        customerType: 'individual'
+        street: '7 Elm St',
+        city: 'Denver',
+        state: 'CO',
+        zipCode: '80014',
+        country: 'USA',
+        originalLeadId: lead.id
       };
 
       const customer = await db.Customer.create(customerData);
       
       expect(customer.id).toBeDefined();
-      expect(customer.leadId).toBe(lead.id);
+      expect(customer.originalLeadId).toBe(lead.id);
     });
   });
 
@@ -142,44 +160,58 @@ describe('PostgreSQL Database Tests', () => {
         firstName: 'Project',
         lastName: 'Customer',
         email: 'project@example.com',
-        customerType: 'individual'
+        phone: '555-2000',
+        street: '10 State St',
+        city: 'Boston',
+        state: 'MA',
+        zipCode: '02108',
+        country: 'USA',
+        originalLeadId: (await db.Lead.create({ firstName:'Tmp', lastName:'Lead', email:'tmp@e.com', phone:'555-0001', street:'1', city:'c', state:'s', zipCode:'z', source:'website' })).id
       });
 
       const projectData = {
-        projectName: 'Solar Installation Project',
+        name: 'Solar Installation Project',
         customerId: customer.id,
-        projectType: 'residential',
-        status: 'planning',
-        stage: 'initial_consultation',
+        status: 'active',
+        stage: 'planning',
+        installStreet: '10 State St',
+        installCity: 'Boston',
+        installState: 'MA',
+        installZipCode: '02108',
+        installCountry: 'USA',
         systemSize: 10.5,
-        estimatedCost: 25000
+        panelCount: 20,
+        panelType: 'Mono PERC',
+        inverterType: 'String Inverter',
+        totalContractValue: 25000
       };
 
       const project = await db.Project.create(projectData);
       
       expect(project.id).toBeDefined();
-      expect(project.systemSize).toBe(10.5);
-      expect(project.status).toBe('planning');
+      expect(project.systemSize).toBe('10.50');
+      expect(project.status).toBe('active');
     });
 
-    test('should validate project stage transitions', async () => {
-      const customer = await db.Customer.create({
-        firstName: 'Stage',
-        lastName: 'Test',
-        email: 'stage@example.com',
-        customerType: 'individual'
-      });
-
+    test('should update to next valid stage', async () => {
+      const customer = await db.Customer.findOne();
       const project = await db.Project.create({
-        projectName: 'Stage Test Project',
+        name: 'Stage Test Project',
         customerId: customer.id,
-        projectType: 'residential',
-        status: 'planning',
-        stage: 'initial_consultation'
+        status: 'active',
+        stage: 'planning',
+        installStreet: '10 State St',
+        installCity: 'Boston',
+        installState: 'MA',
+        installZipCode: '02108',
+        installCountry: 'USA',
+        systemSize: 5.5,
+        panelCount: 10,
+        panelType: 'Poly',
+        inverterType: 'Microinverter',
+        totalContractValue: 12000
       });
-
-      // Update to next valid stage
-      project.stage = 'site_survey';
+      project.stage = 'permitting';
       await expect(project.save()).resolves.not.toThrow();
     });
   });
@@ -198,16 +230,22 @@ describe('PostgreSQL Database Tests', () => {
         firstName: 'Associated',
         lastName: 'Lead',
         email: 'associated@example.com',
-        assignedTo: user.id,
+        phone: '555-2222',
+        street: '1 A',
+        city: 'B',
+        state: 'C',
+        zipCode: '00000',
+        source: 'website',
+        assignedToId: user.id,
         status: 'new'
       });
 
       const foundLead = await db.Lead.findByPk(lead.id, {
-        include: [{ model: db.User, as: 'assignedUser' }]
+        include: [{ model: db.User, as: 'assignedTo' }]
       });
 
-      expect(foundLead.assignedUser).toBeDefined();
-      expect(foundLead.assignedUser.id).toBe(user.id);
+      expect(foundLead.assignedTo).toBeDefined();
+      expect(foundLead.assignedTo.id).toBe(user.id);
     });
 
     test('should cascade delete related records', async () => {
@@ -215,22 +253,25 @@ describe('PostgreSQL Database Tests', () => {
         firstName: 'Cascade',
         lastName: 'Test',
         email: 'cascade@example.com',
+        phone: '555-3333',
+        street: '1 A',
+        city: 'B',
+        state: 'C',
+        zipCode: '00000',
+        source: 'website',
         status: 'new'
       });
 
       await db.LeadNote.create({
         leadId: lead.id,
-        note: 'Test note',
-        createdBy: 'system'
+        text: 'Test note',
+        createdById: (await db.User.create({ firstName:'Note', lastName:'Maker', email:'noter@example.com', password:'Pass12345!' })).id
       });
 
       // Delete lead should cascade delete notes
       await lead.destroy();
 
-      const notes = await db.LeadNote.findAll({
-        where: { leadId: lead.id }
-      });
-
+      const notes = await db.LeadNote.findAll({ where: { leadId: lead.id } });
       expect(notes.length).toBe(0);
     });
   });
@@ -254,18 +295,24 @@ describe('PostgreSQL Database Tests', () => {
       })).rejects.toThrow();
     });
 
-    test('should validate numeric ranges', async () => {
+    test('should validate roofAge numeric range', async () => {
       const lead = await db.Lead.create({
-        firstName: 'Score',
-        lastName: 'Test',
-        email: 'score@example.com',
+        firstName: 'Roof',
+        lastName: 'Age',
+        email: 'roof@example.com',
+        phone: '555-4444',
+        street: '1 A',
+        city: 'B',
+        state: 'C',
+        zipCode: '00000',
+        source: 'website',
         status: 'new',
-        score: 50 // Valid: 0-100
+        roofAge: 10
       });
 
-      expect(lead.score).toBe(50);
+      expect(lead.roofAge).toBe(10);
 
-      lead.score = 150; // Invalid: > 100
+      lead.roofAge = -1; // Invalid: < 0
       await expect(lead.save()).rejects.toThrow();
     });
 
@@ -274,6 +321,12 @@ describe('PostgreSQL Database Tests', () => {
         firstName: 'Soft',
         lastName: 'Delete',
         email: 'soft@example.com',
+        phone: '555-5555',
+        street: '1 A',
+        city: 'B',
+        state: 'C',
+        zipCode: '00000',
+        source: 'website',
         status: 'new'
       });
 

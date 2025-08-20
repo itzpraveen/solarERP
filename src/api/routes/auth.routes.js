@@ -55,6 +55,9 @@ router.post('/login', validateLogin, handleValidationErrors, authController.logi
 router.post('/forgotPassword', validateForgotPassword, handleValidationErrors, authController.forgotPassword);
 router.patch('/resetPassword/:token', validatePasswordReset, handleValidationErrors, authController.resetPassword);
 
+// Stateless logout (client removes token)
+router.post('/logout', authController.logout);
+
 // Demo user creation (protected and only for development)
 if (process.env.NODE_ENV !== 'production') {
   router.post('/demo', authController.createDemoUser);
@@ -64,5 +67,6 @@ if (process.env.NODE_ENV !== 'production') {
 router.use(authController.protect);
 router.get('/me', authController.getMe);
 router.patch('/updatePassword', validatePasswordUpdate, authController.updatePassword);
+router.patch('/profile', authController.updateProfile);
 
 module.exports = router;
