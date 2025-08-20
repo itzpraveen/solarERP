@@ -1,0 +1,31 @@
+{
+  "watch": [
+    "src/**/*",
+    ".env"
+  ],
+  "ext": "js,json,env",
+  "ignore": [
+    "src/**/*.spec.js",
+    "src/**/*.test.js",
+    "node_modules/**/*",
+    "client-new/**/*",
+    "logs/**/*",
+    "uploads/**/*",
+    "coverage/**/*",
+    ".git/**/*"
+  ],
+  "exec": "node",
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "delay": "1000",
+  "verbose": false,
+  "restartable": "rs",
+  "events": {
+    "start": "echo '🚀 Backend server starting...'",
+    "restart": "echo '🔄 Backend server restarting due to changes...'",
+    "crash": "echo '💥 Backend server crashed! Waiting for file changes...'"
+  },
+  "legacyWatch": false,
+  "signal": "SIGTERM"
+}

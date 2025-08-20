@@ -141,7 +141,7 @@ const Header = ({ handleDrawerToggle }: HeaderProps) => {
           }}>
             <Box sx={{ display: { xs: 'none', md: 'block' }, mr: 1 }}>
               <Typography variant="body2" fontWeight={500} color="text.primary">
-                {user?.name || 'User'}
+                {(user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : '') || 'User'}
               </Typography>
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
                 Administrator
@@ -154,11 +154,11 @@ const Header = ({ handleDrawerToggle }: HeaderProps) => {
                 sx={{ p: 0, background: theme.palette.primary.main }}
               >
                 <Avatar 
-                  alt={user?.name || 'User'} 
-                  src={user?.avatar}
+                  alt={(user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : '') || 'User'} 
+                  src={user?.avatar || (user as any)?.profilePicture || ''}
                   sx={{ width: 36, height: 36 }}
                 >
-                  {!user?.avatar && (user?.name?.charAt(0) || 'U')}
+                  {!user?.avatar && !(user as any)?.profilePicture && (((user?.firstName || user?.lastName || 'U')[0]) || 'U')}
                 </Avatar>
               </IconButton>
             </Tooltip>

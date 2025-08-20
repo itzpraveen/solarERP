@@ -1,6 +1,6 @@
 const express = require('express');
-const customerController = require('../controllers/customer.controller');
-const authController = require('../controllers/auth.controller');
+const customerController = require('../../controllers/customer.controller');
+const authController = require('../../controllers/auth.controller');
 const { check } = require('express-validator');
 const router = express.Router();
 
@@ -13,11 +13,11 @@ const validateCustomer = [
   check('lastName', 'Last name is required').not().isEmpty(),
   check('email', 'Please include a valid email').isEmail(),
   check('phone', 'Phone number is required').not().isEmpty(),
-  check('address.street', 'Street address is required').not().isEmpty(),
-  check('address.city', 'City is required').not().isEmpty(),
-  check('address.state', 'State is required').not().isEmpty(),
-  check('address.zipCode', 'ZIP code is required').not().isEmpty(),
-  check('originalLead', 'Original lead ID is required').isMongoId()
+  check('street', 'Street address is required').not().isEmpty(),
+  check('city', 'City is required').not().isEmpty(),
+  check('state', 'State is required').not().isEmpty(),
+  check('zipCode', 'ZIP code is required').not().isEmpty(),
+  check('originalLeadId', 'Original lead ID is required').isUUID()
 ];
 
 // Customer routes
@@ -33,7 +33,7 @@ router.route('/:id')
 // Convert lead to customer
 router.route('/convert-lead/:leadId')
   .post(
-    check('proposalId', 'If provided, proposal ID must be valid').optional().isMongoId(),
+    check('proposalId', 'If provided, proposal ID must be valid').optional().isUUID(),
     customerController.convertLeadToCustomer
   );
 

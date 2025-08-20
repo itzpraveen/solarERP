@@ -1,7 +1,34 @@
 const express = require('express');
 const router = express.Router();
-const serviceRequestController = require('../controllers/service-request.controller');
-const authController = require('../controllers/auth.controller');
+const { check } = require('express-validator');
+const serviceRequestController = require('../../controllers/service-request.controller');
+const authController = require('../../controllers/auth.controller');
+
+// Validation error handler
+const handleValidationErrors = (req, res, next) => {
+  const { validationResult } = require('express-validator');
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ status: 'error', errors: errors.array() });
+  }
+  next();
+};
+
+// Validators
+const validateCreate = [
+  check('title', 'Title is required').not().isEmpty(),
+  check('description', 'Description is required').not().isEmpty(),
+  check('requestType', 'Request type is required').isIn(['maintenance', 'repair', 'installation', 'inspection', 'other']),
+  check('priority').optional().isIn(['low', 'medium', 'high', 'urgent']),
+  check('customerId', 'Valid customerId is required').isUUID(),
+  check('projectId').optional().isUUID(),
+  check('assignedToId').optional().isUUID(),
+  check('scheduledDate').optional().isISO8601()
+];
+const validateNote = [ check('text', 'Note text is required').not().isEmpty() ];
+const validateAssign = [ check('assignedToId', 'assignedToId is required').isUUID() ];
+const validateStatus = [ check('status', 'Valid status is required').isIn(['new','assigned','in_progress','on_hold','completed','cancelled']) ];
+const validateSchedule = [ check('scheduledDate', 'Valid scheduledDate is required').isISO8601() ];
 
 // Protect all routes
 router.use(authController.protect);
@@ -9,7 +36,7 @@ router.use(authController.protect);
 // Get all service requests & Create new service request
 router.route('/')
   .get(serviceRequestController.getServiceRequests)
-  .post(serviceRequestController.createServiceRequest);
+  .post(validateCreate, handleValidationErrors, serviceRequestController.createServiceRequest);
 
 // Get, update, delete specific service request by ID
 router.route('/:id')
@@ -19,19 +46,19 @@ router.route('/:id')
 
 // Add note to service request
 router.route('/:id/notes')
-  .post(serviceRequestController.addNote);
+  .post(validateNote, handleValidationErrors, serviceRequestController.addNote);
 
 // Assign technician to service request
 router.route('/:id/assign')
-  .put(serviceRequestController.assignTechnician);
+  .put(validateAssign, handleValidationErrors, serviceRequestController.assignTechnician);
 
 // Update status of service request
 router.route('/:id/status')
-  .put(serviceRequestController.updateStatus);
+  .put(validateStatus, handleValidationErrors, serviceRequestController.updateStatus);
 
 // Schedule service request
 router.route('/:id/schedule')
-  .put(serviceRequestController.scheduleService);
+  .put(validateSchedule, handleValidationErrors, serviceRequestController.scheduleService);
 
 // Complete service request
 router.route('/:id/complete')

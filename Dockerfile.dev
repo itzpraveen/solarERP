@@ -1,0 +1,34 @@
+# Development Dockerfile with hot-reload and debugging support
+FROM node:20-alpine
+
+# Install development tools
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    bash \
+    git
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies with dev dependencies
+RUN npm ci --include=dev
+
+# Install nodemon globally for hot-reload
+RUN npm install -g nodemon
+
+# Copy application code
+COPY . .
+
+# Create necessary directories
+RUN mkdir -p uploads logs temp
+
+# Expose application and debug ports
+EXPOSE 5002 9229
+
+# Use nodemon for hot-reload in development
+CMD ["nodemon", "--inspect=0.0.0.0:9229", "src/index.js"]

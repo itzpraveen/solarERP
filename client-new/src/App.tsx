@@ -1,32 +1,58 @@
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
+import { CssBaseline, ThemeProvider, createTheme, CircularProgress, Box } from '@mui/material';
 import { AuthProvider } from './context/AuthContext';
 import PrivateRoute from './components/routing/PrivateRoute';
 import MainLayout from './components/Layout/MainLayout';
 
-// Pages
-import Dashboard from './pages/Dashboard';
-import Login from './pages/auth/Login';
-import NotFound from './pages/NotFound';
-import Leads from './pages/leads/Leads';
-import LeadDetails from './pages/leads/LeadDetails';
-import Customers from './pages/customers/Customers';
-import CustomerDetails from './pages/customers/CustomerDetails';
-import Projects from './pages/projects/Projects';
-import ProjectDetails from './pages/projects/ProjectDetails';
-import Proposals from './pages/proposals/Proposals';
-import ProposalDetails from './pages/proposals/ProposalDetails';
-import Settings from './pages/settings/Settings';
-import Profile from './pages/Profile';
-import Equipment from './pages/equipment/Equipment';
-import EquipmentDetails from './pages/equipment/EquipmentDetails';
-import Documents from './pages/documents/Documents';
-import Reports from './pages/reports/Reports';
+// Loading component
+const PageLoader = () => (
+  <Box
+    display="flex"
+    justifyContent="center"
+    alignItems="center"
+    minHeight="100vh"
+    bgcolor="background.default"
+  >
+    <CircularProgress />
+  </Box>
+);
 
-// Service Request Module
-import ServiceRequests from './pages/services/ServiceRequests';
-import ServiceRequestForm from './pages/services/ServiceRequestForm';
-import ServiceRequestDetails from './pages/services/ServiceRequestDetails';
+// Lazy load pages for code splitting
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Login = lazy(() => import('./pages/auth/Login'));
+const NotFound = lazy(() => import('./pages/NotFound'));
+
+// Leads module
+const Leads = lazy(() => import('./pages/leads/Leads'));
+const LeadDetails = lazy(() => import('./pages/leads/LeadDetails'));
+
+// Customers module
+const Customers = lazy(() => import('./pages/customers/Customers'));
+const CustomerDetails = lazy(() => import('./pages/customers/CustomerDetails'));
+
+// Projects module
+const Projects = lazy(() => import('./pages/projects/Projects'));
+const ProjectDetails = lazy(() => import('./pages/projects/ProjectDetails'));
+
+// Proposals module
+const Proposals = lazy(() => import('./pages/proposals/Proposals'));
+const ProposalDetails = lazy(() => import('./pages/proposals/ProposalDetails'));
+
+// Equipment module
+const Equipment = lazy(() => import('./pages/equipment/Equipment'));
+const EquipmentDetails = lazy(() => import('./pages/equipment/EquipmentDetails'));
+
+// Service Requests module
+const ServiceRequests = lazy(() => import('./pages/services/ServiceRequests'));
+const ServiceRequestForm = lazy(() => import('./pages/services/ServiceRequestForm'));
+const ServiceRequestDetails = lazy(() => import('./pages/services/ServiceRequestDetails'));
+
+// Other pages
+const Settings = lazy(() => import('./pages/settings/Settings'));
+const Profile = lazy(() => import('./pages/Profile'));
+const Documents = lazy(() => import('./pages/documents/Documents'));
+const Reports = lazy(() => import('./pages/reports/Reports'));
 
 // Extend the Theme interface to include our custom properties
 declare module '@mui/material/styles' {
@@ -49,127 +75,57 @@ const theme = createTheme({
       lightest: '#f1f8e9' // Custom lightest shade for subtle backgrounds
     },
     secondary: {
-      main: '#2196f3', // Blue secondary color
-      light: '#6ec6ff',
-      dark: '#0069c0',
-      contrastText: '#fff',
+      main: '#ff9800', // Orange secondary color
+      light: '#ffb74d',
+      dark: '#f57c00',
+      contrastText: '#000'
     },
     background: {
-      default: '#f8f9fc',
-      paper: '#ffffff',
-    },
-    error: {
-      main: '#f44336',
-    },
-    warning: {
-      main: '#ff9800',
-    },
-    info: {
-      main: '#03a9f4',
-    },
-    success: {
-      main: '#4caf50',
-    },
-    grey: {
-      50: '#f8f9fc',
-      100: '#edf2f7',
-      200: '#e2e8f0',
-      300: '#cbd5e0',
-      400: '#a0aec0',
-      500: '#718096',
-      600: '#4a5568',
-      700: '#2d3748',
-      800: '#1a202c',
-      900: '#171923',
-    },
+      default: '#f5f5f5',
+      paper: '#ffffff'
+    }
   },
   typography: {
-    fontFamily: [
-      'Inter',
-      'Roboto',
-      '"Helvetica Neue"',
-      'Arial',
-      'sans-serif',
-    ].join(','),
+    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
     h1: {
-      fontWeight: 600,
+      fontWeight: 600
     },
     h2: {
-      fontWeight: 600,
+      fontWeight: 600
     },
     h3: {
-      fontWeight: 600,
+      fontWeight: 600
     },
     h4: {
-      fontWeight: 600,
+      fontWeight: 600
     },
     h5: {
-      fontWeight: 600,
+      fontWeight: 600
     },
     h6: {
-      fontWeight: 600,
-    },
-    button: {
-      textTransform: 'none',
-      fontWeight: 500,
-    },
+      fontWeight: 600
+    }
   },
   shape: {
-    borderRadius: 8,
+    borderRadius: 8
   },
   components: {
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: 8,
-          padding: '8px 16px',
-          boxShadow: 'none',
-          '&:hover': {
-            boxShadow: '0px 2px 4px rgba(0, 0, 0, 0.1)',
-          },
-        },
-        containedPrimary: {
-          background: 'linear-gradient(45deg, #4caf50 30%, #66bb6a 90%)',
-        },
-        containedSecondary: {
-          background: 'linear-gradient(45deg, #2196f3 30%, #42a5f5 90%)',
-        },
-      },
+          textTransform: 'none',
+          fontWeight: 500
+        }
+      }
     },
     MuiCard: {
       styleOverrides: {
         root: {
-          borderRadius: 12,
-          boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.05)',
-        },
-      },
-    },
-    MuiPaper: {
-      styleOverrides: {
-        root: {
-          borderRadius: 12,
-          boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.05)',
-        },
-      },
-    },
-    MuiAppBar: {
-      styleOverrides: {
-        root: {
-          boxShadow: '0px 1px 10px rgba(0, 0, 0, 0.05)',
-          backgroundColor: '#ffffff',
-          color: '#2d3748',
-        },
-      },
-    },
-    MuiDrawer: {
-      styleOverrides: {
-        paper: {
-          backgroundColor: '#ffffff',
-          borderRight: 'none',
-        },
-      },
-    },
-  },
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+        }
+      }
+    }
+  }
 });
 
 function App() {
@@ -178,47 +134,72 @@ function App() {
       <CssBaseline />
       <AuthProvider>
         <Router>
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/login" element={<Login />} />
-            
-            {/* Private Routes */}
-            <Route path="/" element={
-              <PrivateRoute>
-                <MainLayout />
-              </PrivateRoute>
-            }>
-              <Route index element={<Navigate to="/dashboard" replace />} />
-              <Route path="dashboard" element={<Dashboard />} />
-              
-              {/* Implemented Routes */}
-              <Route path="leads" element={<Leads />} />
-              <Route path="leads/:id" element={<LeadDetails />} />
-              <Route path="customers" element={<Customers />} />
-              <Route path="customers/:id" element={<CustomerDetails />} />
-              <Route path="projects" element={<Projects />} />
-              <Route path="projects/:id" element={<ProjectDetails />} />
-              <Route path="proposals" element={<Proposals />} />
-              <Route path="proposals/:id" element={<ProposalDetails />} />
-              <Route path="equipment" element={<Equipment />} />
-              <Route path="equipment/:id" element={<EquipmentDetails />} />
-              <Route path="documents" element={<Documents />} />
-              <Route path="reports" element={<Reports />} />
-              
-              {/* Service Request Routes */}
-              <Route path="services" element={<ServiceRequests />} />
-              <Route path="services/new" element={<ServiceRequestForm />} />
-              <Route path="services/:id" element={<ServiceRequestDetails />} />
-              <Route path="services/:id/edit" element={<ServiceRequestForm />} />
-              
-              {/* Profile & Settings */}
-              <Route path="profile" element={<Profile />} />
-              <Route path="settings" element={<Settings />} />
-            </Route>
-            
-            {/* 404 Route */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/login" element={<Login />} />
+
+              {/* Private Routes */}
+              <Route
+                path="/"
+                element={
+                  <PrivateRoute>
+                    <MainLayout />
+                  </PrivateRoute>
+                }
+              >
+                <Route index element={<Navigate to="/dashboard" replace />} />
+                <Route path="dashboard" element={<Dashboard />} />
+                
+                {/* Leads Module */}
+                <Route path="leads">
+                  <Route index element={<Leads />} />
+                  <Route path=":id" element={<LeadDetails />} />
+                </Route>
+
+                {/* Customers Module */}
+                <Route path="customers">
+                  <Route index element={<Customers />} />
+                  <Route path=":id" element={<CustomerDetails />} />
+                </Route>
+
+                {/* Projects Module */}
+                <Route path="projects">
+                  <Route index element={<Projects />} />
+                  <Route path=":id" element={<ProjectDetails />} />
+                </Route>
+
+                {/* Proposals Module */}
+                <Route path="proposals">
+                  <Route index element={<Proposals />} />
+                  <Route path=":id" element={<ProposalDetails />} />
+                </Route>
+
+                {/* Equipment Module */}
+                <Route path="equipment">
+                  <Route index element={<Equipment />} />
+                  <Route path=":id" element={<EquipmentDetails />} />
+                </Route>
+
+                {/* Service Requests Module */}
+                <Route path="service-requests">
+                  <Route index element={<ServiceRequests />} />
+                  <Route path="new" element={<ServiceRequestForm />} />
+                  <Route path=":id" element={<ServiceRequestDetails />} />
+                  <Route path=":id/edit" element={<ServiceRequestForm />} />
+                </Route>
+
+                {/* Other Pages */}
+                <Route path="documents" element={<Documents />} />
+                <Route path="reports" element={<Reports />} />
+                <Route path="settings" element={<Settings />} />
+                <Route path="profile" element={<Profile />} />
+              </Route>
+
+              {/* 404 Page */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
         </Router>
       </AuthProvider>
     </ThemeProvider>

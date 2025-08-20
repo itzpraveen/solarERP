@@ -1,6 +1,6 @@
 const express = require('express');
-const documentController = require('../controllers/document.controller');
-const authController = require('../controllers/auth.controller');
+const documentController = require('../../controllers/document.controller');
+const authController = require('../../controllers/auth.controller');
 const upload = require('../../utils/fileUpload');
 const { check } = require('express-validator');
 const router = express.Router();
@@ -10,6 +10,16 @@ router.get('/public/:token', documentController.getPublicDocument);
 
 // All other routes require authentication
 router.use(authController.protect);
+
+// Validation error handler
+const handleValidationErrors = (req, res, next) => {
+  const { validationResult } = require('express-validator');
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ status: 'error', errors: errors.array() });
+  }
+  next();
+};
 
 // Input validation
 const validateDocument = [
@@ -28,7 +38,7 @@ const validateDocument = [
     'legal',
     'other'
   ]),
-  check('relatedTo.entityType', 'Valid entity type is required').isIn([
+  check('relatedEntityType', 'Valid entity type is required').isIn([
     'project',
     'customer',
     'lead',
@@ -37,7 +47,7 @@ const validateDocument = [
     'user',
     'other'
   ]),
-  check('relatedTo.entityId', 'Valid entity ID is required').isMongoId()
+  check('relatedEntityId', 'Valid entity ID is required').isUUID()
 ];
 
 // Search documents
@@ -46,7 +56,7 @@ router.get('/search', documentController.searchDocuments);
 // Main document routes
 router.route('/')
   .get(documentController.getAllDocuments)
-  .post(upload.single('file'), validateDocument, documentController.createDocument);
+  .post(upload.single('file'), validateDocument, handleValidationErrors, documentController.createDocument);
 
 router.route('/:id')
   .get(documentController.getDocument)
@@ -62,6 +72,7 @@ router.post('/:id/share', documentController.shareDocument);
 // Sign document
 router.post('/:id/sign', 
   check('signatureData', 'Signature data is required').not().isEmpty(),
+  handleValidationErrors,
   documentController.signDocument
 );
 

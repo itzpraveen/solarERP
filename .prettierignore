@@ -1,0 +1,17 @@
+node_modules
+build
+dist
+coverage
+.git
+.next
+.cache
+public
+*.min.js
+*.min.css
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+*.log
+.DS_Store
+.env*
+*.md

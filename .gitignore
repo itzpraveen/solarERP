@@ -1,30 +1,32 @@
 # Node.js dependencies
 node_modules/
-package-lock.json
 yarn.lock
+pnpm-lock.yaml
 
 # Environment variables
 .env
-.env.local
-.env.development
-.env.test
-.env.production
+.env.*
+!.env.example
 
 # Logs
-logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
 
-# Uploads directory (for development)
+# Uploads directory
 uploads/
+!uploads/.gitkeep
 
 # Build directories
-/build
-/dist
-/client/build
-/client/dist
+build/
+dist/
+client-new/build/
+client-new/dist/
+*.tsbuildinfo
 
 # OS specific files
 .DS_Store
@@ -34,17 +36,71 @@ uploads/
 .Trashes
 ehthumbs.db
 Thumbs.db
-
-# Editor directories and files
-.idea
-.vscode
 *.swp
 *.swo
+*~
+
+# Editor directories and files
+.idea/
+.vscode/
+*.sublime-*
+.history/
+*.local
 
 # Testing and coverage
-/coverage
-.nyc_output
+coverage/
+.nyc_output/
+*.lcov
+test-results/
+junit.xml
 
 # Temporary files
-.tmp
-.temp
+.tmp/
+.temp/
+tmp/
+temp/
+*.tmp
+*.temp
+*.cache
+
+# Docker
+.dockerignore
+docker-compose.override.yml
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
+
+# Backup files
+*.backup
+*.bak
+*.old
+
+# Debug files
+npm-debug.log
+yarn-debug.log
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Production secrets
+.env.production
+.env.staging
+
+# Miscellaneous
+.cache/
+.parcel-cache/
+.next/
+.nuxt/
+.vuepress/dist
+.serverless/
+.fusebox/
+.dynamodb/
+.tern-port
+.vercel
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz

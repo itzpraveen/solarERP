@@ -1,6 +1,6 @@
 const express = require('express');
-const proposalController = require('../controllers/proposal.controller');
-const authController = require('../controllers/auth.controller');
+const proposalController = require('../../controllers/proposal.controller');
+const authController = require('../../controllers/auth.controller');
 const { check } = require('express-validator');
 const router = express.Router();
 
@@ -12,18 +12,18 @@ router.use(authController.protect);
 
 // Input validation
 const validateProposal = [
-  check('lead', 'Lead ID is required').isMongoId(),
+  check('leadId', 'Lead ID is required').isUUID(),
   check('name', 'Proposal name is required').not().isEmpty(),
   check('systemSize', 'System size is required').isNumeric(),
   check('panelCount', 'Panel count is required').isNumeric(),
   check('panelType', 'Panel type is required').not().isEmpty(),
   check('inverterType', 'Inverter type is required').not().isEmpty(),
   check('yearlyProductionEstimate', 'Yearly production estimate is required').isNumeric(),
-  check('estimatedSavings.firstYear', 'First year savings estimate is required').isNumeric(),
-  check('estimatedSavings.twentyFiveYear', 'Twenty-five year savings estimate is required').isNumeric(),
-  check('pricing.grossCost', 'Gross cost is required').isNumeric(),
-  check('pricing.federalTaxCredit', 'Federal tax credit amount is required').isNumeric(),
-  check('pricing.netCost', 'Net cost is required').isNumeric()
+  check('firstYearSavings', 'First year savings estimate is required').isNumeric(),
+  check('twentyFiveYearSavings', 'Twenty-five year savings estimate is required').isNumeric(),
+  check('grossCost', 'Gross cost is required').isNumeric(),
+  check('federalTaxCredit', 'Federal tax credit amount is required').isNumeric(),
+  check('netCost', 'Net cost is required').isNumeric()
 ];
 
 // Proposal routes

@@ -32,11 +32,12 @@ const Profile = () => {
 
   useEffect(() => {
     if (user) {
+      const displayName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
       setFormData({
-        name: user.name || '',
+        name: displayName,
         email: user.email || '',
         role: user.role || '',
-        avatar: user.avatar || '',
+        avatar: user.avatar || (user as any)?.profilePicture || '',
         password: '',
         confirmPassword: '',
       });
@@ -88,14 +89,18 @@ const Profile = () => {
       
       // Refresh auth token if needed
       if (res.token) {
-        localStorage.setItem('token', res.token);
+        localStorage.setItem('authToken', res.token);
         // Update auth token header
         axios.defaults.headers.common['Authorization'] = `Bearer ${res.token}`;
       }
       
-      // Update user in context
+      // Update user in context (split name into first/last)
+      const nameTrim = (formData.name || '').trim();
+      const [firstName, ...rest] = nameTrim.split(' ');
+      const lastName = rest.join(' ');
       updateUser({
-        name: formData.name,
+        firstName: firstName || (user?.firstName || ''),
+        lastName: lastName || (user?.lastName || ''),
         email: formData.email
       });
       
@@ -128,11 +133,11 @@ const Profile = () => {
           {/* Profile Image Section */}
           <Grid item xs={12} md={3} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <Avatar 
-              src={user?.avatar} 
-              alt={user?.name}
+              src={user?.avatar || (user as any)?.profilePicture || ''} 
+              alt={(user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() : '') || 'User'}
               sx={{ width: 150, height: 150, mb: 2 }}
             >
-              {!user?.avatar && (user?.name?.charAt(0) || 'U')}
+              {!user?.avatar && !(user as any)?.profilePicture && (((user?.firstName || user?.lastName || 'U')[0]) || 'U')}
             </Avatar>
             <Typography variant="body1" gutterBottom>
               {user?.role}
