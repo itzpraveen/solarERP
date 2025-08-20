@@ -1,6 +1,6 @@
 'use strict';
 
-const leadController = require('../../../controllers/lead.controller.new');
+const leadController = require('../../../controllers/lead.controller');
 const leadService = require('../../../services/lead.service');
 const AppError = require('../../../utils/appError');
 

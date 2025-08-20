@@ -1,5 +1,5 @@
 const express = require('express');
-const leadController = require('../../controllers/lead.controller.new');
+const leadController = require('../../controllers/lead.controller');
 const authController = require('../../controllers/auth.controller');
 const { check } = require('express-validator');
 const { cacheMiddleware, invalidateCache } = require('../../services/cache.service');
